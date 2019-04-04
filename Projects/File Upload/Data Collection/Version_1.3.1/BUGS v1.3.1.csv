@@ -1,0 +1,40 @@
+Summary,Issue key,Issue id,Issue Type,Status,Project key,Project name,Project type,Project lead,Project description,Project url,Priority,Resolution,Assignee,Reporter,Creator,Created,Updated,Last Viewed,Resolved,Affects Version/s,Fix Version/s,Fix Version/s,Due Date,Votes,Description,Environment,Original Estimate,Remaining Estimate,Time Spent,Work Ratio,Σ Original Estimate,Σ Remaining Estimate,Σ Time Spent,Security Level,Custom field (Attachment count),Custom field (Blog - New Blog Administrators),Custom field (Blog - New Blog PMC),Custom field (Blog - Write access),Custom field (Blog Administrator?),Custom field (Blogs - Admin for blog),Custom field (Blogs - Email Address),Custom field (Blogs - Existing Blog Access Level),Custom field (Blogs - Existing Blog Name),Custom field (Blogs - New Blog Write Access),Custom field (Blogs - Username),Custom field (Bug Category),Custom field (Bugzilla - Email Notification Address),Custom field (Bugzilla - List of usernames),Custom field (Bugzilla - PMC Name),Custom field (Bugzilla - Project Name),Custom field (Bugzilla Id),Custom field (Change Category),Custom field (Complexity),Custom field (Date of First Response),Custom field (Discovered By),Custom field (Docs Text),Custom field (Enable Automatic Patch Review),Custom field (Epic Link),Custom field (Existing GitBox Approval),Custom field (External issue ID),Custom field (External issue URL),Custom field (Git Notification Mailing List),Custom field (Git Repository Import Path),Custom field (Git Repository Name),Custom field (Git Repository Type),Custom field (GitHub Options),Custom field (Github Integration),Custom field (Github Integrations - Other),Custom field (Global Rank),Custom field (INFRA - Subversion Repository Path),Custom field (Initial Confluence Contributors),Custom field (Last public comment date),Custom field (Machine Readable Info),Custom field (New-TLP-TLPName),Custom field (Priority),Custom field (Project),Custom field (Protected Branch),Custom field (Rank),Custom field (Rank (Obsolete)),Custom field (Severity),Custom field (Severity),Custom field (Space Description),Custom field (Space Key),Custom field (Space Name),Custom field (Test and Documentation Plan),Custom field (Testcase included),Comment,Comment,Comment,Comment,Comment,Comment,Comment,Comment,Comment,Comment,Comment,Comment,Comment
+MultipartStream public API broken,FILEUPLOAD-137,12371852,Bug,Closed,FILEUPLOAD,Commons FileUpload,software,issues@commons.apache.org,,http://commons.apache.org/fileupload/,Major,Fixed,jochen@apache.org,marksinke,marksinke,18/Jun/07 09:49,06/Jun/17 04:26,04/Apr/19 09:19,12/Aug/13 13:30,1.2,1.2.1,1.3.1,,1,"In commons-transaction 1.2 the MultipartStream class has 2 public constructors. Both are deprecated; however their implementation delegates to non-visible (package-private) constructors. There are two issues here:
+
+1. the deprecated, delegating constructors use a null pointer for the progress notifier, which in turn yield a NullPointerException when you try to use them
+2. the non-deprecated constructors are not visible.
+
+Hence, I cannot really upgrade from 1.0 to 1.2.
+
+Thanks,
+
+Mark.",,,,,,,,,,0.0,,,,,,,,,,,,,,,,,,,2007-06-18 13:54:34.527,,,false,,,,,,,,,,,,43095,,,Tue Jun 06 04:26:04 UTC 2017,,,,,,0|i0sksn:,164846,,,,,,,,18/Jun/07 13:54;jochen@apache.org;How's that related to commons-transaction?,"18/Jun/07 13:55;jochen@apache.org;Apart from that: Why do you use the MultipartStream class directly? Making it public was an error, which I am trying to fix in 1.2.
+","27/Jun/07 18:22;marksinke;Hi Jochen,
+
+We're using it to do SOAP with attachments.
+
+Mark. 
+
+","27/Jun/07 18:59;bayard;Still a problem. According to findbugs, there are still errors:
+
+""Message:  Non-virtual method call in org.apache.commons.fileupload.MultipartStream.MultipartStream() passes null for unconditionally dereferenced parameter of org.apache.commons.fileupload.MultipartStream.MultipartStream(java.io.InputStream,byte[],MultipartStream)""
+
+Looking at the code, the boundary parameter jumps out as one that will throw an NPE if you call new MultipartStream().",03/Oct/07 14:40;jason.madden@riskmetrics.com;I am also using MultiPartStream to do SOAP attachments. It's the lowest-level API that's available and seemed the most appropriate. I also cannot upgrade to 1.2 because of these NPEs.,"03/Oct/07 18:35;jochen@apache.org;I'd recommend that you give Mime4J a try.
+","10/Mar/13 12:06;tn;The calls to the notifier are now protected by a null check, so this should be safe.
+
+The default constructor MultipartStream() will still cause a NullPointerException.
+I would suggest to throw something like a IllegalStateException in any case and document it in the javadoc.
+It is deprecated anyway and will be removed.","11/Mar/13 09:00;simone.tripodi;even if the 0-arguments constructor is deprecated it should not break the backward compatibility - I am investigating if/how it can be still supported.
+
+If not, I'm by [~tn]'s side on throwing an unchecked exception and document it in apidoc","11/Mar/13 09:54;simone.tripodi;while it would be possible to work around the NPE on {{boundary}}, the adapted {{InputStream}} reference cannot be set if not via the constructor since {{MultipartStream#input}} is {{final}}.
+
+Since it doesn't look like there is a fix for this, I'd go for {{UnsupportedOperationException}} in {{MultipartStream()}} constructor and add a note in its javadoc.
+
+Thoughts?","12/Aug/13 13:30;jochen@apache.org;Two parts:
+
+- I fail to find any uses of ""notifier"", that could trigger an NPE. Namely, checks for null are present in makeAvailable(), and readByte(). Please be more specific on that part.
+
+-The constructor     MultipartStream(InputStream, byte[], int, ProgressNotifier) is now public. This is an upwards compatible  change with no side effects.
+
+","12/Aug/13 13:32;mark.sinke@forcare.com;I'm enjoying a holiday, without access to e-mail. I will respond to mails on or after Aug 19th. Please contact mailto:info@forcare.com or mailto:support@forcare.com for specific questions. Regards, Mark Sinke, CTO, Forcare BV.
+","10/Jan/14 15:24;RobMcDougall;If the constructor MultipartStream(InputStream, byte[], int, ProgressNotifier) is public, is there any reason not to make the convenience function MultipartStream(InputStream input, byte[] boundary, ProgressNotifier pNotifier) public as well?  They are both mentioned in the comments for the deprecated constructors but only one is actually public.",06/Jun/17 04:26;chtompki;1.3.1 released.

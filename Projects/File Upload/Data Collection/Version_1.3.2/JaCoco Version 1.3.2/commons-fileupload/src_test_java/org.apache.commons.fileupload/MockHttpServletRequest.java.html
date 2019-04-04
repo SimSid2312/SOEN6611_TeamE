@@ -1,0 +1,519 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>MockHttpServletRequest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-fileupload (Apr 4, 2019 4:16:36 AM)</a> &gt; <a href="../../index.html" class="el_group">commons-fileupload</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.fileupload</a> &gt; <span class="el_source">MockHttpServletRequest.java</span></div><h1>MockHttpServletRequest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.fileupload;
+
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.security.Principal;
+import java.util.Enumeration;
+import java.util.Locale;
+import java.util.Map;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletInputStream;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+/**
+ * @version $Id$
+ */
+class MockHttpServletRequest implements HttpServletRequest {
+
+    private final InputStream m_requestData;
+
+    private long length;
+
+    private String m_strContentType;
+
+<span class="fc" id="L46">    private int readLimit = -1;</span>
+
+<span class="fc" id="L48">    private final Map&lt;String, String&gt; m_headers = new java.util.HashMap&lt;String, String&gt;();</span>
+
+    /**
+     * Creates a new instance with the given request data
+     * and content type.
+     */
+    public MockHttpServletRequest(
+            final byte[] requestData,
+            final String strContentType) {
+<span class="nc" id="L57">        this(new ByteArrayInputStream(requestData),</span>
+<span class="nc" id="L58">                requestData.length, strContentType);</span>
+<span class="nc" id="L59">    }</span>
+
+    /**
+     * Creates a new instance with the given request data
+     * and content type.
+     */
+<span class="fc" id="L65">    public MockHttpServletRequest(</span>
+            final InputStream requestData,
+            final long requestLength,
+            final String strContentType) {
+<span class="fc" id="L69">        m_requestData = requestData;</span>
+<span class="fc" id="L70">        length = requestLength;</span>
+<span class="fc" id="L71">        m_strContentType = strContentType;</span>
+<span class="fc" id="L72">        m_headers.put(FileUploadBase.CONTENT_TYPE, strContentType);</span>
+<span class="fc" id="L73">    }</span>
+
+    /**
+     * @see javax.servlet.http.HttpServletRequest#getAuthType()
+     */
+    public String getAuthType() {
+<span class="nc" id="L79">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.http.HttpServletRequest#getCookies()
+     */
+    public Cookie[] getCookies() {
+<span class="nc" id="L86">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.http.HttpServletRequest#getDateHeader(String)
+     */
+    public long getDateHeader(String arg0) {
+<span class="nc" id="L93">        return 0;</span>
+    }
+
+    /**
+     * @see javax.servlet.http.HttpServletRequest#getHeader(String)
+     */
+    public String getHeader(String headerName) {
+<span class="fc" id="L100">        return m_headers.get(headerName);</span>
+    }
+
+    /**
+     * @see javax.servlet.http.HttpServletRequest#getHeaders(String)
+     */
+    public Enumeration&lt;String&gt; getHeaders(String arg0) {
+        // todo - implement
+<span class="nc" id="L108">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.http.HttpServletRequest#getHeaderNames()
+     */
+    public Enumeration&lt;String&gt; getHeaderNames() {
+        // todo - implement
+<span class="nc" id="L116">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.http.HttpServletRequest#getIntHeader(String)
+     */
+    public int getIntHeader(String arg0) {
+<span class="nc" id="L123">        return 0;</span>
+    }
+
+    /**
+     * @see javax.servlet.http.HttpServletRequest#getMethod()
+     */
+    public String getMethod() {
+<span class="nc" id="L130">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.http.HttpServletRequest#getPathInfo()
+     */
+    public String getPathInfo() {
+<span class="nc" id="L137">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.http.HttpServletRequest#getPathTranslated()
+     */
+    public String getPathTranslated() {
+<span class="nc" id="L144">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.http.HttpServletRequest#getContextPath()
+     */
+    public String getContextPath() {
+<span class="nc" id="L151">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.http.HttpServletRequest#getQueryString()
+     */
+    public String getQueryString() {
+<span class="nc" id="L158">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.http.HttpServletRequest#getRemoteUser()
+     */
+    public String getRemoteUser() {
+<span class="nc" id="L165">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.http.HttpServletRequest#isUserInRole(String)
+     */
+    public boolean isUserInRole(String arg0) {
+<span class="nc" id="L172">        return false;</span>
+    }
+
+    /**
+     * @see javax.servlet.http.HttpServletRequest#getUserPrincipal()
+     */
+    public Principal getUserPrincipal() {
+<span class="nc" id="L179">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.http.HttpServletRequest#getRequestedSessionId()
+     */
+    public String getRequestedSessionId() {
+<span class="nc" id="L186">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.http.HttpServletRequest#getRequestURI()
+     */
+    public String getRequestURI() {
+<span class="nc" id="L193">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.http.HttpServletRequest#getRequestURL()
+     */
+    public StringBuffer getRequestURL() {
+<span class="nc" id="L200">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.http.HttpServletRequest#getServletPath()
+     */
+    public String getServletPath() {
+<span class="nc" id="L207">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.http.HttpServletRequest#getSession(boolean)
+     */
+    public HttpSession getSession(boolean arg0) {
+<span class="nc" id="L214">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.http.HttpServletRequest#getSession()
+     */
+    public HttpSession getSession() {
+<span class="nc" id="L221">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.http.HttpServletRequest#isRequestedSessionIdValid()
+     */
+    public boolean isRequestedSessionIdValid() {
+<span class="nc" id="L228">        return false;</span>
+    }
+
+    /**
+     * @see javax.servlet.http.HttpServletRequest#isRequestedSessionIdFromCookie()
+     */
+    public boolean isRequestedSessionIdFromCookie() {
+<span class="nc" id="L235">        return false;</span>
+    }
+
+    /**
+     * @see javax.servlet.http.HttpServletRequest#isRequestedSessionIdFromURL()
+     */
+    public boolean isRequestedSessionIdFromURL() {
+<span class="nc" id="L242">        return false;</span>
+    }
+
+    /**
+     * @see javax.servlet.http.HttpServletRequest#isRequestedSessionIdFromUrl()
+     * @deprecated
+     */
+    @Deprecated
+    public boolean isRequestedSessionIdFromUrl() {
+<span class="nc" id="L251">        return false;</span>
+    }
+
+    /**
+     * @see javax.servlet.ServletRequest#getAttribute(String)
+     */
+    public Object getAttribute(String arg0) {
+<span class="nc" id="L258">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.ServletRequest#getAttributeNames()
+     */
+    public Enumeration&lt;String&gt; getAttributeNames() {
+<span class="nc" id="L265">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.ServletRequest#getCharacterEncoding()
+     */
+    public String getCharacterEncoding() {
+<span class="fc" id="L272">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.ServletRequest#setCharacterEncoding(String)
+     */
+    public void setCharacterEncoding(String arg0)
+        throws UnsupportedEncodingException {
+<span class="nc" id="L280">    }</span>
+
+    /**
+     * @see javax.servlet.ServletRequest#getContentLength()
+     */
+    public int getContentLength() {
+<span class="fc" id="L286">        int iLength = 0;</span>
+
+<span class="pc bpc" id="L288" title="1 of 2 branches missed.">        if (null == m_requestData) {</span>
+<span class="nc" id="L289">            iLength = -1;</span>
+<span class="nc" id="L290">        } else {</span>
+<span class="pc bpc" id="L291" title="1 of 2 branches missed.">            if (length &gt; Integer.MAX_VALUE) {</span>
+<span class="nc" id="L292">                throw new RuntimeException(&quot;Value '&quot; + length + &quot;' is too large to be converted to int&quot;);</span>
+            }
+<span class="fc" id="L294">            iLength = (int) length;</span>
+        }
+<span class="fc" id="L296">        return iLength;</span>
+    }
+
+    /**
+     * For testing attack scenarios in SizesTest.
+     */
+    public void setContentLength(long length) {
+<span class="nc" id="L303">        this.length = length;</span>
+<span class="nc" id="L304">    }</span>
+
+    /**
+     * @see javax.servlet.ServletRequest#getContentType()
+     */
+    public String getContentType() {
+<span class="fc" id="L310">        return m_strContentType;</span>
+    }
+
+    /**
+     * @see javax.servlet.ServletRequest#getInputStream()
+     */
+    public ServletInputStream getInputStream() throws IOException {
+<span class="fc" id="L317">        ServletInputStream sis = new MyServletInputStream(m_requestData, readLimit);</span>
+<span class="fc" id="L318">        return sis;</span>
+    }
+
+    /**
+     * Sets the read limit. This can be used to limit the number of bytes to read ahead.
+     *
+     * @param readLimit the read limit to use
+     */
+    public void setReadLimit(int readLimit) {
+<span class="nc" id="L327">        this.readLimit = readLimit;</span>
+<span class="nc" id="L328">    }</span>
+
+    /**
+     * @see javax.servlet.ServletRequest#getParameter(String)
+     */
+    public String getParameter(String arg0) {
+<span class="nc" id="L334">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.ServletRequest#getParameterNames()
+     */
+    public Enumeration&lt;String&gt; getParameterNames() {
+<span class="nc" id="L341">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.ServletRequest#getParameterValues(String)
+     */
+    public String[] getParameterValues(String arg0) {
+<span class="nc" id="L348">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.ServletRequest#getParameterMap()
+     */
+    public Map&lt;String, String[]&gt; getParameterMap() {
+<span class="nc" id="L355">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.ServletRequest#getProtocol()
+     */
+    public String getProtocol() {
+<span class="nc" id="L362">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.ServletRequest#getScheme()
+     */
+    public String getScheme() {
+<span class="nc" id="L369">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.ServletRequest#getServerName()
+     */
+    public String getServerName() {
+<span class="nc" id="L376">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.ServletRequest#getLocalName()
+     */
+    @SuppressWarnings(&quot;javadoc&quot;) // This is a Servlet 2.4 method
+    public String getLocalName() {
+<span class="nc" id="L384">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.ServletRequest#getServerPort()
+     */
+    public int getServerPort() {
+<span class="nc" id="L391">        return 0;</span>
+    }
+
+    /**
+     * @see javax.servlet.ServletRequest#getLocalPort()
+     */
+    @SuppressWarnings(&quot;javadoc&quot;) // This is a Servlet 2.4 method
+    public int getLocalPort() {
+<span class="nc" id="L399">        return 0;</span>
+    }
+
+    /**
+     * @see javax.servlet.ServletRequest#getRemotePort()
+     */
+    @SuppressWarnings(&quot;javadoc&quot;) // This is a Servlet 2.4 method
+    public int getRemotePort() {
+<span class="nc" id="L407">        return 0;</span>
+    }
+
+    /**
+     * @see javax.servlet.ServletRequest#getReader()
+     */
+    public BufferedReader getReader() throws IOException {
+<span class="nc" id="L414">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.ServletRequest#getRemoteAddr()
+     */
+    public String getRemoteAddr() {
+<span class="nc" id="L421">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.ServletRequest#getLocalAddr()
+     */
+    @SuppressWarnings(&quot;javadoc&quot;) // This is a Servlet 2.4 method
+    public String getLocalAddr() {
+<span class="nc" id="L429">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.ServletRequest#getRemoteHost()
+     */
+    public String getRemoteHost() {
+<span class="nc" id="L436">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.ServletRequest#setAttribute(String, Object)
+     */
+    public void setAttribute(String arg0, Object arg1) {
+<span class="nc" id="L443">    }</span>
+
+    /**
+     * @see javax.servlet.ServletRequest#removeAttribute(String)
+     */
+    public void removeAttribute(String arg0) {
+<span class="nc" id="L449">    }</span>
+
+    /**
+     * @see javax.servlet.ServletRequest#getLocale()
+     */
+    public Locale getLocale() {
+<span class="nc" id="L455">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.ServletRequest#getLocales()
+     */
+    public Enumeration&lt;Locale&gt; getLocales() {
+<span class="nc" id="L462">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.ServletRequest#isSecure()
+     */
+    public boolean isSecure() {
+<span class="nc" id="L469">        return false;</span>
+    }
+
+    /**
+     * @see javax.servlet.ServletRequest#getRequestDispatcher(String)
+     */
+    public RequestDispatcher getRequestDispatcher(String arg0) {
+<span class="nc" id="L476">        return null;</span>
+    }
+
+    /**
+     * @see javax.servlet.ServletRequest#getRealPath(String)
+     * @deprecated
+     */
+    @Deprecated
+    public String getRealPath(String arg0) {
+<span class="nc" id="L485">        return null;</span>
+    }
+
+    private static class MyServletInputStream
+        extends javax.servlet.ServletInputStream {
+
+        private final InputStream in;
+        private final int readLimit;
+
+        /**
+         * Creates a new instance, which returns the given
+         * streams data.
+         */
+<span class="fc" id="L498">        public MyServletInputStream(InputStream pStream, int readLimit) {</span>
+<span class="fc" id="L499">            in = pStream;</span>
+<span class="fc" id="L500">            this.readLimit = readLimit;</span>
+<span class="fc" id="L501">        }</span>
+
+        @Override
+        public int read() throws IOException {
+<span class="nc" id="L505">            return in.read();</span>
+        }
+
+        @Override
+        public int read(byte b[], int off, int len) throws IOException {
+<span class="pc bpc" id="L510" title="1 of 2 branches missed.">            if (readLimit &gt; 0) {</span>
+<span class="nc" id="L511">                return in.read(b, off, Math.min(readLimit, len));</span>
+            }
+<span class="fc" id="L513">            return in.read(b, off, len);</span>
+        }
+
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span>commons-fileupload (Apr 4, 2019 4:16:36 AM)</div></body></html>

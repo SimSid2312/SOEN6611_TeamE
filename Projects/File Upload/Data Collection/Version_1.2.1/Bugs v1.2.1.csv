@@ -1,0 +1,286 @@
+Summary,Issue key,Issue id,Issue Type,Status,Project key,Project name,Project type,Project lead,Project description,Project url,Priority,Resolution,Assignee,Reporter,Creator,Created,Updated,Last Viewed,Resolved,Affects Version/s,Affects Version/s,Fix Version/s,Fix Version/s,Due Date,Votes,Description,Environment,Original Estimate,Remaining Estimate,Time Spent,Work Ratio,Σ Original Estimate,Σ Remaining Estimate,Σ Time Spent,Security Level,Outward issue link (Duplicate),Attachment,Attachment,Attachment,Custom field (Attachment count),Custom field (Blog - New Blog Administrators),Custom field (Blog - New Blog PMC),Custom field (Blog - Write access),Custom field (Blog Administrator?),Custom field (Blogs - Admin for blog),Custom field (Blogs - Email Address),Custom field (Blogs - Existing Blog Access Level),Custom field (Blogs - Existing Blog Name),Custom field (Blogs - New Blog Write Access),Custom field (Blogs - Username),Custom field (Bug Category),Custom field (Bugzilla - Email Notification Address),Custom field (Bugzilla - List of usernames),Custom field (Bugzilla - PMC Name),Custom field (Bugzilla - Project Name),Custom field (Bugzilla Id),Custom field (Change Category),Custom field (Complexity),Custom field (Date of First Response),Custom field (Discovered By),Custom field (Docs Text),Custom field (Enable Automatic Patch Review),Custom field (Epic Link),Custom field (Existing GitBox Approval),Custom field (External issue ID),Custom field (External issue URL),Custom field (Git Notification Mailing List),Custom field (Git Repository Import Path),Custom field (Git Repository Name),Custom field (Git Repository Type),Custom field (GitHub Options),Custom field (Github Integration),Custom field (Github Integrations - Other),Custom field (Global Rank),Custom field (INFRA - Subversion Repository Path),Custom field (Initial Confluence Contributors),Custom field (Last public comment date),Custom field (Machine Readable Info),Custom field (New-TLP-TLPName),Custom field (Priority),Custom field (Project),Custom field (Protected Branch),Custom field (Rank),Custom field (Rank (Obsolete)),Custom field (Severity),Custom field (Severity),Custom field (Space Description),Custom field (Space Key),Custom field (Space Name),Custom field (Test and Documentation Plan),Custom field (Testcase included),Comment,Comment,Comment,Comment,Comment,Comment,Comment,Comment,Comment,Comment,Comment,Comment,Comment
+Cannot run unit tests from Ant 1.7.0 (Sun) Java 1.3.1,FILEUPLOAD-153,12386104,Bug,Closed,FILEUPLOAD,Commons FileUpload,software,issues@commons.apache.org,,http://commons.apache.org/fileupload/,Minor,Fixed,,ggregory,ggregory,12/Jan/08 01:53,06/Jun/17 04:48,04/Apr/19 09:17,12/Jan/08 10:50,1.2.1,,1.2.1,,,0,"Cannot run unit tests from Ant 1.7.0 (Sun) Java 1.3.1.
+
+> From: Jörg Schaible [mailto:Joerg.Schaible@Elsag-Solutions.com]
+> Sent: Thursday, January 10, 2008 10:56 PM
+> To: Jakarta Commons Developers List
+> Subject: RE: [VOTE] Release commons-fileupload 1.2.1 (rc3)
+> 
+> Hi Gary,
+> 
+> Gary Gregory wrote:
+> > Hello:
+> >
+> > The ant build in this RC fails on Sun Java 1.3.1 [1] because
+> > the unit tests use the XML formatter which depend on W3C
+> > code. The W3C code is in Java 1.4 but not 1.3. The ant build
+> > also reports, apparently non-fatal errors [1] when attempting
+> > to fetch non-existent files out of the maven repos.
+> >
+> > Personally, I no longer care about 1.3.1 but I thought you might like
+> > to know.
+> 
+> This can be fixed by adding Xalan 2.7.0 to Ant's lib, but you have to use the one
+> from Apache's Maven repo, not the one from their distribution. Se
+> http://jira.codehaus.org/browse/HAUS-1572
+
+That does not work for me, no matter what version of Xalan I put in ANT_HOME/lib, I always get:
+{noformat} 
+Using loader null on class org.apache.tools.ant.taskdefs.optional.junit.XMLJUnitResultFormatter: java.lang.NoClassDefFoundError: org/w3c/dom/Node
+	at org.apache.tools.ant.taskdefs.optional.junit.FormatterElement.createFormatter(FormatterElement.java:241)
+	at org.apache.tools.ant.taskdefs.optional.junit.FormatterElement.createFormatter(FormatterElement.java:214)
+	at org.apache.tools.ant.taskdefs.optional.junit.JUnitTestRunner.transferFormatters(JUnitTestRunner.java:818)
+	at org.apache.tools.ant.taskdefs.optional.junit.JUnitTestRunner.launch(JUnitTestRunner.java:910)
+	at org.apache.tools.ant.taskdefs.optional.junit.JUnitTestRunner.main(JUnitTestRunner.java:766)
+--- Nested Exception ---
+java.lang.NoClassDefFoundError: org/w3c/dom/Node
+	at java.lang.Class.forName0(Native Method)
+	at java.lang.Class.forName(Class.java:115)
+	at org.apache.tools.ant.taskdefs.optional.junit.FormatterElement.createFormatter(FormatterElement.java:232)
+	at org.apache.tools.ant.taskdefs.optional.junit.FormatterElement.createFormatter(FormatterElement.java:214)
+	at org.apache.tools.ant.taskdefs.optional.junit.JUnitTestRunner.transferFormatters(JUnitTestRunner.java:818)
+	at org.apache.tools.ant.taskdefs.optional.junit.JUnitTestRunner.launch(JUnitTestRunner.java:910)
+	at org.apache.tools.ant.taskdefs.optional.junit.JUnitTestRunner.main(JUnitTestRunner.java:766)
+{noformat} 
+Then I read:
+
+http://ant.apache.org/faq.html#junit-no-runtime-xml
+
+This states that the only way to fix this is to fix one's build.xml file like so:
+""the easiest solution is to add
+{code:xml}
+<pathelement path=""${ant.home}/lib/xml-apis.jar:${ant.home}/lib/xercesImpl.jar""/>
+{code}
+to your task's <classpath>.""
+I implemented this and the build succeeded. So I am submitting the attached patch to build.xml. This path element is ignored by Java versions >= 1.4 since one must use the override mechanism to use different XML libs than what is in the runtime.
+
+Thank you,
+Gary
+","java version ""1.3.1_15""
+Java(TM) 2 Runtime Environment, Standard Edition (build 1.3.1_15-b01)
+Java HotSpot(TM) Client VM (build 1.3.1_15-b01, mixed mode)
+
+Windows XP 5.1 Service Pack 2 x86-32",,,,,,,,,,12/Jan/08 06:11;patch.txt;https://issues.apache.org/jira/secure/attachment/12373027/patch.txt,,,1.0,,,,,,,,,,,,,,,,,,,2008-01-12 04:57:42.839,,,false,,,,,,,,,,,,43079,,,Tue Jun 06 04:48:34 UTC 2017,,,,,,0|i0skp3:,164830,,,,,,,,"12/Jan/08 04:57;jochen@apache.org;What classpath are you exactly referring to? The one defined in line 131? A patch would surely help.
+","12/Jan/08 06:11;ggregory@seagullsw.com;Oops, forgot to attach patch.","12/Jan/08 10:50;jochen@apache.org;Applied, thank you!
+",06/Jun/17 04:48;chtompki;1.2.1 released.,,,,,,,,,
+setFileSizeMax validation is happening after ENTIRE file gets uploaded,FILEUPLOAD-145,12377199,Bug,Closed,FILEUPLOAD,Commons FileUpload,software,issues@commons.apache.org,,http://commons.apache.org/fileupload/,Major,Fixed,jochen@apache.org,zmonster,zmonster,30/Aug/07 23:53,06/Jun/17 04:21,04/Apr/19 09:17,22/Sep/07 21:01,1.2,,1.2.1,,,0,"The LimitedInputStream *IS* correctly raising a FileUploadBase.FileSizeLimitExceededException in the event of a too-large file.  HOWEVER, the exception isn't getting *processed* until AFTER all of the data is read.  This is because of what appears to be a bug in MultipartStream.ItemInputStream.close() (or a bug in close handling after the FileSizeLimitExceededException is raised).  After the LimitedInputStream correctly raises the file size exception, someone attempts to close the MultipartStream, but the close() method repeatedly calls 'makeAvailable()' which ends up reading the rest of the file upload data anyways, REGARDLESS of the size limit exception being raised.","All, however I mainly use Mac OSX",,,,,,,,,,21/Sep/07 21:07;jochen@apache.org;FILEUPLOAD-145.patch;https://issues.apache.org/jira/secure/attachment/12366387/FILEUPLOAD-145.patch,,,1.0,,,,,,,,,,,,,,,,,,,2007-09-13 20:33:40.644,,,false,,,,,,,,,,,,43087,,,Tue Jun 06 04:21:41 UTC 2017,,,,,,0|i0skqv:,164838,,,,,,,,"13/Sep/07 20:33;bayard;Looking at the code, I agree with Eric's description above.
+
+The options would seem to be:
+
+1) Remove the eating of the stream from close() (presumably it's there for a reason).
+2) Add a boolean to turn off the eating of the stream and set that when raising an error in checkLimit.
+3) other ideas?","21/Sep/07 21:07;jochen@apache.org;Could you please verify, whether the attached patch works?
+","21/Sep/07 21:39;zmonster;The attached patch does appear to work in that the client (web browser) receives the desired file size max error after fileSizeMax bytes are uploaded (whereas before, the entire (size>fileSizeMax) had to be uploaded before the error was sent).  However, this is still not completely ideal.  It would be desireable for the server to check the file size immediately, before the upload starts, and throw the error in a pre-emptive fashion.  But maybe that information is not available at the fileupload level, and 'fileSizeMax' bytes have to be read in all cases before any error can be thrown?  If so, that's fine.  This patch is one step better than we had before.  Please excuse my ignorance of the inner-workings of the fileupload code.","22/Sep/07 21:01;jochen@apache.org;A FileSizeLimitExceededException was deferred until the complete file has been uploaded. Additionally, the FileSizeLimitException is now thrown immediately, if the attachments headers contain a content-length value, which exceeds the configured limit. (It is unlikely, that browsers send such a header, but one can try.)
+
+",06/Jun/17 04:21;chtompki;1.2.1 released.,,,,,,,,
+[fileupload] separator of boundary doesnt match rfc1867 examples,FILEUPLOAD-139,12372872,Bug,Closed,FILEUPLOAD,Commons FileUpload,software,issues@commons.apache.org,,http://commons.apache.org/fileupload/,Major,Fixed,,martynas,martynas,03/Jul/07 06:26,05/Sep/07 09:21,04/Apr/19 09:17,05/Sep/07 09:21,,,1.2.1,,,0,"[fileupload]
+in class :
+package org.apache.commons.fileupload;
+public abstract class FileUploadBase {
+
+    protected byte[] getBoundary(String contentType) {
+        ParameterParser parser = new ParameterParser();
+        parser.setLowerCaseNames(true);
+        // Parameter parser can handle null input
+        Map params = parser.parse(contentType, ';');
+        String boundaryStr = (String) params.get(""boundary"");
+
+        if (boundaryStr == null) {
+            return null;
+        }
+        byte[] boundary;
+        try {
+            boundary = boundaryStr.getBytes(""ISO-8859-1"");
+        } catch (UnsupportedEncodingException e) {
+            boundary = boundaryStr.getBytes();
+        }
+        return boundary;
+    }
+
+}
+
+String :  Map params = parser.parse(contentType, ';');
+doesn't match http://www.ietf.org/rfc/rfc1867.txt document
+because in all examples:
+Content-type: multipart/form-data , boundary=AaB03x
+Content-type: multipart/form-data, boundary=AaB03x
+Content-type: multipart/mixed, boundary=BbC04y
+
+boundary separated by comma (but not semicolon)",,,,,,,,,,,04/Sep/07 11:37;bayard;FILEUPLOAD-139.patch;https://issues.apache.org/jira/secure/attachment/12365064/FILEUPLOAD-139.patch,,,1.0,,,,,,,,,,,,,,,,,,,2007-08-23 11:21:54.296,,,false,,,,,,,,,,,,43093,,,Wed Sep 05 09:21:51 UTC 2007,,,,,,0|i0sks7:,164844,,,,,,,,"23/Aug/07 11:21;bayard;http://www.ietf.org/rfc/rfc1521.txt uses semi-colons [the mime spec].
+
+I guess we need to figure out whether browsers are sending semi-colons or commas. Maybe this part of the spec gets ignored.
+
+
+[Completely odd fact... the Habsburgs ruled Hungary from 1521 to 1867]","23/Aug/07 13:07;martynas;""FileUpload parses HTTP requests which conform to RFC 1867, ""Form-based File Upload in HTML"". That is, if an HTTP request is submitted using the POST method, and with a content type of ""multipart/form-data"", then FileUpload can parse that request, and make the results available in a manner easily used by the caller. ""
+
+this text is copied from http://commons.apache.org/fileupload/ first paragraph
+So as i understand phrase ""conform to RFC 1867"" it means that all spec written in this RFC should be supported.
+
+As i see this is simple task to support both commas and semi-colons.","24/Aug/07 17:28;bayard;Why continue to support semi-colons? The spec doesn't seem to mention them.
+
+Do browsers tend to send ; and not , as the spec says?","27/Aug/07 06:29;martynas;Yes, as i looked browsers tend to send semi-colons.But not only web browsers can submit files to server using this method. For example I made some embedded device witch is sending some generated files to Server. File upload part I done using  RFC 1867.I didn't look  at others rfc looking if there is some mistake in this one. So i have done device which is sending files to some server. If my written script is good I tested on simple php script. There was no problem. So we produced a lot of these devices (i can't change soft in them). Then I began making server on Java using this library . So occurred a problem. At moment i use some decorator witch replaces commas to semi-colons. But as I suppose it should be fixed in library because i may be not only one who is writing simple code using this rfc without checking if its conflicting with other rfc documents.",27/Aug/07 14:15;bayard;Makes sense. Assigning to 1.2.1.,"04/Sep/07 11:37;bayard;Attaching a patch which adds a new parse method to ParameterParser that can take multiple separators. It looks for the earliest one that occurs in the string to be parsed, and uses that. 
+
+Unit test also patched, as is the getBoundary method to use this new parse(String, char[]) method.",04/Sep/07 11:41;bayard;Any thoughts on the patch?,"04/Sep/07 20:05;jochen@apache.org;After reviewing, I can't fight the feeling, that the ParameterParser could use some refactoring in order to reduce the number of similar methods. However, IMO, we should reuse mime4j in the next version anyways, so that can be ignored for now. Go on, Henri!
+","05/Sep/07 09:21;bayard;svn ci -m ""Applying the patch from FILEUPLOAD-139 so that comma separators are supported (as per rfc1867) as well as semi-colons""
+
+Sending        src/java/org/apache/commons/fileupload/FileUploadBase.java
+Sending        src/java/org/apache/commons/fileupload/ParameterParser.java
+Sending        src/test/org/apache/commons/fileupload/ParameterParserTest.java
+Transmitting file data ...
+Committed revision 572918.",,,,
+Fail to upload small files,FILEUPLOAD-138,12372501,Bug,Closed,FILEUPLOAD,Commons FileUpload,software,issues@commons.apache.org,,http://commons.apache.org/fileupload/,Critical,Duplicate,jochen@apache.org,mgroeger,mgroeger,27/Jun/07 12:58,03/Jun/17 17:17,04/Apr/19 09:17,28/Jun/07 09:24,,,1.2.1,,,0,"Upload for very small files failed. The size (of failing) is lass than 58/59 bytes.
+It depends on the exact size of the keepRegion variable of the MultipartStream.
+
+Files less than this size contain no data at the target.",Tomcat 5.5 on Suse Linux 10.0,,,,,,,,,FILEUPLOAD-135,,,,0.0,,,,,,,,,,,,,,,,,,,2007-06-27 13:29:37.448,,,false,,,,,,,,,,,,43094,,,Thu Jun 28 09:24:45 UTC 2007,,,,,,0|i0sksf:,164845,,,,,,,,"27/Jun/07 13:29;jochen@apache.org;This is most likely a duplicate of FILEUPLOAD-135. Please check, whether you still have problems with the current snapshot, as available from 
+
+    http://people.apache.org/repo/m2-snapshot-repository/org/apache/commons/fileupload/commons-fileupload/1.3-SNAPSHOT/","28/Jun/07 07:55;mgroeger;Yes, with the current snapshot the problem disappears.
+
+I took also a current shanpshot from commons-io (otherwise it doesn't compile). The question for me was: How to know which version of commons-io is the related one ?!
+","28/Jun/07 09:24;jochen@apache.org;The question for the required version of commons-io is answered by the POM file, which is distributed together with the jar file.
+",,,,,,,,,,
+MultipartStream public API broken,FILEUPLOAD-137,12371852,Bug,Closed,FILEUPLOAD,Commons FileUpload,software,issues@commons.apache.org,,http://commons.apache.org/fileupload/,Major,Fixed,jochen@apache.org,marksinke,marksinke,18/Jun/07 09:49,06/Jun/17 04:26,04/Apr/19 09:17,12/Aug/13 13:30,1.2,,1.2.1,1.3.1,,1,"In commons-transaction 1.2 the MultipartStream class has 2 public constructors. Both are deprecated; however their implementation delegates to non-visible (package-private) constructors. There are two issues here:
+
+1. the deprecated, delegating constructors use a null pointer for the progress notifier, which in turn yield a NullPointerException when you try to use them
+2. the non-deprecated constructors are not visible.
+
+Hence, I cannot really upgrade from 1.0 to 1.2.
+
+Thanks,
+
+Mark.",,,,,,,,,,,,,,0.0,,,,,,,,,,,,,,,,,,,2007-06-18 13:54:34.527,,,false,,,,,,,,,,,,43095,,,Tue Jun 06 04:26:04 UTC 2017,,,,,,0|i0sksn:,164846,,,,,,,,18/Jun/07 13:54;jochen@apache.org;How's that related to commons-transaction?,"18/Jun/07 13:55;jochen@apache.org;Apart from that: Why do you use the MultipartStream class directly? Making it public was an error, which I am trying to fix in 1.2.
+","27/Jun/07 18:22;marksinke;Hi Jochen,
+
+We're using it to do SOAP with attachments.
+
+Mark. 
+
+","27/Jun/07 18:59;bayard;Still a problem. According to findbugs, there are still errors:
+
+""Message:  Non-virtual method call in org.apache.commons.fileupload.MultipartStream.MultipartStream() passes null for unconditionally dereferenced parameter of org.apache.commons.fileupload.MultipartStream.MultipartStream(java.io.InputStream,byte[],MultipartStream)""
+
+Looking at the code, the boundary parameter jumps out as one that will throw an NPE if you call new MultipartStream().",03/Oct/07 14:40;jason.madden@riskmetrics.com;I am also using MultiPartStream to do SOAP attachments. It's the lowest-level API that's available and seemed the most appropriate. I also cannot upgrade to 1.2 because of these NPEs.,"03/Oct/07 18:35;jochen@apache.org;I'd recommend that you give Mime4J a try.
+","10/Mar/13 12:06;tn;The calls to the notifier are now protected by a null check, so this should be safe.
+
+The default constructor MultipartStream() will still cause a NullPointerException.
+I would suggest to throw something like a IllegalStateException in any case and document it in the javadoc.
+It is deprecated anyway and will be removed.","11/Mar/13 09:00;simone.tripodi;even if the 0-arguments constructor is deprecated it should not break the backward compatibility - I am investigating if/how it can be still supported.
+
+If not, I'm by [~tn]'s side on throwing an unchecked exception and document it in apidoc","11/Mar/13 09:54;simone.tripodi;while it would be possible to work around the NPE on {{boundary}}, the adapted {{InputStream}} reference cannot be set if not via the constructor since {{MultipartStream#input}} is {{final}}.
+
+Since it doesn't look like there is a fix for this, I'd go for {{UnsupportedOperationException}} in {{MultipartStream()}} constructor and add a note in its javadoc.
+
+Thoughts?","12/Aug/13 13:30;jochen@apache.org;Two parts:
+
+- I fail to find any uses of ""notifier"", that could trigger an NPE. Namely, checks for null are present in makeAvailable(), and readByte(). Please be more specific on that part.
+
+-The constructor     MultipartStream(InputStream, byte[], int, ProgressNotifier) is now public. This is an upwards compatible  change with no side effects.
+
+","12/Aug/13 13:32;mark.sinke@forcare.com;I'm enjoying a holiday, without access to e-mail. I will respond to mails on or after Aug 19th. Please contact mailto:info@forcare.com or mailto:support@forcare.com for specific questions. Regards, Mark Sinke, CTO, Forcare BV.
+","10/Jan/14 15:24;RobMcDougall;If the constructor MultipartStream(InputStream, byte[], int, ProgressNotifier) is public, is there any reason not to make the convenience function MultipartStream(InputStream input, byte[] boundary, ProgressNotifier pNotifier) public as well?  They are both mentioned in the comments for the deprecated constructors but only one is actually public.",06/Jun/17 04:26;chtompki;1.3.1 released.
+InputStream created with Streaming API returns EOF on first read() for short files uploaded from FireFox over HTTPS,FILEUPLOAD-135,12370108,Bug,Closed,FILEUPLOAD,Commons FileUpload,software,issues@commons.apache.org,,http://commons.apache.org/fileupload/,Major,Fixed,jochen@apache.org,bird_owl,bird_owl,24/May/07 02:09,06/Jun/17 04:22,04/Apr/19 09:17,27/Jun/07 01:03,1.2,1.2.1,1.2.1,,,1,"This problem happens only with files shorer then boundary string generated by browser and only with Firefox using HTTPS protocol.
+For some reason in this particular environment inputStream.read() in MultipartStream.ItemInputStream.makeAvailable() reads not whole HTTP response body, but only file content before boundary string. 
+I've created a patch fixing this issue.","Windows XP
+Browser: Firefox 1.5.0.11
+Protocol: HTTPS
+
+",,,,,,,,,,07/Jun/07 21:17;bird_owl;FILEUPLOAD135.patch;https://issues.apache.org/jira/secure/attachment/12359214/FILEUPLOAD135.patch,24/May/07 02:12;bird_owl;commons-fileupload-1.1-bug-short-file-eof.patch;https://issues.apache.org/jira/secure/attachment/12358053/commons-fileupload-1.1-bug-short-file-eof.patch,25/May/07 20:31;bird_owl;commons-fileupload-1.2-bug-short-file-eof.patch;https://issues.apache.org/jira/secure/attachment/12358277/commons-fileupload-1.2-bug-short-file-eof.patch,3.0,,,,,,,,,,,,,,,,,,,2007-05-27 21:13:34.861,,,false,,,,,,,,,,,,43097,,,Tue Jun 06 04:22:09 UTC 2017,,,,,,0|i0skt3:,164848,,,,,,,,24/May/07 02:12;bird_owl;reading from inputStream until we get enough content to fit boundary string,25/May/07 20:31;bird_owl;my previous patch has a bug. please use new one,"27/May/07 21:13;jochen@apache.org;Before applying your patch, I'd like to understand the problem. Would it be possible for you to provide a test case, which fails with 1.2 and works with your patch? Preferrably a patch against the test suite, but a sample http body should do.
+","29/May/07 17:46;bird_owl;The problem is not with content of HTTP response, but with original InputStream behavior. InputStream.read() may read not whole buffer or whole content of input stream, but just part of it. If this part is shorter then boundary string (but still greater then 0) ItemInputStream.read() returns -1.
+
+I was able to reproduce it only with small file (10 bytes) using FireFox 1.5.0.11 and HTTPS. I think I can simulate this by developing custom InputStream, but it could take some time.
+
+Here is fragment of my code where I test the upload:
+
+    protected byte[] getBoundary(String contentType) 
+    {
+        ParameterParser parser = new ParameterParser();
+        parser.setLowerCaseNames(true);
+        // Parameter parser can handle null input
+        Map params = parser.parse(contentType, ';');
+        String boundaryStr = (String) params.get(""boundary"");
+
+        if (boundaryStr == null) {
+            return null;
+        }
+        byte[] boundary;
+        try {
+            boundary = boundaryStr.getBytes(""ISO-8859-1"");
+        } catch (UnsupportedEncodingException e) {
+            boundary = boundaryStr.getBytes();
+        }
+        return boundary;
+    }
+
+    private void testFileUpload(HttpServletRequest req)
+    {
+        try 
+        {
+            byte[] boundary = getBoundary(req.getHeader(""Content-Type""));
+            System.out.println(""Boundary: "" + new String(boundary));
+            MultipartStream multipartStream = new MultipartStream(req.getInputStream(), boundary);
+            boolean nextPart = multipartStream.skipPreamble();
+            OutputStream output = System.out;
+            while(nextPart) 
+            {
+                //header = chunks.readHeader();
+                System.out.println(""!"" + multipartStream.readHeaders() + ""!"");
+
+                multipartStream.readBodyData(output);
+                nextPart = multipartStream.readBoundary();
+            }
+        }
+        catch(Exception e) 
+        {
+            e.printStackTrace();
+        }
+    }
+","06/Jun/07 23:42;jochen@apache.org;This test case doesn't help me understand the problem. The important part is the multipart document, which triggers the problem. We'd need a code sample that creates such a multipart document (compare, for example, the methid StreamingTest.newRequest; btw, note that this method creates file items which are clearly smaller than the boundary) or at least the multipart document itself, which you can catch with tools like tcpmon or Wireshark.
+","07/Jun/07 21:17;bird_owl;I've added new test case to StreamingTest class. The key thing here is defining custom InputStream on top of ByteArrayInputStream which never read more then 3 bytes per call. If you change this number to something bigger then 10, the test will pass.
+
+BTW, with  MockHttpServletRequest.MyServletInputStream.read(byte[],int,int) method defined properly testIOException() start failing. Without this change the second read() method defined in testIOException() never been called.
+
+","25/Jun/07 18:07;rob.slifka@voltage.com;Hello Jira,
+
+I've run into this issue as well, very much looking forward to the
+patch, thanks :)
+
+Rob Slifka
+
+","25/Jun/07 18:13;rslifka;""Hello Jira"" yikes :-)
+
+Anyway, is there a way to see the progress on this issue?  I.e. if it's been submitted, scheduled, etc.?
+
+Just to verify, it is indeed a Firefox-only issue, and not reproducible on any other browser (IE6, IE7, Opera, Safari).
+","27/Jun/07 01:03;jochen@apache.org;Applied, thank you!
+","09/Jul/07 17:32;rslifka;Many thanks Jochen!  I see that another has verified the fix in FILEUPLOAD-138.
+
+Any idea when we'll see 1.2.1 released?
+","19/Dec/07 01:35;cpopetz;I'd like to note that this is actually browser independent and not just an issue with short files...when data is coming via AJP (coyote / mod_jk) in tomcat, it comes in chunks, and if a chunk falls on a boundary, it triggers this bug (which it does for my web site a _lot_ and I've been chasing it for weeks)  because the first read will just return what's left in that chunk (not enough for a boundary) and the second read would return the rest of the boundary.
+","17/Jan/12 00:05;mgessel;Incidentally, I started triggering this bug after updating to JRE 1.7 u1 on the *client*. I have a standalone Java application that is uploading files to a Tomcat container via HTTPS/SSL. 
+
+Reproduction requires: 
+ - HTTPS/SSL transmission
+ - jdk1.7.0_u1 or later
+ - commons-fileupload-1.2.0 or previous
+
+Fixed with commons-fileupload-1.2.1 or later",06/Jun/17 04:22;chtompki;1.2.1 released.
+"A factory-created DiskFileItem does not have an initialized dfos, causing NullPointerExceptions if getOutputStream() is not called.",FILEUPLOAD-134,12366902,Bug,Closed,FILEUPLOAD,Commons FileUpload,software,issues@commons.apache.org,,http://commons.apache.org/fileupload/,Major,Fixed,,tv,tv,10/Apr/07 15:46,06/Jun/17 04:29,04/Apr/19 09:17,07/Jun/07 00:06,1.2,,1.2.1,,,0,"When upgrading the Turbine code to commons-fileupload 1.2, I got NPEs in Unit tests dealing with DiskFileItems. In that special case, a FileItem was created like this:
+
+        ParameterParser pp = new DefaultParameterParser();
+        DiskFileItemFactory factory = new DiskFileItemFactory(10240, new File("".""));
+
+        FileItem test = factory.createItem(""upload-field"", ""application/octet-stream"", false, null);
+
+        pp.add(""upload-field"", test);
+
+        assertTrue(pp.toString().startsWith(""{upload-field=[name=null""));
+
+pp.toString() causes a call to test.toString() which (among other things) calls dfos.getFile(). This fails because dfos is not initialized before getOutputStream() is called.",,,,,,,,,,,,,,0.0,,,,,,,,,,,,,,,,,,,2007-06-07 00:06:00.808,,,false,,,,,,,,,,,,43098,,,Tue Jun 06 04:29:13 UTC 2017,,,,,,0|i0sktb:,164849,,,,,,,,"07/Jun/07 00:06;jochen@apache.org;The method DiskFileItem.getStorageLocation() is now checking for dfos == null.
+","28/Sep/09 14:42;miek;Jochen, it turns out the resolution you described only affects the sympton and not the original problem. The dfos is not initialized at all unless getOutputStream() is manually invoked. As I see it, the fix would be to initialize the dfos as soon as the object is created.
+
+I came across this problem when trying to wrap a newly created DiskFileItem in a MultipartFile, which causes getSize() to be called, which ultimately leads to a call of dfos.isInMemory() (line 306 in DiskFileItem.java), which results to an NPE.
+",06/Jun/17 04:29;chtompki;1.2.1 released.,,,,,,,,,,
+max headers size is checked but improperly handled,FILEUPLOAD-116,12348889,Bug,Closed,FILEUPLOAD,Commons FileUpload,software,issues@commons.apache.org,,http://commons.apache.org/fileupload/,Minor,Fixed,,amichai,amichai,29/Aug/06 23:36,06/Jun/17 04:53,04/Apr/19 09:17,07/Apr/07 02:05,1.2,,1.2.1,,,0,"MultipartStream enforces a maximum headers section size limit to prevent abuse. However, when the limit is reached, it silently discards the rest of the headers block, and returns an invalid partial headers string back to FileUploadBase. There it may, depending on the data and location of the cutoff, either return partial headers, return among them an invalid header, or throw an undocumented IllegalStateException.
+Instead, it should inform the caller that the headers are not properly processed - whether or not the oversized headers are due to a malformed stream or not, after cutting them off they certainly become malformed.
+
+The attached patch fixes this by having MultipartStream throw a MalformedStreamException when the limit is reached, as it does if other errors occur. This both leaves existing error handling (whomever catches such an exception) unchanged, and seems right since an extremely oversized header block is likely due to a malformed stream. This change further guarantees that if the exception is not thrown, the returned headers string must be valid, which simplifies processing in FileUploadBase (also included in the patch).",,,,,,,,,,,29/Aug/06 23:36;amichai;ASF.LICENSE.NOT.GRANTED--commons-fileupload-1.2-bug-max-header-size.patch;https://issues.apache.org/jira/secure/attachment/12339819/ASF.LICENSE.NOT.GRANTED--commons-fileupload-1.2-bug-max-header-size.patch,,,1.0,,,,,,,,,,,,,,,,,,,2007-04-07 02:05:07.088,,,false,,,,,,,,,,,,43116,,,Tue Jun 06 04:53:44 UTC 2017,,,,,,0|i0skxb:,164867,,,,,,,,"07/Apr/07 02:05;jochen@apache.org;Applied, thank you.
+",06/Jun/17 04:53;chtompki;1.2.1 released.,,,,,,,,,,,
