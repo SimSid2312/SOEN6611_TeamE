@@ -1,0 +1,58 @@
+For Jacoco -
+
+1. in pom.xml (under build -> plugins tag)
+----------
+  <plugin>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <version>0.7.9</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>prepare-agent</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>report</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>report</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>jacoco-check</id>
+                <phase>test</phase>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <configuration>
+                  <rules>
+                    <rule implementation="org.jacoco.maven.RuleConfiguration">
+                      <element>BUNDLE</element>
+                      <limits>
+                        <limit implementation="org.jacoco.report.check.Limit">
+                          <counter>INSTRUCTION</counter>
+                          <value>COVEREDRATIO</value>
+                          <minimum>0.60</minimum>
+                        </limit>
+                      </limits>
+                    </rule>
+                  </rules>
+                </configuration>
+              </execution>
+            </executions>
+   </plugin>
+
+
+
+
+==============================================================================
+For Pitest -
+
+1. in pom.xml (under build -> plugins tag)
+----------
+          <plugin>
+            <groupId>org.pitest</groupId>
+            <artifactId>pitest-maven</artifactId>
+            <version>1.4.7</version>
+          </plugin>
