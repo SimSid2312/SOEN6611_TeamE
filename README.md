@@ -4,8 +4,8 @@
 
 ## 1) File Structure
 
-- The repository contains a **project** folder which has all the data pertaining to the project.
-- Inside the project folder there are 5 project folders named **(,,,,)**
+- The repository contains a **Projects** folder which has all the data pertaining to the project.
+- Inside the project folder there are 5 project folders named **(File Upload, JfreeChart/Code Change,  common-collections)**
 
 ## 2) 
 
