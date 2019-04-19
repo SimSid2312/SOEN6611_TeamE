@@ -6,6 +6,7 @@
 
 - The repository contains a **Projects** folder which has all the data pertaining to the project.
 - Inside the project folder there are 5 project folders named **(File Upload, JfreeChart/Code Change,  common-collections)**
+- Inside each of the project folders mentioned in the previous line, there are three folders **Code Change, Data Analysis and Data Collection (Data collection contains raw data).**
 
 ## 2) 
 
