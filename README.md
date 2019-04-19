@@ -40,9 +40,10 @@
 
 ## 3) Team Members
 
-- Jasraj Singh Bedi  40046931
-- Neelisha Fernandes 40053845
-- Sagar Vetal  40071979
-- Simran Sidhu  40011611
-- Himanshu Kolhi 40070839
+- Jasraj Singh Bedi | 40046931 | jasraj3453@gmail.com
+- Himanshu Kohli | 40070839 | atomicboy2012@gmail.com
+- Neelisha Fernandes | 40053845 | nileesha.fernando94@gmail.com
+- Sagar Vetal | 40071979 | vetal.sagar07@gmail.com
+- Simran Sidhu | 40011611 | simrantechm@gmail.com
+ 
 
