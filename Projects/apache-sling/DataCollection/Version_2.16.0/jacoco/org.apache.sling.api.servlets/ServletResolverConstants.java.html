@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ServletResolverConstants.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Sling API</a> &gt; <a href="index.source.html" class="el_package">org.apache.sling.api.servlets</a> &gt; <span class="el_source">ServletResolverConstants.java</span></div><h1>ServletResolverConstants.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.apache.sling.api.servlets;
+
+import javax.servlet.ServletConfig;
+
+/**
+ * Service registration properties and common values used for registering a Sling Servlet.
+ * 
+ * @see &lt;a href=&quot;http://sling.apache.org/documentation/the-sling-engine/servlets.html&quot;&gt;Servlets and Scripts&lt;/a&gt;
+ * @since 2.2.0
+ */
+<span class="nc" id="L29">public final class ServletResolverConstants {</span>
+
+    /**
+     * The name of the service registration property of a servlet registered as
+     * a service providing the absolute paths under which the servlet is
+     * accessible as a resource (value is &quot;sling.servlet.paths&quot;).
+     * A relative path is made absolute by prefixing it with the value set through the 
+     * {@link #SLING_SERVLET_PREFIX} property. 
+     * &lt;p&gt;
+     * The type of this property is a String or String[] (array of strings)
+     * denoting the path(s) under which the servlet is registered in the
+     * resource tree.
+     * &lt;p&gt;
+     * Either this property or the {@link #SLING_SERVLET_RESOURCE_TYPES}
+     * property must be set or the servlet is ignored. 
+     * If both are set the servlet is registered using both ways.
+     * &lt;p&gt;
+     * A servlet using this property might be ignored unless its path is included 
+     * in the Execution Paths {@code servletresolver.paths} configuration setting of the
+     * {@code org.apache.sling.servlets.resolver.internal.SlingServletResolver} service.
+     */
+    public static final String SLING_SERVLET_PATHS = &quot;sling.servlet.paths&quot;;
+
+    /**
+     * The name of the service registration property of a servlet registered as
+     * a service containing the resource type(s) supported by the servlet (value
+     * is &quot;sling.servlet.resourceTypes&quot;).
+     * A relative resource type is made absolute by prefixing it with the value set through the 
+     * {@link #SLING_SERVLET_PREFIX} property. 
+     * &lt;p&gt;
+     * The type of this property is a String or String[] (array of strings)
+     * denoting the resource types.
+     * &lt;p&gt;
+     * Either this property or the {@link #SLING_SERVLET_PATHS} property must be
+     * set, or the servlet is ignored.
+     * If both are set, the servlet is registered using both ways.
+     */
+    public static final String SLING_SERVLET_RESOURCE_TYPES = &quot;sling.servlet.resourceTypes&quot;;
+
+    /**
+     * &lt;p&gt;
+     * The name of the service registration property of a servlet registered as
+     * a service providing the prefix/index to be used to register this servlet.
+     * It only is applied as prefix to {@link #SLING_SERVLET_PATHS} and 
+     * {@link #SLING_SERVLET_RESOURCE_TYPES} in case they do not start with a &quot;/&quot;.
+     * &lt;/p&gt;
+     * &lt;ul&gt;
+     * &lt;li&gt;If the value of this property is a number, it defines the index of the search
+     * path entries from the resource resolver. The defined search path is used as
+     * a prefix to mount this servlet. The number can be -1 which always points to the
+     * last search entry. If the specified value is higher than than the highest index
+     * of the search paths, the last entry is used. The index starts with 0.
+     * If the value of this property is a string and parseable as a number, the above
+     * logic is used.&lt;/li&gt;
+     * &lt;li&gt;If the value of this property is a string starting with &quot;/&quot;, this value is applied
+     * as a prefix, regardless of the configured search paths!&lt;/li&gt;
+     * &lt;li&gt;If the value is anything else, it is ignored.&lt;/li&gt;
+     * &lt;/ul&gt;
+     * If this property is not specified, the configuration of the {@code org.apache.sling.servlets.resolver.internal.SlingServletResolver}
+     * service is used.
+     * In case even that one is not set &quot;/&quot; is used as prefix.
+     */
+    public static final String SLING_SERVLET_PREFIX = &quot;sling.servlet.prefix&quot;;
+
+    /**
+     * The name of the service registration property of a Servlet registered as
+     * a service containing the request URL selectors supported by the servlet
+     * (value is &quot;sling.servlet.selectors&quot;). The selectors must be configured as
+     * they would be specified in the URL that is as a list of dot-separated
+     * strings such as &lt;em&gt;print.a4&lt;/em&gt;.
+     * &lt;p&gt;
+     * The type of this property is a String or String[] (array of strings)
+     * denoting the resource types. This property is ignored if the
+     * {@link #SLING_SERVLET_RESOURCE_TYPES} property is not set. Otherwise this property is
+     * optional and ignored if not set.
+     */
+    public static final String SLING_SERVLET_SELECTORS = &quot;sling.servlet.selectors&quot;;
+
+    /**
+     * The name of the service registration property of a servlet registered as
+     * a service containing the request URL extensions supported by the servlet
+     * for GET requests (value is &quot;sling.servlet.extensions&quot;).
+     * &lt;p&gt;
+     * The type of this property is a String or String[] (array of strings)
+     * denoting the resource types. This property is ignored if the
+     * {@link #SLING_SERVLET_RESOURCE_TYPES} property is not set. 
+     * Otherwise this property is optional and ignored if not set.
+     */
+    public static final String SLING_SERVLET_EXTENSIONS = &quot;sling.servlet.extensions&quot;;
+
+    /**
+     * The name of the service registration property of a servlet registered as
+     * a service containing the request methods supported by the servlet (value
+     * is &quot;sling.servlet.methods&quot;). The value may be one of the HTTP methods or &quot;*&quot; for all methods.
+     * &lt;p&gt;
+     * The type of this property is a String or String[] (array of strings)
+     * denoting the resource types. This property is ignored if the
+     * {@link #SLING_SERVLET_RESOURCE_TYPES} property is not set. 
+     * Otherwise this property is optional and assumed to be {@code GET} and {@code HEAD} if not set.
+     * @see &lt;a href=&quot;https://tools.ietf.org/html/rfc7231#section-4.3&quot;&gt;HTTP 1.1 Spec Methods&lt;/a&gt;
+     */
+    public static final String SLING_SERVLET_METHODS = &quot;sling.servlet.methods&quot;;
+
+    /**
+     * The name of the service registration property of a Servlet registered as
+     * a service containing the name of the servlet (value is
+     * &quot;sling.core.servletName&quot;). If this property is missing or empty, the
+     * &lt;code&gt;component.name&lt;/code&gt; property or the &lt;code&gt;service.pid&lt;/code&gt;
+     * is used. If none of the three properties is defined, the Servlet is
+     * ignored.
+     * @see ServletConfig#getServletName()
+     */
+    public static final String SLING_SERVLET_NAME = &quot;sling.core.servletName&quot;;
+
+    /**
+     * The resource type of a registered servlet used as the default servlet if
+     * no other (more specific) servlet or script could be selected (value is
+     * &quot;sling/servlet/default&quot;). If no servlet is registered under this name,
+     * the {@code org.apache.sling.servlets.resolver.internal.defaults.DefaultServlet} is
+     * used.
+     * @see &lt;a href=&quot;http://sling.apache.org/documentation/the-sling-engine/servlets.html#default-servlets&quot;&gt;Default Servlet(s)&lt;/a&gt;
+     */
+    public static final String DEFAULT_RESOURCE_TYPE = &quot;sling/servlet/default&quot;;
+
+    /**
+     * The resource type used to select error handlers (value is
+     * &quot;sling/servlet/errorhandler&quot;).
+     * @see &lt;a href=&quot;http://sling.apache.org/documentation/the-sling-engine/errorhandling.html&quot;&gt;Errorhandling&lt;/a&gt;
+     */
+    public static final String DEFAULT_ERROR_HANDLER_RESOURCE_TYPE = &quot;sling/servlet/errorhandler&quot;;
+
+    /**
+     * The HTTP &quot;method&quot; name of an error handler used as the default (value is
+     * &quot;default&quot;).
+     * @see &lt;a href=&quot;http://sling.apache.org/documentation/the-sling-engine/errorhandling.html#default-handler&quot;&gt;Default Error Handle&lt;/a&gt;
+     */
+    public static final String DEFAULT_ERROR_HANDLER_METHOD = &quot;default&quot;;
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>
