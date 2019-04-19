@@ -1,0 +1,445 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ResourceMetadata.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Sling API</a> &gt; <a href="index.source.html" class="el_package">org.apache.sling.api.resource</a> &gt; <span class="el_source">ResourceMetadata.java</span></div><h1>ResourceMetadata.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.apache.sling.api.resource;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+
+/**
+ * The &lt;code&gt;ResourceMetadata&lt;/code&gt; interface defines the API for the
+ * metadata of a Sling {@link Resource}. Essentially the resource's metadata is
+ * just a map of objects indexed by string keys.
+ * &lt;p&gt;
+ * The actual contents of the meta data map is implementation specific with the
+ * exception of the {@link #RESOLUTION_PATH sling.resolutionPath} property which
+ * must be provided by all implementations and contain the part of the request
+ * URI used to resolve the resource. The type of this property value is defined
+ * to be &lt;code&gt;String&lt;/code&gt;.
+ * &lt;p&gt;
+ * Note, that the prefix &lt;em&gt;sling.&lt;/em&gt; to key names is reserved for the
+ * Sling implementation.
+ *
+ * Once a resource is returned by the {@link ResourceResolver}, the resource
+ * metadata is made read-only and therefore can't be changed by client code!
+ */
+<span class="fc" id="L48">public class ResourceMetadata extends HashMap&lt;String, Object&gt; {</span>
+
+    private static final long serialVersionUID = 4692666752269523738L;
+
+    /**
+     * The name of the required property providing the part of the request URI
+     * which was used to the resolve the resource to which the meta data
+     * instance belongs (value is &quot;sling.resolutionPath&quot;).
+     */
+    public static final String RESOLUTION_PATH = &quot;sling.resolutionPath&quot;;
+
+    /**
+     * The name of the required property providing the part of the request URI
+     * which was not used to the resolve the resource to which the meta data
+     * instance belongs (value is &quot;sling.resolutionPathInfo&quot;). The value of this
+     * property concatenated to the value of the
+     * {@link #RESOLUTION_PATH sling.resolutionPath} property returns the
+     * original request URI leading to the resource.
+     * &lt;p&gt;
+     * This property is optional. If missing, it should be assumed equal to an
+     * empty string.
+     *
+     * @since 2.0.4 (Sling API Bundle 2.0.4)
+     */
+    public static final String RESOLUTION_PATH_INFO = &quot;sling.resolutionPathInfo&quot;;
+
+    /**
+     * The name of the optional property providing the content type of the
+     * resource if the resource is streamable (value is &quot;sling.contentType&quot;).
+     * This property may be missing if the resource is not streamable or if the
+     * content type is not known.
+     */
+    public static final String CONTENT_TYPE = &quot;sling.contentType&quot;;
+
+    /**
+     * The name of the optional property providing the content length of the
+     * resource if the resource is streamable (value is &quot;sling.contentLength&quot;).
+     * This property may be missing if the resource is not streamable or if the
+     * content length is not known.
+     * &lt;p&gt;
+     * Note, that unlike the other properties, this property may be set only
+     * after the resource has successfully been adapted to an
+     * &lt;code&gt;InputStream&lt;/code&gt; for performance reasons.
+     */
+    public static final String CONTENT_LENGTH = &quot;sling.contentLength&quot;;
+
+    /**
+     * The name of the optional property providing the character encoding of the
+     * resource if the resource is streamable and contains character data (value
+     * is &quot;sling.characterEncoding&quot;). This property may be missing if the
+     * resource is not streamable or if the character encoding is not known.
+     */
+    public static final String CHARACTER_ENCODING = &quot;sling.characterEncoding&quot;;
+
+    /**
+     * Returns the creation time of this resource in the repository in
+     * milliseconds (value is &quot;sling.creationTime&quot;). The type of this property
+     * is &lt;code&gt;java.lang.Long&lt;/code&gt;. The property may be missing if the
+     * resource is not streamable or if the creation time is not known.
+     */
+    public static final String CREATION_TIME = &quot;sling.creationTime&quot;;
+
+    /**
+     * Returns the last modification time of this resource in the repository in
+     * milliseconds (value is &quot;sling.modificationTime&quot;). The type of this
+     * property is &lt;code&gt;java.lang.Long&lt;/code&gt;. The property may be missing
+     * if the resource is not streamable or if the last modification time is not
+     * known.
+     */
+    public static final String MODIFICATION_TIME = &quot;sling.modificationTime&quot;;
+
+    /**
+     * Returns whether the resource resolver should continue to search for a
+     * resource.
+     * A resource provider can set this flag to indicate that the resource
+     * resolver should search for a provider with a lower priority. If it
+     * finds a resource using such a provider, that resource is returned
+     * instead. If none is found this resource is returned.
+     * This flag should never be manipulated by application code!
+     * The value of this property has no meaning, the resource resolver
+     * just checks whether this flag is set or not.
+     * @since 2.2 (Sling API Bundle 2.2.0)
+     * @deprecated This flag is not supported anymore when implementing the SPI
+     *             based {@code org.apache.sling.spi.resource.provider.ResourceProvider}
+     */
+    public static final String INTERNAL_CONTINUE_RESOLVING = &quot;:org.apache.sling.resource.internal.continue.resolving&quot;;
+
+    /**
+     * Returns a map containing parameters added to path after semicolon.
+     * For instance, map for path &lt;code&gt;/content/test;v='1.2.3'.html&lt;/code&gt;
+     * will contain one entry key &lt;code&gt;v&lt;/code&gt; and value &lt;code&gt;1.2.3&lt;/code&gt;.
+     */
+    public static final String PARAMETER_MAP = &quot;sling.parameterMap&quot;;
+
+<span class="fc" id="L142">    private boolean isReadOnly = false;</span>
+
+    /**
+     * Sets the {@link #CHARACTER_ENCODING} property to &lt;code&gt;encoding&lt;/code&gt;
+     * if not &lt;code&gt;null&lt;/code&gt;.
+     * @param encoding The encoding
+     */
+    public void setCharacterEncoding(String encoding) {
+<span class="nc bnc" id="L150" title="All 2 branches missed.">        if (encoding != null) {</span>
+<span class="nc" id="L151">            put(CHARACTER_ENCODING, encoding);</span>
+        }
+<span class="nc" id="L153">    }</span>
+
+    /**
+     * Returns the {@link #CHARACTER_ENCODING} property if not &lt;code&gt;null&lt;/code&gt;
+     * and a &lt;code&gt;String&lt;/code&gt; instance. Otherwise &lt;code&gt;null&lt;/code&gt; is
+     * returned.
+     * @return The character encoding
+     */
+    public @CheckForNull String getCharacterEncoding() {
+<span class="nc" id="L162">        Object value = get(CHARACTER_ENCODING);</span>
+<span class="nc bnc" id="L163" title="All 2 branches missed.">        if (value instanceof String) {</span>
+<span class="nc" id="L164">            return (String) value;</span>
+        }
+
+<span class="nc" id="L167">        return null;</span>
+    }
+
+    /**
+     * Sets the {@link #CONTENT_TYPE} property to &lt;code&gt;contentType&lt;/code&gt; if
+     * not &lt;code&gt;null&lt;/code&gt;.
+     * @param contentType The content type
+     */
+    public void setContentType(String contentType) {
+<span class="nc bnc" id="L176" title="All 2 branches missed.">        if (contentType != null) {</span>
+<span class="nc" id="L177">            put(CONTENT_TYPE, contentType);</span>
+        }
+<span class="nc" id="L179">    }</span>
+
+    /**
+     * Returns the {@link #CONTENT_TYPE} property if not &lt;code&gt;null&lt;/code&gt; and
+     * a &lt;code&gt;String&lt;/code&gt; instance. Otherwise &lt;code&gt;null&lt;/code&gt; is
+     * returned.
+     * @return The content type
+     */
+    public @CheckForNull String getContentType() {
+<span class="nc" id="L188">        Object value = get(CONTENT_TYPE);</span>
+<span class="nc bnc" id="L189" title="All 2 branches missed.">        if (value instanceof String) {</span>
+<span class="nc" id="L190">            return (String) value;</span>
+        }
+
+<span class="nc" id="L193">        return null;</span>
+    }
+
+    /**
+     * Sets the {@link #CONTENT_LENGTH} property to &lt;code&gt;contentType&lt;/code&gt;
+     * if not &lt;code&gt;null&lt;/code&gt;.
+     * @param contentLength The content length
+     */
+    public void setContentLength(long contentLength) {
+<span class="nc bnc" id="L202" title="All 2 branches missed.">        if (contentLength &gt; 0) {</span>
+<span class="nc" id="L203">            put(CONTENT_LENGTH, contentLength);</span>
+        }
+<span class="nc" id="L205">    }</span>
+
+    /**
+     * Returns the {@link #CONTENT_LENGTH} property if not &lt;code&gt;null&lt;/code&gt;
+     * and a &lt;code&gt;long&lt;/code&gt;. Otherwise &lt;code&gt;-1&lt;/code&gt; is returned.
+     * @return The content length
+     */
+    public long getContentLength() {
+<span class="nc" id="L213">        Object value = get(CONTENT_LENGTH);</span>
+<span class="nc bnc" id="L214" title="All 2 branches missed.">        if (value instanceof Long) {</span>
+<span class="nc" id="L215">            return (Long) value;</span>
+        }
+
+<span class="nc" id="L218">        return -1;</span>
+    }
+
+    /**
+     * Sets the {@link #CREATION_TIME} property to &lt;code&gt;creationTime&lt;/code&gt;
+     * if not negative.
+     * @param creationTime The creation time
+     */
+    public void setCreationTime(long creationTime) {
+<span class="nc bnc" id="L227" title="All 2 branches missed.">        if (creationTime &gt;= 0) {</span>
+<span class="nc" id="L228">            put(CREATION_TIME, creationTime);</span>
+        }
+<span class="nc" id="L230">    }</span>
+
+    /**
+     * Returns the {@link #CREATION_TIME} property if not &lt;code&gt;null&lt;/code&gt;
+     * and a &lt;code&gt;long&lt;/code&gt;. Otherwise &lt;code&gt;-1&lt;/code&gt; is returned.
+     * @return The creation time
+     */
+    public long getCreationTime() {
+<span class="nc" id="L238">        Object value = get(CREATION_TIME);</span>
+<span class="nc bnc" id="L239" title="All 2 branches missed.">        if (value instanceof Long) {</span>
+<span class="nc" id="L240">            return (Long) value;</span>
+        }
+
+<span class="nc" id="L243">        return -1;</span>
+    }
+
+    /**
+     * Sets the {@link #MODIFICATION_TIME} property to
+     * &lt;code&gt;modificationTime&lt;/code&gt; if not negative.
+     * @param modificationTime The modification time
+     */
+    public void setModificationTime(long modificationTime) {
+<span class="fc bfc" id="L252" title="All 2 branches covered.">        if (modificationTime &gt;= 0) {</span>
+<span class="fc" id="L253">            put(MODIFICATION_TIME, modificationTime);</span>
+        }
+<span class="fc" id="L255">    }</span>
+
+    /**
+     * Returns the {@link #MODIFICATION_TIME} property if not &lt;code&gt;null&lt;/code&gt;
+     * and a &lt;code&gt;long&lt;/code&gt;. Otherwise &lt;code&gt;-1&lt;/code&gt; is returned.
+     * @return The modification time
+     */
+    public long getModificationTime() {
+<span class="fc" id="L263">        Object value = get(MODIFICATION_TIME);</span>
+<span class="fc bfc" id="L264" title="All 2 branches covered.">        if (value instanceof Long) {</span>
+<span class="fc" id="L265">            return (Long) value;</span>
+        }
+
+<span class="fc" id="L268">        return -1;</span>
+    }
+
+    /**
+     * Sets the {@link #RESOLUTION_PATH} property to &lt;code&gt;resolutionPath&lt;/code&gt;
+     * if not &lt;code&gt;null&lt;/code&gt;.
+     * @param resolutionPath The resolution path
+     */
+    public void setResolutionPath(String resolutionPath) {
+<span class="pc bpc" id="L277" title="1 of 2 branches missed.">        if (resolutionPath != null) {</span>
+<span class="fc" id="L278">            put(RESOLUTION_PATH, resolutionPath);</span>
+        }
+<span class="fc" id="L280">    }</span>
+
+    /**
+     * Returns the {@link #RESOLUTION_PATH} property if not &lt;code&gt;null&lt;/code&gt;
+     * and a &lt;code&gt;String&lt;/code&gt; instance. Otherwise &lt;code&gt;null&lt;/code&gt; is
+     * returned.
+     * @return The resolution path
+     */
+    public @CheckForNull String getResolutionPath() {
+<span class="nc" id="L289">        Object value = get(RESOLUTION_PATH);</span>
+<span class="nc bnc" id="L290" title="All 2 branches missed.">        if (value instanceof String) {</span>
+<span class="nc" id="L291">            return (String) value;</span>
+        }
+
+<span class="nc" id="L294">        return null;</span>
+    }
+
+    /**
+     * Sets the {@link #RESOLUTION_PATH_INFO} property to
+     * &lt;code&gt;resolutionPathInfo&lt;/code&gt; if not &lt;code&gt;null&lt;/code&gt;.
+     * @param resolutionPathInfo The resolution path info
+     */
+    public void setResolutionPathInfo(String resolutionPathInfo) {
+<span class="nc bnc" id="L303" title="All 2 branches missed.">        if (resolutionPathInfo != null) {</span>
+<span class="nc" id="L304">            put(RESOLUTION_PATH_INFO, resolutionPathInfo);</span>
+        }
+<span class="nc" id="L306">    }</span>
+
+    /**
+     * Returns the {@link #RESOLUTION_PATH_INFO} property if not
+     * &lt;code&gt;null&lt;/code&gt; and a &lt;code&gt;String&lt;/code&gt; instance. Otherwise
+     * &lt;code&gt;null&lt;/code&gt; is returned.
+     * @return The resolution path info
+     */
+    public @CheckForNull String getResolutionPathInfo() {
+<span class="nc" id="L315">        Object value = get(RESOLUTION_PATH_INFO);</span>
+<span class="nc bnc" id="L316" title="All 2 branches missed.">        if (value instanceof String) {</span>
+<span class="nc" id="L317">            return (String) value;</span>
+        }
+
+<span class="nc" id="L320">        return null;</span>
+    }
+
+    /**
+     * Sets the {@link #PARAMETER_MAP} property to
+     * &lt;code&gt;parameterMap&lt;/code&gt; if not &lt;code&gt;null&lt;/code&gt;.
+     * @param parameterMap The parameter map
+     */
+    public void setParameterMap(Map&lt;String, String&gt; parameterMap) {
+<span class="nc bnc" id="L329" title="All 2 branches missed.">        if (parameterMap != null) {</span>
+<span class="nc bnc" id="L330" title="All 2 branches missed.">            if (parameterMap.isEmpty()) {</span>
+<span class="nc" id="L331">                put(PARAMETER_MAP, Collections.emptyMap());</span>
+<span class="nc" id="L332">            } else {</span>
+<span class="nc" id="L333">                put(PARAMETER_MAP, new LinkedHashMap&lt;String, String&gt;(parameterMap));</span>
+            }
+        }
+<span class="nc" id="L336">    }</span>
+
+    /**
+     * Returns the {@link #PARAMETER_MAP} property if not
+     * &lt;code&gt;null&lt;/code&gt; and a &lt;code&gt;Map&lt;/code&gt; instance. Otherwise
+     * &lt;code&gt;null&lt;/code&gt; is returned.
+     * @return The parameter map
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public @CheckForNull Map&lt;String, String&gt; getParameterMap() {
+<span class="nc" id="L346">        Object value = get(PARAMETER_MAP);</span>
+<span class="nc bnc" id="L347" title="All 2 branches missed.">        if (value instanceof Map) {</span>
+<span class="nc" id="L348">            return (Map&lt;String, String&gt;) value;</span>
+        }
+
+<span class="nc" id="L351">        return null;</span>
+    }
+
+
+    /**
+     * Make this object read-only. All method calls trying to modify this object
+     * result in an exception!
+     * @since 2.3 (Sling API Bundle 2.4.0)
+     */
+    public void lock() {
+<span class="fc" id="L361">        this.isReadOnly = true;</span>
+<span class="fc" id="L362">    }</span>
+
+    /**
+     * Check if this object is read only and if so throw an unsupported operation exception.
+     */
+    private void checkReadOnly() {
+<span class="fc bfc" id="L368" title="All 2 branches covered.">        if ( this.isReadOnly ) {</span>
+<span class="fc" id="L369">            throw new UnsupportedOperationException(getClass().getSimpleName() + &quot; is locked&quot;);</span>
+        }
+<span class="fc" id="L371">    }</span>
+
+    @Override
+    public void clear() {
+<span class="nc" id="L375">        this.checkReadOnly();</span>
+<span class="nc" id="L376">        super.clear();</span>
+<span class="nc" id="L377">    }</span>
+
+    @Override
+    public Object put(@Nonnull final String key, final Object value) {
+<span class="fc" id="L381">        this.checkReadOnly();</span>
+<span class="fc" id="L382">        return super.put(key, value);</span>
+    }
+
+    @Override
+    public void putAll(@Nonnull final Map&lt;? extends String, ? extends Object&gt; m) {
+<span class="nc" id="L387">        this.checkReadOnly();</span>
+<span class="nc" id="L388">        super.putAll(m);</span>
+<span class="nc" id="L389">    }</span>
+
+    @Override
+    public Object remove(@Nonnull final Object key) {
+<span class="nc" id="L393">        this.checkReadOnly();</span>
+<span class="nc" id="L394">        return super.remove(key);</span>
+    }
+
+    protected void internalPut(@Nonnull String key, Object value) {
+<span class="nc" id="L398">        super.put(key, value);</span>
+<span class="nc" id="L399">    }</span>
+
+    @Override
+    public Object clone() {
+<span class="fc" id="L403">        ResourceMetadata result = (ResourceMetadata) super.clone();</span>
+<span class="fc" id="L404">        result.lockedEntrySet = null;</span>
+<span class="fc" id="L405">        result.lockedKeySet = null;</span>
+<span class="fc" id="L406">        result.lockedValues = null;</span>
+<span class="fc" id="L407">        return result;</span>
+    }
+
+	// volatile for correct double-checked locking in getLockedData()
+    private transient volatile Set&lt;Map.Entry&lt;String, Object&gt;&gt; lockedEntrySet;
+    private transient Set&lt;String&gt; lockedKeySet;
+    private transient Collection&lt;Object&gt; lockedValues;
+
+    private void getLockedData() {
+<span class="pc bpc" id="L416" title="1 of 4 branches missed.">        if(isReadOnly &amp;&amp; lockedEntrySet == null) {</span>
+<span class="pc" id="L417">            synchronized (this) {</span>
+<span class="pc bpc" id="L418" title="2 of 4 branches missed.">                if(isReadOnly &amp;&amp; lockedEntrySet == null) {</span>
+<span class="fc" id="L419">                    lockedEntrySet = Collections.unmodifiableSet(super.entrySet());</span>
+<span class="fc" id="L420">                    lockedKeySet = Collections.unmodifiableSet(super.keySet());</span>
+<span class="fc" id="L421">                    lockedValues = Collections.unmodifiableCollection(super.values());</span>
+                }
+            }
+        }
+<span class="fc" id="L425">    }</span>
+
+    @Override
+    public @Nonnull Set&lt;Map.Entry&lt;String, Object&gt;&gt; entrySet() {
+<span class="fc" id="L429">        getLockedData();</span>
+<span class="pc bpc" id="L430" title="1 of 2 branches missed.">        return lockedEntrySet != null ? lockedEntrySet : super.entrySet();</span>
+    }
+
+    @Override
+    public @Nonnull Set&lt;String&gt; keySet() {
+<span class="fc" id="L435">        getLockedData();</span>
+<span class="pc bpc" id="L436" title="1 of 2 branches missed.">        return lockedKeySet != null ? lockedKeySet : super.keySet();</span>
+    }
+
+    @Override
+    public @Nonnull Collection&lt;Object&gt; values() {
+<span class="fc" id="L441">        getLockedData();</span>
+<span class="pc bpc" id="L442" title="1 of 2 branches missed.">        return lockedValues != null ? lockedValues : super.values();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

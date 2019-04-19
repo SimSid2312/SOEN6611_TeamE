@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SlingRequestPaths.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Sling API</a> &gt; <a href="index.source.html" class="el_package">org.apache.sling.api.wrappers</a> &gt; <span class="el_source">SlingRequestPaths.java</span></div><h1>SlingRequestPaths.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.apache.sling.api.wrappers;
+
+import javax.servlet.http.HttpServletRequest;
+
+/**
+ * This class is not a &quot;wrapper&quot; per se, but computes the correct path info,
+ * request URI, etc. for included requests. When including a request via
+ * {@link javax.servlet.RequestDispatcher}, the Servlet API specifies that
+ * target paths of the included request are available as request attributes.
+ * {@code Request.getPathInfo()}, for example will return the value for the
+ * including request, *not* for the included one.
+ * &lt;p&gt;
+ * This class is not intended to be extended or instantiated because it just
+ * provides constants and static utility methods not intended to be overwritten.
+ */
+<span class="nc" id="L34">public class SlingRequestPaths {</span>
+
+    /**
+     * Attribute name used by the RequestDispatcher to indicate the context path
+     * of the included request, as a String.
+     */
+    public static final String INCLUDE_CONTEXT_PATH = &quot;javax.servlet.include.context_path&quot;;
+
+    /**
+     * Attribute name used by the RequestDispatcher to indicate the path info of
+     * the included request, as a String.
+     */
+    public static final String INCLUDE_PATH_INFO = &quot;javax.servlet.include.path_info&quot;;
+
+    /**
+     * Attribute name used by the RequestDispatcher to indicate the query string
+     * of the included request, as a String.
+     */
+    public static final String INCLUDE_QUERY_STRING = &quot;javax.servlet.include.query_string&quot;;
+
+    /**
+     * Attribute name used by the RequestDispatcher to indicate the request URI
+     * of the included request, as a String.
+     */
+    public static final String INCLUDE_REQUEST_URI = &quot;javax.servlet.include.request_uri&quot;;
+
+    /**
+     * Attribute name used by the RequestDispatcher to indicate the servlet path
+     * of the included request, as a String.
+     */
+    public static final String INCLUDE_SERVLET_PATH = &quot;javax.servlet.include.servlet_path&quot;;
+
+    /**
+     * Return the context path for r, using the appropriate request attribute if
+     * the request is an included one.
+     * @param r The request
+     * @return The context path.
+     */
+    public static String getContextPath(HttpServletRequest r) {
+<span class="nc" id="L73">        final String attr = (String) r.getAttribute(INCLUDE_CONTEXT_PATH);</span>
+<span class="nc bnc" id="L74" title="All 2 branches missed.">        return attr != null ? attr : r.getContextPath();</span>
+    }
+
+    /**
+     * Return the context path for r, using the appropriate request attribute if
+     * the request is an included one.
+     * @param r The request
+     * @return The path info.
+     */
+    public static String getPathInfo(HttpServletRequest r) {
+<span class="nc" id="L84">        final String attr = (String) r.getAttribute(INCLUDE_PATH_INFO);</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">        return attr != null ? attr : r.getPathInfo();</span>
+    }
+
+    /**
+     * Return the query string for r, using the appropriate request attribute if
+     * the request is an included one.
+     * @param r The request
+     * @return The query string.
+     */
+    public static String getQueryString(HttpServletRequest r) {
+<span class="nc" id="L95">        final String attr = (String) r.getAttribute(INCLUDE_QUERY_STRING);</span>
+<span class="nc bnc" id="L96" title="All 2 branches missed.">        return attr != null ? attr : r.getQueryString();</span>
+    }
+
+    /**
+     * Return the request URI for r, using the appropriate request attribute if
+     * the request is an included one.
+     * @param r The request
+     * @return The request uri.
+     */
+    public static String getRequestURI(HttpServletRequest r) {
+<span class="nc" id="L106">        final String attr = (String) r.getAttribute(INCLUDE_REQUEST_URI);</span>
+<span class="nc bnc" id="L107" title="All 2 branches missed.">        return attr != null ? attr : r.getRequestURI();</span>
+    }
+
+    /**
+     * Return the servlet path for r, using the appropriate request attribute if
+     * the request is an included one.
+     * @param r The request
+     * @return The servlet path.
+     */
+    public static String getServletPath(HttpServletRequest r) {
+<span class="nc" id="L117">        final String attr = (String) r.getAttribute(INCLUDE_SERVLET_PATH);</span>
+<span class="nc bnc" id="L118" title="All 2 branches missed.">        return attr != null ? attr : r.getServletPath();</span>
+    }
+
+    /**
+     * True if r is an included request, in which case it has the
+     * INCLUDE_REQUEST_URI attribute
+     * @param r The request
+     * @return {@code true} if this is an include.
+     */
+    public static boolean isIncluded(HttpServletRequest r) {
+<span class="nc bnc" id="L128" title="All 2 branches missed.">        return r.getAttribute(INCLUDE_REQUEST_URI) != null;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

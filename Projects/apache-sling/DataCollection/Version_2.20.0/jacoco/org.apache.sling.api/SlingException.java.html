@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SlingException.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Sling API</a> &gt; <a href="index.source.html" class="el_package">org.apache.sling.api</a> &gt; <span class="el_source">SlingException.java</span></div><h1>SlingException.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.apache.sling.api;
+
+/**
+ * The &lt;code&gt;SlingException&lt;/code&gt; is the base exception used throughout the
+ * Sling API. This exception should only be thrown if there is no more specific
+ * exception defined in the Sling API for the cause and if a cause can be
+ * supplied. Otherwise the more specific exception must be used.
+ * &lt;p&gt;
+ * The &lt;code&gt;SlingException&lt;/code&gt; is a &lt;code&gt;RuntimeException&lt;/code&gt;
+ * because this exception is not intended to be caught by client code. Rather
+ * this exception (and extensions thereof) should be passed through up to the
+ * actual Sling error and exception handling.
+ */
+public class SlingException extends RuntimeException {
+
+    /**
+     * Serial Version ID for pre Java2 RMI
+     */
+    private static final long serialVersionUID = -1243027389278210618L;
+
+    /**
+     * Constructs a new Sling exception.
+     */
+    protected SlingException() {
+<span class="fc" id="L43">        super();</span>
+<span class="fc" id="L44">    }</span>
+
+    /**
+     * Constructs a new Sling exception with the given text. The Sling framework
+     * may use the text to write it to a log.
+     *
+     * @param text the exception text
+     */
+    protected SlingException(String text) {
+<span class="fc" id="L53">        super(text);</span>
+<span class="fc" id="L54">    }</span>
+
+    /**
+     * Constructs a new Sling exception when the Servlet needs to do the
+     * following:
+     * &lt;ul&gt;
+     * &lt;li&gt;throw an exception
+     * &lt;li&gt;include the &quot;root cause&quot; exception
+     * &lt;li&gt;include a description message
+     * &lt;/ul&gt;
+     *
+     * @param text the exception text
+     * @param cause the root cause
+     */
+    public SlingException(String text, Throwable cause) {
+<span class="fc" id="L69">        super(text, cause);</span>
+<span class="fc" id="L70">    }</span>
+
+    /**
+     * Constructs a new Sling exception when the Servlet needs to throw an
+     * exception. The exception's message is based on the localized message of
+     * the underlying exception.
+     *
+     * @param cause the root cause
+     */
+    protected SlingException(Throwable cause) {
+<span class="fc" id="L80">        super(cause);</span>
+<span class="fc" id="L81">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

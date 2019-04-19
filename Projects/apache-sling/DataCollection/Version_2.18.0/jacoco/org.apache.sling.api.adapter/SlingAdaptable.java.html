@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SlingAdaptable.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Sling API</a> &gt; <a href="index.source.html" class="el_package">org.apache.sling.api.adapter</a> &gt; <span class="el_source">SlingAdaptable.java</span></div><h1>SlingAdaptable.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.apache.sling.api.adapter;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * The &lt;code&gt;SlingAdaptable&lt;/code&gt; class is an (abstract) default implementation
+ * of the &lt;code&gt;Adaptable&lt;/code&gt; interface. It just uses the default
+ * {@link AdapterManager} implemented to adapt itself to the requested type.
+ * &lt;p&gt;
+ * Extensions of this class may overwrite the {@link #adaptTo(Class)} method
+ * using their own knowledge of adapters and should call this base class
+ * implementation to fall back for other types.
+ *
+ * @since 2.2 (Sling API Bundle 2.2.0)
+ */
+<span class="fc" id="L35">public abstract class SlingAdaptable implements Adaptable {</span>
+
+    /** The adapter manager used for adapting the synthetic resource. */
+    private static volatile AdapterManager ADAPTER_MANAGER;
+
+    /**
+     * Sets the global {@link AdapterManager} to be used by this class.
+     * &lt;p&gt;
+     * This method is intended to only be called by the {@link AdapterManager}
+     * wanting to register itself for use. Currently only a single adapter
+     * manager is supported by this class.
+     *
+     * @param adapterMgr The {@link AdapterManager} to be globally used.
+     */
+    public static void setAdapterManager(final AdapterManager adapterMgr) {
+<span class="nc" id="L50">        ADAPTER_MANAGER = adapterMgr;</span>
+<span class="nc" id="L51">    }</span>
+
+    /**
+     * Unsets the global {@link AdapterManager}.
+     * &lt;p&gt;
+     * This method is intended to only be called by the {@link AdapterManager}
+     * wanting to unregister itself. Currently only a single adapter manager is
+     * supported by this class.
+     *
+     * @param adapterMgr The {@link AdapterManager} to be unset. If this is not
+     *            the same as currently registered this method has no effect.
+     */
+    public static void unsetAdapterManager(final AdapterManager adapterMgr) {
+<span class="nc bnc" id="L64" title="All 2 branches missed.">        if (ADAPTER_MANAGER == adapterMgr) {</span>
+<span class="nc" id="L65">            ADAPTER_MANAGER = null;</span>
+        }
+<span class="nc" id="L67">    }</span>
+
+    /**
+     * Cached adapters per type.
+     * &lt;p&gt;
+     * This map is created on demand by the {@link #adaptTo(Class)} method as a
+     * regular &lt;code&gt;HashMap&lt;/code&gt;. This means, that extensions of this class
+     * are intended to be short-lived to not hold on to objects and classes for
+     * too long.
+     */
+    private Map&lt;Class&lt;?&gt;, Object&gt; adaptersCache;
+
+    /**
+     * Calls into the registered {@link AdapterManager} to adapt this object to
+     * the desired &lt;code&gt;type&lt;/code&gt;.
+     * &lt;p&gt;
+     * This method implements a cache of adapters to improve performance. That
+     * is repeated calls to this method with the same class will result in the
+     * same object to be returned.
+     *
+     * @param &lt;AdapterType&gt; The generic type to which this resource is adapted
+     *            to
+     * @param type The Class object of the target type, such as
+     *            &lt;code&gt;javax.jcr.Node.class&lt;/code&gt; or
+     *            &lt;code&gt;java.io.File.class&lt;/code&gt;
+     * @return The adapter target or &lt;code&gt;null&lt;/code&gt; if the resource cannot
+     *         adapt to the requested type
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public &lt;AdapterType&gt; AdapterType adaptTo(Class&lt;AdapterType&gt; type) {
+<span class="nc" id="L97">        AdapterType result = null;</span>
+<span class="nc" id="L98">        synchronized ( this ) {</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">            if ( adaptersCache != null ) {</span>
+<span class="nc" id="L100">                result = (AdapterType) adaptersCache.get(type);</span>
+            }
+<span class="nc bnc" id="L102" title="All 2 branches missed.">            if ( result == null ) {</span>
+<span class="nc" id="L103">                final AdapterManager mgr = ADAPTER_MANAGER;</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">                result = (mgr == null ? null : mgr.getAdapter(this, type));</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">                if ( result != null ) {</span>
+<span class="nc bnc" id="L106" title="All 2 branches missed.">                    if ( adaptersCache == null ) {</span>
+<span class="nc" id="L107">                        adaptersCache = new HashMap&lt;Class&lt;?&gt;, Object&gt;();</span>
+                    }
+<span class="nc" id="L109">                    adaptersCache.put(type, result);</span>
+                }
+            }
+        }
+<span class="nc" id="L113">        return result;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

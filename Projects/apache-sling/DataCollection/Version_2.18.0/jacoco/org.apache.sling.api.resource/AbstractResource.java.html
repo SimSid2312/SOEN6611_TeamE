@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AbstractResource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Sling API</a> &gt; <a href="index.source.html" class="el_package">org.apache.sling.api.resource</a> &gt; <span class="el_source">AbstractResource.java</span></div><h1>AbstractResource.java</h1><pre class="source lang-java linenums"><span class="nc" id="L1">/*</span>
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.apache.sling.api.resource;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
+import org.apache.sling.api.adapter.SlingAdaptable;
+import org.apache.sling.api.wrappers.DeepReadValueMapDecorator;
+import org.apache.sling.api.wrappers.ValueMapDecorator;
+
+/**
+ * The &lt;code&gt;AbstractResource&lt;/code&gt; is an abstract implementation of the
+ * {@link Resource} interface.
+ * &lt;p&gt;
+ * Implementations of the {@link Resource} interface are strongly encouraged to
+ * either extend from this class or the {@link ResourceWrapper} class instead of
+ * implementing the {@link Resource} from the ground up. This will ensure to
+ * always be able to support new methods that might be introduced in the
+ * {@link Resource} interface in the future.
+ *
+ * @since 2.1.0 (Sling API Bundle 2.1.0)
+ */
+<span class="fc" id="L41">public abstract class AbstractResource</span>
+    extends SlingAdaptable
+    implements Resource {
+
+    /**
+     * Returns the name of this resource.
+     * &lt;p&gt;
+     * This method is implemented as a pure string operation by calling the
+     * {@link ResourceUtil#getName(String)} method with the path of this
+     * resource.
+     */
+    public String getName() {
+<span class="nc" id="L53">        return ResourceUtil.getName(getPath());</span>
+    }
+
+    /**
+     * Returns the parent resource of this resource.
+     * &lt;p&gt;
+     * This method is implemented calling the {@link ResourceResolver#getParent(Resource)} method.
+     */
+    public Resource getParent() {
+<span class="fc" id="L62">        return getResourceResolver().getParent(this);</span>
+    }
+
+    /**
+     * Returns the indicated child of this resource.
+     * &lt;p&gt;
+     * This method is implemented calling the
+     * {@link ResourceResolver#getResource(Resource, String)} method. As such
+     * the &lt;code&gt;relPath&lt;/code&gt; argument may even be an absolute path or a path
+     * containing relative path segments &lt;code&gt;.&lt;/code&gt; (current resource) and
+     * &lt;code&gt;..&lt;/code&gt; (parent resource).
+     * &lt;p&gt;
+     * Implementations should not generally overwrite this method without
+     * calling this base class implementation.
+     */
+    public Resource getChild(String relPath) {
+<span class="nc" id="L78">        return getResourceResolver().getResource(this, relPath);</span>
+    }
+
+    /**
+     * Returns an iterator on the direct child resources.
+     * &lt;p&gt;
+     * This method is implemented calling the
+     * {@link ResourceResolver#listChildren(Resource)} method.
+     * &lt;p&gt;
+     * Implementations should not generally overwrite this method without
+     * calling this base class implementation.
+     */
+    public Iterator&lt;Resource&gt; listChildren() {
+<span class="nc" id="L91">        return getResourceResolver().listChildren(this);</span>
+    }
+
+    /**
+     * @see org.apache.sling.api.resource.Resource#getChildren()
+     */
+    public Iterable&lt;Resource&gt; getChildren() {
+<span class="nc" id="L98">        return new Iterable&lt;Resource&gt;() {</span>
+
+            public Iterator&lt;Resource&gt; iterator() {
+<span class="nc" id="L101">                return listChildren();</span>
+            }
+        };
+    }
+
+    /**
+     * Checks to see if there are direct children of this resource by invoking
+     * {@link ResourceResolver#hasChildren(Resource)}.
+     */
+    public boolean hasChildren() {
+<span class="nc" id="L111">        return getResourceResolver().hasChildren(this);</span>
+    }
+
+    /**
+     * Returns &lt;code&gt;true&lt;/code&gt; if this resource is of the given resource type
+     * or if any of the super resource types equals the given resource type.
+     * &lt;p&gt;
+     * This method delegates to {@link ResourceResolver#isResourceType(Resource, String)}
+     */
+    public boolean isResourceType(final String resourceType) {
+<span class="nc" id="L121">        return this.getResourceResolver().isResourceType(this, resourceType);</span>
+    }
+
+    /**
+     * This method calls {@link Resource#adaptTo(Class)}
+     * with the {@link ValueMap} class as an argument. If the
+     * &lt;code&gt;adaptTo&lt;/code&gt; method returns a map, this map is returned. If the
+     * resource is not adaptable to a value map, next an adaption to {@link Map}
+     * is tried and if this is successful the map is wrapped as a value map. If
+     * the adaptions are not successful an empty value map is returned.
+     * @see org.apache.sling.api.resource.Resource#getValueMap()
+     */
+    @SuppressWarnings({ &quot;unchecked&quot;, &quot;rawtypes&quot; })
+    public ValueMap getValueMap() {
+        // adapt to ValueMap if resource is not null
+<span class="fc" id="L136">        ValueMap valueMap = this.adaptTo(ValueMap.class);</span>
+
+        // if no resource or no ValueMap adapter, check Map
+<span class="fc bfc" id="L139" title="All 2 branches covered.">        if (valueMap == null) {</span>
+
+<span class="fc" id="L141">            Map map = this.adaptTo(Map.class);</span>
+
+            // if not even adapting to map, assume an empty map
+<span class="pc bpc" id="L144" title="1 of 2 branches missed.">            if (map == null) {</span>
+<span class="nc" id="L145">                map = new HashMap&lt;String, Object&gt;();</span>
+            }
+
+            // .. and decorate the plain map
+<span class="fc" id="L149">            valueMap = new DeepReadValueMapDecorator(this, new ValueMapDecorator(map));</span>
+        }
+
+<span class="fc" id="L152">        return valueMap;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

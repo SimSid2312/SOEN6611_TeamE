@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ResourceNotFoundException.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Sling API</a> &gt; <a href="index.source.html" class="el_package">org.apache.sling.api.resource</a> &gt; <span class="el_source">ResourceNotFoundException.java</span></div><h1>ResourceNotFoundException.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.sling.api.resource;
+
+import org.apache.sling.api.SlingException;
+
+/**
+ * An Exception that causes Sling to return a 404 (NOT FOUND) status code. This
+ * exception should not be caught but rather let be handed up the call stack up
+ * to the Sling error and exception handling.
+ * &lt;p&gt;
+ * The advantage of using this exception over the
+ * &lt;code&gt;HttpServletResponse.sendError&lt;/code&gt; methods is that the request can
+ * be aborted immediately all the way up in the call stack and that in addition
+ * to the status code and an optional message a &lt;code&gt;Throwable&lt;/code&gt; may be
+ * supplied providing more information.
+ */
+public class ResourceNotFoundException extends SlingException {
+
+    private static final long serialVersionUID = -6684709279554347984L;
+
+    private final String resource;
+
+    public ResourceNotFoundException(String message) {
+<span class="nc" id="L39">        this(null, message);</span>
+<span class="nc" id="L40">    }</span>
+
+    public ResourceNotFoundException(String resource, String message) {
+<span class="nc" id="L43">        super(&quot;Resource at '&quot;+ resource + &quot;' not found: &quot; + message);</span>
+<span class="nc" id="L44">        this.resource = resource;</span>
+<span class="nc" id="L45">    }</span>
+
+    public ResourceNotFoundException(String message, Throwable cause) {
+<span class="nc" id="L48">        this(null, message, cause);</span>
+<span class="nc" id="L49">    }</span>
+
+    public ResourceNotFoundException(String resource, String message,
+            Throwable cause) {
+<span class="nc" id="L53">        super(message, cause);</span>
+<span class="nc" id="L54">        this.resource = resource;</span>
+<span class="nc" id="L55">    }</span>
+
+    public String getResource() {
+<span class="nc" id="L58">        return resource;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

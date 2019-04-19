@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ValueMap.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Sling API</a> &gt; <a href="index.source.html" class="el_package">org.apache.sling.api.resource</a> &gt; <span class="el_source">ValueMap.java</span></div><h1>ValueMap.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.apache.sling.api.resource;
+
+import java.util.Collections;
+import java.util.Map;
+
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+
+import org.apache.sling.api.wrappers.ValueMapDecorator;
+
+import org.osgi.annotation.versioning.ConsumerType;
+
+/**
+ * The &lt;code&gt;ValueMap&lt;/code&gt; is an easy way to access properties of a resource.
+ * With resources you can use {@link Resource#getValueMap()} to obtain the
+ * value map of a resource. The various getter methods can be used to get the
+ * properties of the resource.
+ * &lt;p&gt;
+ * In addition a value map returned by a resource supports getting of deep
+ * values, like get(&quot;content/title&quot;) which is equivalent to call
+ * getChild(&quot;content&quot;) on the resource, get the value map of that resource
+ * and call get(&quot;title&quot;) - but without requiring to do all the checks.
+ * Only the following methods support deep reads: {@link #get(Object)},
+ * {@link #get(String, Class)}, {@link #get(String, Object)} and
+ * {@link #containsKey(Object)}.
+ *
+ * A &lt;code&gt;ValueMap&lt;/code&gt; should be immutable.
+ */
+@ConsumerType
+public interface ValueMap extends Map&lt;String, Object&gt; {
+
+    /**
+     * Empty immutable value map.
+     */
+<span class="fc" id="L53">    final ValueMap EMPTY = new ValueMapDecorator(</span>
+<span class="fc" id="L54">        Collections.&lt;String, Object&gt; emptyMap());</span>
+
+    /**
+     * Get a named property and convert it into the given type.
+     * This method does not support conversion into a primitive type or an
+     * array of a primitive type. It should return &lt;code&gt;null&lt;/code&gt; in this
+     * case.
+     *
+     * @param name The name of the property
+     * @param type The class of the type
+     * @param &lt;T&gt; The class of the type
+     * @return Return named value converted to type T or &lt;code&gt;null&lt;/code&gt; if
+     *         non existing or can't be converted.
+     */
+    @CheckForNull &lt;T&gt; T get(@Nonnull String name, @Nonnull Class&lt;T&gt; type);
+
+    /**
+     * Get a named property and convert it into the given type.
+     * This method does not support conversion into a primitive type or an
+     * array of a primitive type. It should return the default value in this
+     * case.
+     *
+     * @param name The name of the property
+     * @param &lt;T&gt; The expected type
+     * @param defaultValue The default value to use if the named property does
+     *            not exist or cannot be converted to the requested type. The
+     *            default value is also used to define the type to convert the
+     *            value to. If this is &lt;code&gt;null&lt;/code&gt; any existing property is
+     *            not converted.
+     * @return Return named value converted to type T or the default value if
+     *         non existing or can't be converted.
+     */
+    &lt;T&gt; T get(@Nonnull String name, T defaultValue);
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

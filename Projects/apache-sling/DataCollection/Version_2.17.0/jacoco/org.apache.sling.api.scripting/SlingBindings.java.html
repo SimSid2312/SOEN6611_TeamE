@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SlingBindings.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Sling API</a> &gt; <a href="index.source.html" class="el_package">org.apache.sling.api.scripting</a> &gt; <span class="el_source">SlingBindings.java</span></div><h1>SlingBindings.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.apache.sling.api.scripting;
+
+import java.io.PrintWriter;
+import java.io.Reader;
+import java.util.HashMap;
+
+import javax.annotation.CheckForNull;
+
+import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.slf4j.Logger;
+
+/**
+ * The &lt;code&gt;SlingBindings&lt;/code&gt; class is used to prepare global variables
+ * for script execution. The constants in this class define names of variables
+ * which &lt;em&gt;MUST&lt;/em&gt; or &lt;em&gt;MAY&lt;/em&gt; be provided for the script execution.
+ * Other variables may be define as callers see fit.
+ */
+<span class="nc" id="L39">public class SlingBindings extends HashMap&lt;String, Object&gt; {</span>
+
+    private static final long serialVersionUID = 209505693646323450L;
+
+    /**
+     * The name of the global scripting variable providing the
+     * {@link org.apache.sling.api.SlingHttpServletRequest} object (value is
+     * &quot;request&quot;). The value of the scripting variable is the same as that
+     * returned by the
+     * {@link org.apache.sling.api.scripting.SlingScriptHelper#getRequest()}
+     * method.
+     * &lt;p&gt;
+     * This bound variable is required in the bindings given the script.
+     */
+    public static final String REQUEST = &quot;request&quot;;
+
+    /**
+     * The name of the global scripting variable providing the
+     * {@link org.apache.sling.api.SlingHttpServletResponse} object (value is
+     * &quot;response&quot;). The value of the scripting variable is the same as that
+     * returned by the
+     * {@link org.apache.sling.api.scripting.SlingScriptHelper#getResponse()}
+     * method.
+     * &lt;p&gt;
+     * This bound variable is required in the bindings given the script.
+     */
+    public static final String RESPONSE = &quot;response&quot;;
+
+    /**
+     * The name of the global scripting variable providing the
+     * {@link java.io.Reader} object (value is &quot;reader&quot;).
+     * &lt;p&gt;
+     * This bound variable is required in the bindings given the script.
+     */
+    public static final String READER = &quot;reader&quot;;
+
+    /**
+     * The name of the global scripting variable providing the
+     * {@link org.apache.sling.api.scripting.SlingScriptHelper} for the request
+     * (value is &quot;sling&quot;).
+     * &lt;p&gt;
+     * This bound variable is optional. If existing, the script helper instance
+     * must be bound to the same request and response objects as bound with the
+     * {@link #REQUEST} and {@link #RESPONSE} variables. If this variable is not
+     * bound, the script implementation will create it before actually
+     * evaluating the script.
+     */
+    public static final String SLING = &quot;sling&quot;;
+
+    /**
+     * The name of the global scripting variable providing the
+     * {@link org.apache.sling.api.resource.Resource} object (value is
+     * &quot;resource&quot;). The value of the scripting variable is the same as that
+     * returned by the &lt;code&gt;SlingScriptHelper.getRequest().getResource()&lt;/code&gt;
+     * method.
+     * &lt;p&gt;
+     * This bound variable is optional. If existing, the resource must be bound
+     * to the same resource as returned by the
+     * &lt;code&gt;SlingHttpServletRequest.getResource()&lt;/code&gt; method. If this
+     * variable is not bound, the script implementation will bind it before
+     * actually evaluating the script.
+     */
+    public static final String RESOURCE = &quot;resource&quot;;
+
+    /**
+     * &lt;p&gt;
+     * The name of the global scripting variable providing the
+     * {@link org.apache.sling.api.resource.ResourceResolver} object (value is
+     * &quot;resolver&quot;). The value of the scripting variable is the same as that
+     * returned by the {@code SlingScriptHelper.getRequest().getResourceResolver()}
+     * method.
+     * &lt;/p&gt;
+     * &lt;p&gt;
+     * This bound variable is optional. If existing, the resource resolver must be
+     * bound to the same resolver as returned by the {@code
+     * SlingHttpServletRequest.getResource().getResourceResolver} method. If this
+     * variable is not bound, the script implementation will bind it before actually
+     * evaluating the script.
+     * &lt;/p&gt;
+     */
+    public static final String RESOLVER = &quot;resolver&quot;;
+
+    /**
+     * The name of the global scripting variable providing the
+     * &lt;code&gt;java.io.PrintWriter&lt;/code&gt; object to return the response content
+     * (value is &quot;out&quot;). The value of the scripting variable is the same as that
+     * returned by the &lt;code&gt;SlingScriptHelper.getResponse().getWriter()&lt;/code&gt;
+     * method.
+     * &lt;p&gt;
+     * Note, that it may be advisable to implement a lazy acquiring writer for
+     * the &lt;em&gt;out&lt;/em&gt; variable to enable the script to write binary data to
+     * the response output stream instead of the writer.
+     * &lt;p&gt;
+     * This bound variable is optional. If existing, the resource must be bound
+     * to the same writer as returned by the
+     * &lt;code&gt;SlingHttpServletResponse.getWriter()&lt;/code&gt; method of the
+     * response object bound to the {@link #RESPONSE} variable. If this variable
+     * is not bound, the script implementation will bind it before actually
+     * evaluating the script.
+     */
+    public static final String OUT = &quot;out&quot;;
+
+    /**
+     * The name of the global scripting variable indicating whether the output
+     * used by the script should be flushed after the script evaluation ended
+     * normally (value is &quot;flush&quot;).
+     * &lt;p&gt;
+     * The type of this variable is &lt;code&gt;java.lang.Boolean&lt;/code&gt; indicating
+     * whether to flush the output (value is &lt;code&gt;TRUE&lt;/code&gt;) or not (value
+     * is &lt;code&gt;FALSE&lt;/code&gt;). If the variable has a non-&lt;code&gt;null&lt;/code&gt;
+     * value of another type, the output is not flush as if the value would be
+     * &lt;code&gt;FALSE&lt;/code&gt;.
+     */
+    public static final String FLUSH = &quot;flush&quot;;
+
+    /**
+     * The name of the global scripting variable providing a logger which may be
+     * used for logging purposes (value is &quot;log&quot;). The logger provides the API
+     * defined by the SLF4J &lt;code&gt;org.slf4j.Logger&lt;/code&gt; interface.
+     * &lt;p&gt;
+     * This bound variable is optional. If this variable is not bound, the
+     * script implementation will bind it before actually evaluating the script.
+     */
+    public static final String LOG = &quot;log&quot;;
+
+    /**
+     * Helper method to get an object with a given type from this map.
+     * @param key The key for the object
+     * @param &lt;ObjectType&gt; The object type
+     * @param type The object type
+     * @return The searched object if it has the specified type, otherwise &lt;code&gt;null&lt;/code&gt; is returned.
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    protected &lt;ObjectType&gt; ObjectType get(final String key, final Class&lt;ObjectType&gt; type) {
+<span class="nc" id="L173">        final Object o = this.get(key);</span>
+<span class="nc bnc" id="L174" title="All 2 branches missed.">        if ( type.isInstance(o) ) {</span>
+<span class="nc" id="L175">            return (ObjectType)o;</span>
+        }
+<span class="nc" id="L177">        return null;</span>
+    }
+
+    /**
+     * Helper method which invokes {@link #put(Object, Object)} only if the value is not null.
+     * @param key The key of the object
+     * @param value The value
+     */
+    protected void safePut(final String key, final Object value) {
+<span class="nc bnc" id="L186" title="All 2 branches missed.">        if ( value != null ) {</span>
+<span class="nc" id="L187">            this.put(key, value);</span>
+        }
+<span class="nc" id="L189">    }</span>
+
+    /**
+     * Sets the {@link #FLUSH} property to &lt;code&gt;flush&lt;/code&gt;.
+     * @param flush Whether to flush or not
+     */
+    public void setFlush(boolean flush) {
+<span class="nc" id="L196">        put(FLUSH, flush);</span>
+<span class="nc" id="L197">    }</span>
+
+    /**
+     * Returns the {@link #FLUSH} property if not &lt;code&gt;null&lt;/code&gt; and a
+     * &lt;code&gt;boolean&lt;/code&gt;. Otherwise &lt;code&gt;false&lt;/code&gt; is returned.
+     * @return {@code true} if flush
+     */
+    public boolean getFlush() {
+<span class="nc" id="L205">        Boolean value = this.get(FLUSH, Boolean.class);</span>
+<span class="nc bnc" id="L206" title="All 2 branches missed.">        if (value != null ) {</span>
+<span class="nc" id="L207">            return value;</span>
+        }
+
+<span class="nc" id="L210">        return false;</span>
+    }
+
+    /**
+     * Sets the {@link #LOG} property to &lt;code&gt;log&lt;/code&gt; if not
+     * &lt;code&gt;null&lt;/code&gt;.
+     * @param log The logger
+     */
+    public void setLog(Logger log) {
+<span class="nc" id="L219">        this.safePut(LOG, log);</span>
+<span class="nc" id="L220">    }</span>
+
+    /**
+     * Returns the {@link #LOG} property if not &lt;code&gt;null&lt;/code&gt; and a
+     * &lt;code&gt;org.slf4j.Logger&lt;/code&gt; instance. Otherwise &lt;code&gt;null&lt;/code&gt;
+     * is returned.
+     * @return The logger or {@code null}
+     */
+    public @CheckForNull Logger getLog() {
+<span class="nc" id="L229">        return this.get(LOG, Logger.class);</span>
+    }
+
+    /**
+     * Sets the {@link #OUT} property to &lt;code&gt;out&lt;/code&gt; if not
+     * &lt;code&gt;null&lt;/code&gt;.
+     * @param out The print writer
+     */
+    public void setOut(PrintWriter out) {
+<span class="nc" id="L238">        this.safePut(OUT, out);</span>
+<span class="nc" id="L239">    }</span>
+
+    /**
+     * Returns the {@link #OUT} property if not &lt;code&gt;null&lt;/code&gt; and a
+     * &lt;code&gt;PrintWriter&lt;/code&gt; instance. Otherwise &lt;code&gt;null&lt;/code&gt; is
+     * returned.
+     * @return The print writer or {@code null}
+     */
+    public @CheckForNull PrintWriter getOut() {
+<span class="nc" id="L248">        return this.get(OUT, PrintWriter.class);</span>
+    }
+
+    /**
+     * Sets the {@link #REQUEST} property to &lt;code&gt;request&lt;/code&gt; if not
+     * &lt;code&gt;null&lt;/code&gt;.
+     * @param request The request object.
+     */
+    public void setRequest(SlingHttpServletRequest request) {
+<span class="nc" id="L257">        this.safePut(REQUEST, request);</span>
+<span class="nc" id="L258">    }</span>
+
+    /**
+     * Returns the {@link #REQUEST} property if not &lt;code&gt;null&lt;/code&gt; and a
+     * &lt;code&gt;SlingHttpServletRequest&lt;/code&gt; instance. Otherwise
+     * &lt;code&gt;null&lt;/code&gt; is returned.
+     * @return The request object or {@code null}
+     */
+    public @CheckForNull SlingHttpServletRequest getRequest() {
+<span class="nc" id="L267">        return this.get(REQUEST, SlingHttpServletRequest.class);</span>
+    }
+
+    /**
+     * Sets the {@link #READER} property to &lt;code&gt;reader&lt;/code&gt; if not
+     * &lt;code&gt;null&lt;/code&gt;.
+     * @param reader The reader
+     */
+    public void setReader(Reader reader) {
+<span class="nc" id="L276">        this.safePut(READER, reader);</span>
+<span class="nc" id="L277">    }</span>
+
+    /**
+     * Returns the {@link #READER} property if not &lt;code&gt;null&lt;/code&gt; and a
+     * &lt;code&gt;Reader&lt;/code&gt; instance. Otherwise &lt;code&gt;null&lt;/code&gt; is
+     * returned.
+     * @return The reader or {@code null}.
+     */
+    public @CheckForNull Reader getReader() {
+<span class="nc" id="L286">        return this.get(READER, Reader.class);</span>
+    }
+
+    /**
+     * Sets the {@link #RESOURCE} property to &lt;code&gt;resource&lt;/code&gt; if not
+     * &lt;code&gt;null&lt;/code&gt;.
+     * @param resource The resource
+     */
+    public void setResource(Resource resource) {
+<span class="nc" id="L295">        this.safePut(RESOURCE, resource);</span>
+<span class="nc" id="L296">    }</span>
+
+    /**
+     * Returns the {@link #RESOURCE} property if not &lt;code&gt;null&lt;/code&gt; and a
+     * &lt;code&gt;Resource&lt;/code&gt; instance. Otherwise &lt;code&gt;null&lt;/code&gt; is
+     * returned.
+     * @return The resource or {@code null}.
+     */
+    public @CheckForNull Resource getResource() {
+<span class="nc" id="L305">        return this.get(RESOURCE, Resource.class);</span>
+    }
+
+    /**
+     * Sets the {@link #RESOLVER} property to the provided {@code resourceResolver} if not {@code null}.
+     * @param resourceResolver the Resource Resolver
+     */
+    public void setResourceResolver(ResourceResolver resourceResolver) {
+<span class="nc" id="L313">        this.safePut(RESOLVER, resourceResolver);</span>
+<span class="nc" id="L314">    }</span>
+
+    /**
+     * Returns the {@link #RESOLVER} property if not &lt;code&gt;null&lt;/code&gt; and a
+     * &lt;code&gt;ResourceResolver&lt;/code&gt; instance. Otherwise &lt;code&gt;null&lt;/code&gt; is
+     * returned.
+     * @return the bound {@link ResourceResolver} if one exists, &lt;code&gt;null&lt;/code&gt; otherwise
+     */
+    public @CheckForNull ResourceResolver getResourceResolver() {
+<span class="nc" id="L323">        return this.get(RESOLVER, ResourceResolver.class);</span>
+    }
+
+    /**
+     * Sets the {@link #RESPONSE} property to &lt;code&gt;response&lt;/code&gt; if not
+     * &lt;code&gt;null&lt;/code&gt;.
+     * @param response The response
+     */
+    public void setResponse(SlingHttpServletResponse response) {
+<span class="nc" id="L332">        this.safePut(RESPONSE, response);</span>
+<span class="nc" id="L333">    }</span>
+
+    /**
+     * Returns the {@link #RESPONSE} property if not &lt;code&gt;null&lt;/code&gt; and a
+     * &lt;code&gt;SlingHttpServletResponse&lt;/code&gt; instance. Otherwise
+     * &lt;code&gt;null&lt;/code&gt; is returned.
+     * @return The response or {@code null}.
+     */
+    public @CheckForNull SlingHttpServletResponse getResponse() {
+<span class="nc" id="L342">        return this.get(RESPONSE, SlingHttpServletResponse.class);</span>
+    }
+
+    /**
+     * Sets the {@link #SLING} property to &lt;code&gt;sling&lt;/code&gt; if not
+     * &lt;code&gt;null&lt;/code&gt;.
+     * @param sling The script helper
+     */
+    public void setSling(SlingScriptHelper sling) {
+<span class="nc" id="L351">        this.safePut(SLING, sling);</span>
+<span class="nc" id="L352">    }</span>
+
+    /**
+     * Returns the {@link #SLING} property if not &lt;code&gt;null&lt;/code&gt; and a
+     * &lt;code&gt;SlingScriptHelper&lt;/code&gt; instance. Otherwise &lt;code&gt;null&lt;/code&gt;
+     * is returned.
+     * @return The script helper or {@code null}.
+     */
+    public @CheckForNull SlingScriptHelper getSling() {
+<span class="nc" id="L361">        return this.get(SLING, SlingScriptHelper.class);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

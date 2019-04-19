@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ValueMapDecorator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Sling API</a> &gt; <a href="index.source.html" class="el_package">org.apache.sling.api.wrappers</a> &gt; <span class="el_source">ValueMapDecorator.java</span></div><h1>ValueMapDecorator.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.apache.sling.api.wrappers;
+
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.sling.api.resource.ValueMap;
+
+/**
+ * &lt;code&gt;ValueMapDecorator&lt;/code&gt; decorates another {@link Map}
+ * to provide a basic implementation for the additional methods
+ * of a {@link ValueMap}.
+ */
+public class ValueMapDecorator implements ValueMap {
+
+    /**
+     * underlying map
+     */
+    private final Map&lt;String, Object&gt; base;
+
+    /**
+     * Creates a new wrapper around a given map.
+     * @param base wrapped object
+     */
+<span class="fc" id="L46">    public ValueMapDecorator(Map&lt;String, Object&gt; base) {</span>
+<span class="fc" id="L47">        this.base = base;</span>
+<span class="fc" id="L48">    }</span>
+
+    /**
+     * {@inheritDoc}
+     */
+    public &lt;T&gt; T get(String name, Class&lt;T&gt; type) {
+<span class="fc" id="L54">        return convert(get(name), type);</span>
+    }
+
+    /**
+     * Converts the object to the given type.
+     * @param obj object
+     * @param type type
+     * @return the converted object
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    private &lt;T&gt; T convert(Object obj, Class&lt;T&gt; type) {
+        // todo: do smarter checks
+        try {
+<span class="fc bfc" id="L67" title="All 2 branches covered.">            if (obj == null) {</span>
+<span class="fc" id="L68">                return null;</span>
+<span class="fc bfc" id="L69" title="All 2 branches covered.">            } else if (type.isAssignableFrom(obj.getClass())) {</span>
+<span class="fc" id="L70">                return (T) obj;</span>
+<span class="fc bfc" id="L71" title="All 2 branches covered.">            } else if (type.isArray()) {</span>
+<span class="fc" id="L72">                return (T) convertToArray(obj, type.getComponentType());</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">            } else if (type == String.class) {</span>
+<span class="fc" id="L74">                return (T) String.valueOf(getSingleValue(obj));</span>
+<span class="fc bfc" id="L75" title="All 2 branches covered.">            } else if (type == Integer.class) {</span>
+<span class="fc" id="L76">                return (T) (Integer) Integer.parseInt(getSingleValue(obj));</span>
+<span class="pc bpc" id="L77" title="1 of 2 branches missed.">            } else if (type == Long.class) {</span>
+<span class="nc" id="L78">                return (T) (Long) Long.parseLong(getSingleValue(obj));</span>
+<span class="pc bpc" id="L79" title="1 of 2 branches missed.">            } else if (type == Double.class) {</span>
+<span class="nc" id="L80">                return (T) (Double) Double.parseDouble(getSingleValue(obj));</span>
+<span class="pc bpc" id="L81" title="1 of 2 branches missed.">            } else if (type == Boolean.class) {</span>
+<span class="nc" id="L82">                return (T) (Boolean) Boolean.parseBoolean(getSingleValue(obj));</span>
+            } else {
+<span class="fc" id="L84">                return null;</span>
+            }
+<span class="fc" id="L86">        } catch (NumberFormatException e) {</span>
+<span class="fc" id="L87">            return null;</span>
+        }
+    }
+
+    /**
+     * Gets a single value of String from the object. If the object is an array it returns it's first element.
+     * @param obj object or object array.
+     * @return result of &lt;code&gt;toString()&lt;/code&gt; on object or first element of an object array. If @param obj is null
+     * or it's an array with first element that is null, then null is returned.
+     */
+    private String getSingleValue(Object obj) {
+        final String result;
+<span class="pc bpc" id="L99" title="1 of 2 branches missed.">        if (obj == null) {</span>
+<span class="nc" id="L100">            result = null;</span>
+<span class="fc bfc" id="L101" title="All 2 branches covered.">        } else if (obj.getClass().isArray()) {</span>
+<span class="fc" id="L102">            final Object[] values = (Object[]) obj;</span>
+<span class="pc bpc" id="L103" title="1 of 2 branches missed.">            result = values[0] != null ? values[0].toString() : null;</span>
+<span class="fc" id="L104">        } else {</span>
+<span class="fc" id="L105">            result = obj.toString();</span>
+        }
+<span class="fc" id="L107">        return result;</span>
+    }
+
+    /**
+     * Converts the object to an array of the given type
+     * @param obj the object or object array
+     * @param type the component type of the array
+     * @return and array of type T
+     */
+    private &lt;T&gt; T[] convertToArray(Object obj, Class&lt;T&gt; type) {
+<span class="fc bfc" id="L117" title="All 2 branches covered.">        if (obj.getClass().isArray()) {</span>
+<span class="fc" id="L118">            final Object[] array = (Object[]) obj;</span>
+<span class="fc" id="L119">            List&lt;Object&gt; resultList = new ArrayList&lt;Object&gt;();</span>
+<span class="fc bfc" id="L120" title="All 2 branches covered.">            for (int i = 0; i &lt; array.length; i++) {</span>
+<span class="fc" id="L121">                T singleValueResult = convert(array[i], type);</span>
+<span class="fc bfc" id="L122" title="All 2 branches covered.">                if (singleValueResult != null) {</span>
+<span class="fc" id="L123">                    resultList.add(singleValueResult);</span>
+                }
+            }
+<span class="fc bfc" id="L126" title="All 2 branches covered.">            if (resultList.isEmpty()) {</span>
+<span class="fc" id="L127">                return null;</span>
+            }
+<span class="fc" id="L129">            return resultList.toArray((T[]) Array.newInstance(type, resultList.size()));</span>
+        } else {
+            @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L132">            final T singleValueResult = convert(obj, type);</span>
+            // return null for type conversion errors instead of single element array with value null
+<span class="fc bfc" id="L134" title="All 2 branches covered.">            if (singleValueResult == null) {</span>
+<span class="fc" id="L135">                return null;</span>
+            }
+<span class="fc" id="L137">            final T[] arrayResult = (T[]) Array.newInstance(type, 1);</span>
+<span class="fc" id="L138">            arrayResult[0] = singleValueResult;</span>
+<span class="fc" id="L139">            return arrayResult;</span>
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public &lt;T&gt; T get(String name, T defaultValue) {
+<span class="pc bpc" id="L148" title="1 of 2 branches missed.">        if ( defaultValue == null ) {</span>
+<span class="nc" id="L149">            return (T)get(name);</span>
+        }
+<span class="fc" id="L151">        T value = get(name, (Class&lt;T&gt;) defaultValue.getClass());</span>
+<span class="pc bpc" id="L152" title="1 of 2 branches missed.">        return value == null ? defaultValue : value;</span>
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public int size() {
+<span class="fc" id="L159">        return base.size();</span>
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public boolean isEmpty() {
+<span class="nc" id="L166">        return base.isEmpty();</span>
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public boolean containsKey(Object key) {
+<span class="fc" id="L173">        return base.containsKey(key);</span>
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public boolean containsValue(Object value) {
+<span class="nc" id="L180">        return base.containsValue(value);</span>
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Object get(Object key) {
+<span class="fc" id="L187">        return base.get(key);</span>
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Object put(String key, Object value) {
+<span class="fc" id="L194">        return base.put(key, value);</span>
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Object remove(Object key) {
+<span class="nc" id="L201">        return base.remove(key);</span>
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void putAll(Map&lt;? extends String, ?&gt; t) {
+<span class="nc" id="L208">        base.putAll(t);</span>
+<span class="nc" id="L209">    }</span>
+
+    /**
+     * {@inheritDoc}
+     */
+    public void clear() {
+<span class="nc" id="L215">        base.clear();</span>
+<span class="nc" id="L216">    }</span>
+
+    /**
+     * {@inheritDoc}
+     */
+    public Set&lt;String&gt; keySet() {
+<span class="nc" id="L222">        return base.keySet();</span>
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Collection&lt;Object&gt; values() {
+<span class="nc" id="L229">        return base.values();</span>
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Set&lt;Entry&lt;String, Object&gt;&gt; entrySet() {
+<span class="fc" id="L236">        return base.entrySet();</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L241">        return super.toString() + &quot; : &quot; + this.base.toString();</span>
+    }
+
+    @Override
+    /**
+     * {@inheritDoc}
+     */
+    public int hashCode() {
+<span class="fc" id="L249">        return base.hashCode();</span>
+    }
+
+    @Override
+    /**
+     * {@inheritDoc}
+     */
+    public boolean equals(Object obj) {
+<span class="fc" id="L257">        return base.equals(obj);</span>
+    }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

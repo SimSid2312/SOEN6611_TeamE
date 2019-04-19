@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ResourceWrapper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Sling API</a> &gt; <a href="index.source.html" class="el_package">org.apache.sling.api.resource</a> &gt; <span class="el_source">ResourceWrapper.java</span></div><h1>ResourceWrapper.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.apache.sling.api.resource;
+
+import java.util.Iterator;
+
+import javax.annotation.Nonnull;
+
+/**
+ * The &lt;code&gt;ResourceWrapper&lt;/code&gt; is a wrapper for any &lt;code&gt;Resource&lt;/code&gt;
+ * delegating all method calls to the wrapped resource by default. Extensions of
+ * this class may overwrite any method to return different values as
+ * appropriate.
+ */
+public class ResourceWrapper implements Resource {
+
+    /** the wrapped resource */
+    private final Resource resource;
+
+    /**
+     * Creates a new wrapper instance delegating all method calls to the given
+     * &lt;code&gt;resource&lt;/code&gt;.
+     * @param resource The resource to wrap
+     */
+<span class="fc" id="L41">    public ResourceWrapper(@Nonnull final Resource resource) {</span>
+<span class="fc" id="L42">        this.resource = resource;</span>
+<span class="fc" id="L43">    }</span>
+
+    /**
+     * Returns the &lt;code&gt;Resource&lt;/code&gt; wrapped by this instance. This method
+     * can be overwritten by subclasses if required. All methods implemented by
+     * this class use this method to get the resource object.
+     * @return The resource wrapped by this instance.
+     */
+    public Resource getResource() {
+<span class="fc" id="L52">        return resource;</span>
+    }
+
+    /**
+     * Returns the value of calling &lt;code&gt;getPath&lt;/code&gt; on the
+     * {@link #getResource() wrapped resource}.
+     */
+    @Override
+    public String getPath() {
+<span class="fc" id="L61">        return getResource().getPath();</span>
+    }
+
+    /**
+     * Returns the value of calling &lt;code&gt;getName&lt;/code&gt; on the
+     * {@link #getResource() wrapped resource}.
+     *
+     * @since 2.1.0 (Sling API Bundle 2.1.0)
+     */
+    @Override
+    public String getName() {
+<span class="fc" id="L72">        return getResource().getName();</span>
+    }
+
+    /**
+     * Returns the value of calling &lt;code&gt;getParent&lt;/code&gt; on the
+     * {@link #getResource() wrapped resource}.
+     *
+     * @since 2.1.0 (Sling API Bundle 2.1.0)
+     */
+    @Override
+    public Resource getParent() {
+<span class="fc" id="L83">        return getResource().getParent();</span>
+    }
+
+    /**
+     * Returns the value of calling &lt;code&gt;getChild&lt;/code&gt; on the
+     * {@link #getResource() wrapped resource}.
+     *
+     * @since 2.1.0 (Sling API Bundle 2.1.0)
+     */
+    @Override
+    public Resource getChild(String relPath) {
+<span class="nc" id="L94">        return getResource().getChild(relPath);</span>
+    }
+
+    /**
+     * Returns the value of calling &lt;code&gt;listChildren&lt;/code&gt; on the
+     * {@link #getResource() wrapped resource}.
+     *
+     * @since 2.1.0 (Sling API Bundle 2.1.0)
+     */
+    @Override
+    public Iterator&lt;Resource&gt; listChildren() {
+<span class="nc" id="L105">        return getResource().listChildren();</span>
+    }
+
+    /**
+     * @see org.apache.sling.api.resource.Resource#getChildren()
+     */
+    @Override
+    public Iterable&lt;Resource&gt; getChildren() {
+<span class="nc" id="L113">        return getResource().getChildren();</span>
+    }
+
+    /**
+     * Returns the value of calling &lt;code&gt;getResourceMetadata&lt;/code&gt; on the
+     * {@link #getResource() wrapped resource}.
+     */
+    @Override
+    public ResourceMetadata getResourceMetadata() {
+<span class="nc" id="L122">        return getResource().getResourceMetadata();</span>
+    }
+
+    /**
+     * Returns the value of calling &lt;code&gt;getResourceResolver&lt;/code&gt; on the
+     * {@link #getResource() wrapped resource}.
+     */
+    @Override
+    public ResourceResolver getResourceResolver() {
+<span class="nc" id="L131">        return getResource().getResourceResolver();</span>
+    }
+
+    /**
+     * Returns the value of calling &lt;code&gt;getResourceType&lt;/code&gt; on the
+     * {@link #getResource() wrapped resource}.
+     */
+    @Override
+    public String getResourceType() {
+<span class="nc" id="L140">        return getResource().getResourceType();</span>
+    }
+
+    /**
+     * Returns the value of calling &lt;code&gt;getResourceSuperType&lt;/code&gt; on the
+     * {@link #getResource() wrapped resource}.
+     */
+    @Override
+    public String getResourceSuperType() {
+<span class="nc" id="L149">        return getResource().getResourceSuperType();</span>
+    }
+
+    /**
+     * Returns the value of calling &lt;code&gt;hasChildren&lt;/code&gt; on the
+     * {@link #getResource() wrapped resource}.
+     *
+     * @since 2.4.4  (Sling API Bundle 2.5.0)
+     */
+	@Override
+    public boolean hasChildren() {
+<span class="nc" id="L160">		return getResource().hasChildren();</span>
+	}
+
+    /**
+     * Returns the value of calling &lt;code&gt;isResourceType&lt;/code&gt; on the
+     * {@link #getResource() wrapped resource}.
+     *
+     * @since 2.1.0 (Sling API Bundle 2.1.0)
+     */
+    @Override
+    public boolean isResourceType(final String resourceType) {
+<span class="nc" id="L171">        return getResource().isResourceType(resourceType);</span>
+    }
+
+    /**
+     * Returns the value of calling &lt;code&gt;adaptTo&lt;/code&gt; on the
+     * {@link #getResource() wrapped resource}.
+     */
+    @Override
+    public &lt;AdapterType&gt; AdapterType adaptTo(Class&lt;AdapterType&gt; type) {
+<span class="nc" id="L180">        return getResource().adaptTo(type);</span>
+    }
+
+    /**
+     * @see org.apache.sling.api.resource.Resource#getValueMap()
+     */
+    @Override
+    public ValueMap getValueMap() {
+<span class="nc" id="L188">        return getResource().getValueMap();</span>
+    }
+
+    /**
+     * Returns a string representation of this wrapper consisting of the class'
+     * simple name, the {@link #getResourceType() resource type} and
+     * {@link #getPath() path} as well as the string representation of the
+     * {@link #getResource() wrapped resource}.
+     */
+    @Override
+    public String toString() {
+<span class="nc" id="L199">        final String simpleName = getClass().getSimpleName();</span>
+<span class="nc bnc" id="L200" title="All 2 branches missed.">        final String className = (simpleName.length() &gt; 0) ? simpleName : getClass().getName();</span>
+<span class="nc" id="L201">        return className + &quot;, type=&quot; + getResourceType()</span>
+<span class="nc" id="L202">            + &quot;, path=&quot; + getPath() + &quot;, resource=[&quot; + getResource() + &quot;]&quot;;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

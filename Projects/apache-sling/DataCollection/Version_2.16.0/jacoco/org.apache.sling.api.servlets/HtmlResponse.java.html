@@ -1,0 +1,532 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HtmlResponse.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Sling API</a> &gt; <a href="index.source.html" class="el_package">org.apache.sling.api.servlets</a> &gt; <span class="el_source">HtmlResponse.java</span></div><h1>HtmlResponse.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.sling.api.servlets;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.Writer;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.sling.api.request.ResponseUtil;
+
+/**
+ * Generator for a HTML status response that displays the changes made in a post
+ * request. see &lt;a href=&quot;HtmlResponse.html&quot;&gt;HtmlResponse.html&lt;/a&gt; for the
+ * format.
+ *
+ * @deprecated use org.apache.sling.servlets.post.HtmlResponse instead.
+ */
+@Deprecated
+public class HtmlResponse {
+
+    /**
+     * some human readable title like: 200 Created /foo/bar
+     */
+    public static final String PN_TITLE = &quot;title&quot;;
+
+    /**
+     * status code. more or less http response status codes
+     */
+    public static final String PN_STATUS_CODE = &quot;status.code&quot;;
+
+    /**
+     * some human readable status message
+     */
+    public static final String PN_STATUS_MESSAGE = &quot;status.message&quot;;
+
+    /**
+     * externally mapped location url of the modified path
+     */
+    public static final String PN_LOCATION = &quot;location&quot;;
+
+    /**
+     * externally mapped location url of the parent of the modified path
+     */
+    public static final String PN_PARENT_LOCATION = &quot;parentLocation&quot;;
+
+    /**
+     * the path of the modified item. this is usually the addressed resource or
+     * in case of a creation request (eg: /foo/*) the path of the newly created
+     * node.
+     */
+    public static final String PN_PATH = &quot;path&quot;;
+
+    /**
+     * the referrer of the request
+     */
+    public static final String PN_REFERER = &quot;referer&quot;;
+
+    /**
+     * Indicating whether request processing created new data. This property
+     * is initialized to &lt;code&gt;false&lt;/code&gt; and may be changed by calling
+     * the {@link #setCreateRequest(boolean)} method.
+     */
+    public static final String PN_IS_CREATED = &quot;isCreate&quot;;
+
+    /**
+     * human readable changelog
+     */
+    public static final String PN_CHANGE_LOG = &quot;changeLog&quot;;
+
+    /**
+     * The Throwable caught while processing the request. This property is not
+     * set unless the {@link #setError(Throwable)} method is called.
+     */
+    public static final String PN_ERROR = &quot;error&quot;;
+
+    /**
+     * name of the html template
+     */
+    private static final String TEMPLATE_NAME = &quot;HtmlResponse.html&quot;;
+
+    /**
+     * list of changes
+     */
+<span class="nc" id="L105">    private final StringBuilder changes = new StringBuilder();</span>
+
+    /**
+     * Properties of the response
+     */
+<span class="nc" id="L110">    private final Map&lt;String, Object&gt; properties = new HashMap&lt;String, Object&gt;();</span>
+
+    /**
+     * Creates a new html response with default settings, which is
+     * &lt;code&gt;null&lt;/code&gt; for almost all properties except the
+     * {@link #isCreateRequest()} which defaults to &lt;code&gt;false&lt;/code&gt;.
+     */
+<span class="nc" id="L117">    public HtmlResponse() {</span>
+<span class="nc" id="L118">        setCreateRequest(false);</span>
+<span class="nc" id="L119">    }</span>
+
+    // ---------- Settings for the response ------------------------------------
+
+    /**
+     * Returns the referer as from the 'referer' request header.
+     * @return The referrer
+     */
+    public String getReferer() {
+<span class="nc" id="L128">        return getProperty(PN_REFERER, String.class);</span>
+    }
+
+    /**
+     * Sets the referer property
+     * @param referer The referrer to set
+     */
+    public void setReferer(String referer) {
+<span class="nc" id="L136">        setProperty(PN_REFERER, referer);</span>
+<span class="nc" id="L137">    }</span>
+
+    /**
+     * Returns the absolute path of the item upon which the request operated.
+     * &lt;p&gt;
+     * If the {@link #setPath(String)} method has not been called yet, this
+     * method returns &lt;code&gt;null&lt;/code&gt;.
+     * @return The path or {@code null}.
+     */
+    public String getPath() {
+<span class="nc" id="L147">        return getProperty(PN_PATH, String.class);</span>
+    }
+
+    /**
+     * Sets the absolute path of the item upon which the request operated.
+     * @param path The path
+     */
+    public void setPath(String path) {
+<span class="nc" id="L155">        setProperty(PN_PATH, path);</span>
+<span class="nc" id="L156">    }</span>
+
+    /**
+     * Returns &lt;code&gt;true&lt;/code&gt; if this was a create request.
+     * &lt;p&gt;
+     * Before calling the {@link #setCreateRequest(boolean)} method, this method
+     * always returns &lt;code&gt;false&lt;/code&gt;.
+     * @return {@code true} if this is a create request
+     */
+    public boolean isCreateRequest() {
+<span class="nc" id="L166">        return getProperty(PN_IS_CREATED, Boolean.class);</span>
+    }
+
+    /**
+     * Sets whether the request was a create request or not.
+     * @param isCreateRequest flag for the create request
+     */
+    public void setCreateRequest(boolean isCreateRequest) {
+<span class="nc" id="L174">        setProperty(PN_IS_CREATED, isCreateRequest);</span>
+<span class="nc" id="L175">    }</span>
+
+    /**
+     * Returns the location of the modification. this is the externalized form
+     * of the current path.
+     *
+     * @return the location of the modification.
+     */
+    public String getLocation() {
+<span class="nc" id="L184">        return getProperty(PN_LOCATION, String.class);</span>
+    }
+
+    /**
+     * Set the location
+     * @param location The location
+     */
+    public void setLocation(String location) {
+<span class="nc" id="L192">        setProperty(PN_LOCATION, location);</span>
+<span class="nc" id="L193">    }</span>
+
+    /**
+     * Returns the parent location of the modification. this is the externalized
+     * form of the parent node of the current path.
+     *
+     * @return the location of the modification.
+     */
+    public String getParentLocation() {
+<span class="nc" id="L202">        return getProperty(PN_PARENT_LOCATION, String.class);</span>
+    }
+
+    /**
+     * Set the parent location
+     * @param parentLocation The parent location
+     */
+    public void setParentLocation(String parentLocation) {
+<span class="nc" id="L210">        setProperty(PN_PARENT_LOCATION, parentLocation);</span>
+<span class="nc" id="L211">    }</span>
+
+    /**
+     * Sets the title of the response message
+     *
+     * @param title the title
+     */
+    public void setTitle(String title) {
+<span class="nc" id="L219">        setProperty(PN_TITLE, title);</span>
+<span class="nc" id="L220">    }</span>
+
+    /**
+     * sets the response status code properties
+     *
+     * @param code the code
+     * @param message the message
+     */
+    public void setStatus(int code, String message) {
+<span class="nc" id="L229">        setProperty(PN_STATUS_CODE, code);</span>
+<span class="nc" id="L230">        setProperty(PN_STATUS_MESSAGE, message);</span>
+<span class="nc" id="L231">    }</span>
+
+    /**
+     * Returns the status code of this instance. If the status code has never
+     * been set by calling the {@link #setStatus(int, String)} method, the
+     * status code is determined by checking if there was an error.  If there
+     * was an error, the response is assumed to be unsuccessful and 500 is returned.
+     * If there is no error, the response is assumed to be successful and 200 is returned.
+     * @return The status code
+     */
+    public int getStatusCode() {
+<span class="nc" id="L242">        Integer status = getProperty(PN_STATUS_CODE, Integer.class);</span>
+<span class="nc bnc" id="L243" title="All 2 branches missed.">        if (status == null) {</span>
+<span class="nc bnc" id="L244" title="All 2 branches missed.">        	if (getError() != null) {</span>
+        		//if there was an error
+<span class="nc" id="L246">        		status = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;</span>
+        	} else {
+<span class="nc" id="L248">        		status = HttpServletResponse.SC_OK;</span>
+        	}
+        }
+<span class="nc" id="L251">        return status;</span>
+    }
+
+    /**
+     * Get the status message
+     * @return The status message
+     */
+    public String getStatusMessage() {
+<span class="nc" id="L259">        return getProperty(PN_STATUS_MESSAGE, String.class);</span>
+    }
+
+    /**
+     * Returns any recorded error or &lt;code&gt;null&lt;/code&gt;
+     *
+     * @return an error or &lt;code&gt;null&lt;/code&gt;
+     */
+    public Throwable getError() {
+<span class="nc" id="L268">        return getProperty(PN_ERROR, Throwable.class);</span>
+    }
+
+    /**
+     * Set the error
+     * @param error The error
+     */
+    public void setError(Throwable error) {
+<span class="nc" id="L276">        setProperty(PN_ERROR, error);</span>
+<span class="nc" id="L277">    }</span>
+
+    /**
+     * Returns &lt;code&gt;true&lt;/code&gt; if no {@link #getError() error} is set and if
+     * the {@link #getStatusCode() status code} is one of the 2xx codes.
+     * @return {@code true} if successful
+     */
+    public boolean isSuccessful() {
+<span class="nc bnc" id="L285" title="All 4 branches missed.">        return getError() == null &amp;&amp; (getStatusCode() / 100) == 2;</span>
+    }
+
+    // ---------- ChangeLog ----------------------------------------------------
+
+    /**
+     * Records a 'modified' change
+     *
+     * @param path path of the item that was modified
+     */
+    public void onModified(String path) {
+<span class="nc" id="L296">        onChange(&quot;modified&quot;, path);</span>
+<span class="nc" id="L297">    }</span>
+
+    /**
+     * Records a 'created' change
+     *
+     * @param path path of the item that was created
+     */
+    public void onCreated(String path) {
+<span class="nc" id="L305">        onChange(&quot;created&quot;, path);</span>
+<span class="nc" id="L306">    }</span>
+
+    /**
+     * Records a 'deleted' change
+     *
+     * @param path path of the item that was deleted
+     */
+    public void onDeleted(String path) {
+<span class="nc bnc" id="L314" title="All 2 branches missed.">        if (path != null) {</span>
+<span class="nc" id="L315">            onChange(&quot;deleted&quot;, path);</span>
+        }
+<span class="nc" id="L317">    }</span>
+
+    /**
+     * Records a 'moved' change.
+     * &lt;p&gt;
+     * Note: the moved change only records the
+     * basic move command. the implied changes on the moved properties and sub
+     * nodes are not recorded.
+     *
+     * @param srcPath source path of the node that was moved
+     * @param dstPath destination path of the node that was moved.
+     */
+    public void onMoved(String srcPath, String dstPath) {
+<span class="nc" id="L330">        onChange(&quot;moved&quot;, srcPath, dstPath);</span>
+<span class="nc" id="L331">    }</span>
+
+    /**
+     * Records a 'copied' change.
+     * &lt;p&gt;
+     * Note: the copy change only records the
+     * basic copy command. the implied changes on the copied properties and sub
+     * nodes are not recorded.
+     *
+     * @param srcPath source path of the node that was copied
+     * @param dstPath destination path of the node that was copied.
+     */
+    public void onCopied(String srcPath, String dstPath) {
+<span class="nc" id="L344">        onChange(&quot;copied&quot;, srcPath, dstPath);</span>
+<span class="nc" id="L345">    }</span>
+
+    /**
+     * Records a generic change of the given &lt;code&gt;type&lt;/code&gt;.
+     * &lt;p&gt;
+     * The change is added to the internal list of changes with the syntax of a
+     * method call, where the &lt;code&gt;type&lt;/code&gt; is the method name and the
+     * &lt;code&gt;arguments&lt;/code&gt; are the string arguments to the method enclosed in
+     * double quotes. For example, the the call
+     *
+     * &lt;pre&gt;
+     * onChange(&amp;quot;sameple&amp;quot;, &amp;quot;arg1&amp;quot;, &amp;quot;arg2&amp;quot;);
+     * &lt;/pre&gt;
+     *
+     * is aded as
+     *
+     * &lt;pre&gt;
+     * sample(&amp;quot;arg1&amp;quot;, &amp;quot;arg2&amp;quot;)
+     * &lt;/pre&gt;
+     *
+     * to the internal list of changes.
+     *
+     * @param type The type of the modification
+     * @param arguments The arguments to the modifications
+     */
+    public void onChange(String type, String... arguments) {
+<span class="nc" id="L371">        changes.append(type);</span>
+<span class="nc" id="L372">        String delim = &quot;(&quot;;</span>
+<span class="nc bnc" id="L373" title="All 2 branches missed.">        for (String a : arguments) {</span>
+<span class="nc" id="L374">            changes.append(delim);</span>
+<span class="nc" id="L375">            changes.append('\&quot;');</span>
+<span class="nc" id="L376">            changes.append(a);</span>
+<span class="nc" id="L377">            changes.append('\&quot;');</span>
+<span class="nc" id="L378">            delim = &quot;, &quot;;</span>
+        }
+<span class="nc" id="L380">        changes.append(&quot;);&lt;br/&gt;&quot;);</span>
+<span class="nc" id="L381">    }</span>
+
+    // ---------- Response Generation ------------------------------------------
+
+    /**
+     * prepares the response properties
+     */
+    private void prepare() {
+<span class="nc" id="L389">        String path = getPath();</span>
+<span class="nc bnc" id="L390" title="All 2 branches missed.">        if (getProperty(PN_STATUS_CODE) == null) {</span>
+<span class="nc bnc" id="L391" title="All 2 branches missed.">            if (getError() != null) {</span>
+<span class="nc" id="L392">                setStatus(500, getError().toString());</span>
+<span class="nc" id="L393">                setTitle(&quot;Error while processing &quot; + path);</span>
+            } else {
+<span class="nc bnc" id="L395" title="All 2 branches missed.">                if (isCreateRequest()) {</span>
+<span class="nc" id="L396">                    setStatus(201, &quot;Created&quot;);</span>
+<span class="nc" id="L397">                    setTitle(&quot;Content created &quot; + path);</span>
+                } else {
+<span class="nc" id="L399">                    setStatus(200, &quot;OK&quot;);</span>
+<span class="nc" id="L400">                    setTitle(&quot;Content modified &quot; + path);</span>
+                }
+            }
+        }
+
+<span class="nc" id="L405">        String referer = getReferer();</span>
+<span class="nc bnc" id="L406" title="All 2 branches missed.">        if (referer == null) {</span>
+<span class="nc" id="L407">            referer = &quot;&quot;;</span>
+        }
+<span class="nc" id="L409">        setReferer(referer);</span>
+
+        // get changelog
+<span class="nc" id="L412">        changes.insert(0, &quot;&lt;pre&gt;&quot;);</span>
+<span class="nc" id="L413">        changes.append(&quot;&lt;/pre&gt;&quot;);</span>
+<span class="nc" id="L414">        setProperty(PN_CHANGE_LOG, changes.toString());</span>
+<span class="nc" id="L415">    }</span>
+
+    /**
+     * Sets a generic response property with the given
+     *
+     * @param name name of the property
+     * @param value value of the property
+     */
+    public void setProperty(String name, Object value) {
+<span class="nc" id="L424">        properties.put(name, value);</span>
+<span class="nc" id="L425">    }</span>
+
+    /**
+     * Returns the generic response property with the given name and type or
+     * &lt;code&gt;null&lt;/code&gt; if no such property exists or the property is not of
+     * the requested type.
+     *
+     * @param name The property name
+     * @param &lt;Type&gt; The type to get
+     * @param type The type to get
+     * @return The property value or {@code null}.
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public &lt;Type&gt; Type getProperty(String name, Class&lt;Type&gt; type) {
+<span class="nc" id="L439">        Object value = getProperty(name);</span>
+<span class="nc bnc" id="L440" title="All 2 branches missed.">        if (type.isInstance(value)) {</span>
+<span class="nc" id="L441">            return (Type) value;</span>
+        }
+
+<span class="nc" id="L444">        return null;</span>
+    }
+
+    /**
+     * Returns the generic response property with the given name and type or
+     * &lt;code&gt;null&lt;/code&gt; if no such property exists.
+     * @param name The property name
+     * @return The property value or {@code null}.
+     */
+    public Object getProperty(String name) {
+<span class="nc" id="L454">        return properties.get(name);</span>
+    }
+
+    /**
+     * Writes the response to the given writer and replaces all ${var} patterns
+     * by the value of the respective property. if the property is not defined
+     * the pattern is not modified.
+     *
+     * @param response to send to
+     * @param setStatus whether to set the status code on the response
+     * @throws IOException if an i/o exception occurs
+     */
+    public void send(HttpServletResponse response, boolean setStatus)
+            throws IOException {
+<span class="nc" id="L468">        prepare();</span>
+
+<span class="nc bnc" id="L470" title="All 2 branches missed.">        if (setStatus) {</span>
+<span class="nc" id="L471">            Object status = getProperty(PN_STATUS_CODE);</span>
+<span class="nc bnc" id="L472" title="All 2 branches missed.">            if (status instanceof Number) {</span>
+<span class="nc" id="L473">                int statusCode = ((Number) status).intValue();</span>
+<span class="nc" id="L474">                response.setStatus(statusCode);</span>
+
+                // special treatment of 201/CREATED: Requires Location
+<span class="nc bnc" id="L477" title="All 2 branches missed.">                if (statusCode == HttpServletResponse.SC_CREATED) {</span>
+<span class="nc" id="L478">                    response.setHeader(&quot;Location&quot;, getLocation());</span>
+                }
+            }
+        }
+
+<span class="nc" id="L483">        response.setContentType(&quot;text/html&quot;);</span>
+<span class="nc" id="L484">        response.setCharacterEncoding(&quot;UTF-8&quot;);</span>
+
+<span class="nc" id="L486">        Writer out = response.getWriter();</span>
+<span class="nc" id="L487">        InputStream template = getClass().getResourceAsStream(TEMPLATE_NAME);</span>
+<span class="nc" id="L488">        Reader in = new BufferedReader(new InputStreamReader(template));</span>
+<span class="nc" id="L489">        StringBuffer varBuffer = new StringBuffer();</span>
+<span class="nc" id="L490">        int state = 0;</span>
+        int read;
+<span class="nc bnc" id="L492" title="All 2 branches missed.">        while ((read = in.read()) &gt;= 0) {</span>
+<span class="nc" id="L493">            char c = (char) read;</span>
+<span class="nc bnc" id="L494" title="All 4 branches missed.">            switch (state) {</span>
+                // initial
+                case 0:
+<span class="nc bnc" id="L497" title="All 2 branches missed.">                    if (c == '$') {</span>
+<span class="nc" id="L498">                        state = 1;</span>
+                    } else {
+<span class="nc" id="L500">                        out.write(c);</span>
+                    }
+<span class="nc" id="L502">                    break;</span>
+                // $ read
+                case 1:
+<span class="nc bnc" id="L505" title="All 2 branches missed.">                    if (c == '{') {</span>
+<span class="nc" id="L506">                        state = 2;</span>
+                    } else {
+<span class="nc" id="L508">                        state = 0;</span>
+<span class="nc" id="L509">                        out.write('$');</span>
+<span class="nc" id="L510">                        out.write(c);</span>
+                    }
+<span class="nc" id="L512">                    break;</span>
+                // { read
+                case 2:
+<span class="nc bnc" id="L515" title="All 2 branches missed.">                    if (c == '}') {</span>
+<span class="nc" id="L516">                        state = 0;</span>
+<span class="nc" id="L517">                        Object prop = properties.get(varBuffer.toString());</span>
+<span class="nc bnc" id="L518" title="All 2 branches missed.">                        if (prop != null) {</span>
+<span class="nc" id="L519">                            out.write(ResponseUtil.escapeXml(prop.toString()));</span>
+                        }
+<span class="nc" id="L521">                        varBuffer.setLength(0);</span>
+<span class="nc" id="L522">                    } else {</span>
+<span class="nc" id="L523">                        varBuffer.append(c);</span>
+                    }
+            }
+<span class="nc" id="L526">        }</span>
+<span class="nc" id="L527">        in.close();</span>
+<span class="nc" id="L528">        out.flush();</span>
+<span class="nc" id="L529">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

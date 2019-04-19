@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SlingHttpServletRequestWrapper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Sling API</a> &gt; <a href="index.source.html" class="el_package">org.apache.sling.api.wrappers</a> &gt; <span class="el_source">SlingHttpServletRequestWrapper.java</span></div><h1>SlingHttpServletRequestWrapper.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.apache.sling.api.wrappers;
+
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequestWrapper;
+
+import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.request.RequestDispatcherOptions;
+import org.apache.sling.api.request.RequestParameter;
+import org.apache.sling.api.request.RequestParameterMap;
+import org.apache.sling.api.request.RequestPathInfo;
+import org.apache.sling.api.request.RequestProgressTracker;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
+
+/**
+ * The &lt;code&gt;SlingHttpServletRequestWrapper&lt;/code&gt; class is a default wrapper
+ * class around a {@link SlingHttpServletRequest} which may be extended to amend
+ * the functionality of the original request object.
+ */
+public class SlingHttpServletRequestWrapper extends HttpServletRequestWrapper
+        implements SlingHttpServletRequest {
+
+    /**
+     * Create a wrapper for the supplied wrappedRequest
+     * @param wrappedRequest The request.
+     */
+    public SlingHttpServletRequestWrapper(SlingHttpServletRequest wrappedRequest) {
+<span class="nc" id="L52">        super(wrappedRequest);</span>
+<span class="nc" id="L53">    }</span>
+
+    /**
+     * Return the original {@link SlingHttpServletRequest} object wrapped by
+     * this.
+     * @return The wrapped request.
+     */
+    public SlingHttpServletRequest getSlingRequest() {
+<span class="nc" id="L61">        return (SlingHttpServletRequest) getRequest();</span>
+    }
+
+    @Override
+    public Cookie getCookie(String name) {
+<span class="nc" id="L66">        return getSlingRequest().getCookie(name);</span>
+    }
+
+    @Override
+    public RequestProgressTracker getRequestProgressTracker() {
+<span class="nc" id="L71">        return getSlingRequest().getRequestProgressTracker();</span>
+    }
+
+    @Override
+    public RequestDispatcher getRequestDispatcher(Resource resource) {
+<span class="nc" id="L76">        return getSlingRequest().getRequestDispatcher(resource);</span>
+    }
+
+    @Override
+    public RequestDispatcher getRequestDispatcher(Resource resource,
+            RequestDispatcherOptions options) {
+<span class="nc" id="L82">        return getSlingRequest().getRequestDispatcher(resource, options);</span>
+    }
+
+    @Override
+    public RequestDispatcher getRequestDispatcher(String path,
+            RequestDispatcherOptions options) {
+<span class="nc" id="L88">        return getSlingRequest().getRequestDispatcher(path, options);</span>
+    }
+
+    @Override
+    public RequestParameter getRequestParameter(String name) {
+<span class="nc" id="L93">        return getSlingRequest().getRequestParameter(name);</span>
+    }
+
+    @Override
+    public RequestParameterMap getRequestParameterMap() {
+<span class="nc" id="L98">        return getSlingRequest().getRequestParameterMap();</span>
+    }
+
+    @Override
+    public List&lt;RequestParameter&gt; getRequestParameterList() {
+<span class="nc" id="L103">        return getSlingRequest().getRequestParameterList();</span>
+    }
+
+    @Override
+    public RequestParameter[] getRequestParameters(String name) {
+<span class="nc" id="L108">        return getSlingRequest().getRequestParameters(name);</span>
+    }
+
+    @Override
+    public RequestPathInfo getRequestPathInfo() {
+<span class="nc" id="L113">        return getSlingRequest().getRequestPathInfo();</span>
+    }
+
+    @Override
+    public Resource getResource() {
+<span class="nc" id="L118">        return getSlingRequest().getResource();</span>
+    }
+
+    @Override
+    public ResourceResolver getResourceResolver() {
+<span class="nc" id="L123">        return getSlingRequest().getResourceResolver();</span>
+    }
+
+    @Override
+    public ResourceBundle getResourceBundle(Locale locale) {
+<span class="nc" id="L128">        return getSlingRequest().getResourceBundle(locale);</span>
+    }
+
+    @Override
+    public ResourceBundle getResourceBundle(String baseName, Locale locale) {
+<span class="nc" id="L133">        return getSlingRequest().getResourceBundle(baseName, locale);</span>
+    }
+
+    @Override
+    public String getResponseContentType() {
+<span class="nc" id="L138">        return getSlingRequest().getResponseContentType();</span>
+    }
+
+    @Override
+    public Enumeration&lt;String&gt; getResponseContentTypes() {
+<span class="nc" id="L143">        return getSlingRequest().getResponseContentTypes();</span>
+    }
+
+    @Override
+    public &lt;AdapterType&gt; AdapterType adaptTo(Class&lt;AdapterType&gt; type) {
+<span class="nc" id="L148">        return getSlingRequest().adaptTo(type);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

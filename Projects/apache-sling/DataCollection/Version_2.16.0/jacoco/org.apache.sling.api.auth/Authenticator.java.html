@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Authenticator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Sling API</a> &gt; <a href="index.source.html" class="el_package">org.apache.sling.api.auth</a> &gt; <span class="el_source">Authenticator.java</span></div><h1>Authenticator.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.apache.sling.api.auth;
+
+import javax.annotation.Nonnull;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.osgi.annotation.versioning.ProviderType;
+
+/**
+ * The &lt;code&gt;Authenticator&lt;/code&gt; interface defines the service interface which
+ * may be used by applications to enforce requests to be authenticated (see
+ * {@link #login(HttpServletRequest, HttpServletResponse)}) or to end enforced
+ * authentication (see {@link #logout(HttpServletRequest, HttpServletResponse)}
+ * ). As such this service may be looked at as the functionality to enable
+ * applications to log users in and out.
+ * &lt;p&gt;
+ * A very simple login script (using ESP here) could be implemented like this:
+ *
+ * &lt;pre&gt;
+ * var auth = sling.getService(org.apache.sling.commons.auth.Authenticator);
+ * if (auth != null) {
+ *     try {
+ *         auth.login(request, response);
+ *         return; // we are done here
+ *     } catch (e) {
+ *         // probably NoAuthenticationHandler exception
+ *     }
+ * }
+ * // Authenticator service is missing or no AuthenticationHandler
+ * ... do whatever you want to for error handling ...
+ * &lt;/pre&gt;
+ * &lt;p&gt;
+ * Likewise implementing a logout script (ESP, too) is equally simple:
+ *
+ * &lt;pre&gt;
+ * if (request.authType) {
+ *     // not logged in at all, no need to logout
+ * } else {
+ *     var auth = sling.getService(org.apache.sling.commons.auth.Authenticator);
+ *     if (auth != null) {
+ *         auth.logout(request, response);
+ *     } else {
+ *         // handle the case of no Authenticator service to logout with
+ *     }
+ * }
+ * &lt;/pre&gt;
+ * &lt;p&gt;
+ * This interface is not intended to be implemented by applications but may be
+ * used to initiate the authentication process form a request processing servlet
+ * or script.
+ *
+ * @since 1.0 (Sling API Bundle 2.1.0)
+ */
+@ProviderType
+public interface Authenticator {
+
+    /**
+     * The name under which this service is registered.
+     */
+<span class="nc" id="L78">    static final String SERVICE_NAME = Authenticator.class.getName();</span>
+
+    /**
+     * Name of the request attribute which may be set by the application to
+     * indicate to the {@link #login(HttpServletRequest, HttpServletResponse)}
+     * method to which resource access should actually be authenticated. If this
+     * request attribute is not set or is the empty string, the
+     * {@link #login(HttpServletRequest, HttpServletResponse)} method uses the
+     * request path info (&lt;code&gt;HttpServletRequest.getPathInfo()&lt;/code&gt;) method
+     * to find the resource to which to authenticate access.
+     * &lt;p&gt;
+     * This request attribute can be used by frontend servlets/scripts which
+     * call into {@link #login(HttpServletRequest, HttpServletResponse)} on
+     * behalf of users.
+     */
+    static final String LOGIN_RESOURCE = &quot;resource&quot;;
+
+    /**
+     * Tries to login a request user for the current request.
+     * &lt;p&gt;
+     * To identify the resource to which access should be authenticated the
+     * &lt;code&gt;{@link #LOGIN_RESOURCE resource}&lt;/code&gt; request attribute is
+     * considered. If the request attribute is not set the request path info (
+     * &lt;code&gt;HttpServletRequest.getPathInfo()&lt;/code&gt;) is used.
+     * &lt;p&gt;
+     * This method must be called on an uncommitted response since the
+     * implementation may want to reset the response to start the authentication
+     * process with a clean response. If the response is already committed an
+     * &lt;code&gt;IllegalStateException&lt;/code&gt; is thrown.
+     * &lt;p&gt;
+     * After this method has finished, request processing should be terminated
+     * and the response be considered committed and finished unless the
+     * {@link NoAuthenticationHandlerException} exception is thrown in which
+     * case no response has been sent to the client.
+     *
+     * @param request The object representing the client request.
+     * @param response The object representing the response to the client.
+     * @throws NoAuthenticationHandlerException If the service cannot find a way
+     *             to authenticate a request user.
+     * @throws IllegalStateException If the response has already been committed.
+     */
+    void login(@Nonnull HttpServletRequest request, @Nonnull HttpServletResponse response);
+
+    /**
+     * Logs out if the current request is authenticated.
+     * &lt;p&gt;
+     * This method must be called on an uncommitted response since the
+     * implementation may want to reset the response to restart the
+     * authentication process with a clean response. If the response is already
+     * committed an &lt;code&gt;IllegalStateException&lt;/code&gt; is thrown.
+     * &lt;p&gt;
+     * After this method has finished, request processing should be terminated
+     * and the response be considered committed and finished.
+     *
+     * @param request The object representing the client request.
+     * @param response The object representing the response to the client.
+     * @throws IllegalStateException If the response has already been committed.
+     */
+    void logout(@Nonnull HttpServletRequest request, @Nonnull HttpServletResponse response);
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

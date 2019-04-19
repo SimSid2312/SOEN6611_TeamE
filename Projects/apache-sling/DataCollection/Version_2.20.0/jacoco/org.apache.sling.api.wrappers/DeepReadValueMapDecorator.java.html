@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DeepReadValueMapDecorator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Sling API</a> &gt; <a href="index.source.html" class="el_package">org.apache.sling.api.wrappers</a> &gt; <span class="el_source">DeepReadValueMapDecorator.java</span></div><h1>DeepReadValueMapDecorator.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.apache.sling.api.wrappers;
+
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ValueMap;
+
+/**
+ * A value map wrapper which implements deep reading of properties
+ * based on the resource tree.
+ * @since 2.5 (Sling API Bundle 2.7.0)
+ */
+public class DeepReadValueMapDecorator extends ValueMapDecorator {
+
+    private final String pathPrefix;
+
+    private final ResourceResolver resolver;
+
+    private final ValueMap base;
+
+    public DeepReadValueMapDecorator(final Resource resource, final ValueMap base) {
+<span class="fc" id="L39">        super(base);</span>
+<span class="fc" id="L40">        this.pathPrefix = resource.getPath() + &quot;/&quot;;</span>
+<span class="fc" id="L41">        this.resolver = resource.getResourceResolver();</span>
+<span class="fc" id="L42">        this.base = base;</span>
+<span class="fc" id="L43">    }</span>
+
+    private ValueMap getValueMap(final String name) {
+<span class="fc" id="L46">        final int pos = name.lastIndexOf(&quot;/&quot;);</span>
+<span class="pc bpc" id="L47" title="1 of 2 branches missed.">        if ( pos == -1 ) {</span>
+<span class="fc" id="L48">            return this.base;</span>
+        }
+<span class="nc" id="L50">        final Resource rsrc = this.resolver.getResource(pathPrefix + name.substring(0, pos));</span>
+<span class="nc bnc" id="L51" title="All 2 branches missed.">        if ( rsrc != null ) {</span>
+<span class="nc" id="L52">            final ValueMap vm = rsrc.adaptTo(ValueMap.class);</span>
+<span class="nc bnc" id="L53" title="All 2 branches missed.">            if ( vm != null ) {</span>
+<span class="nc" id="L54">                return vm;</span>
+            }
+        }
+<span class="nc" id="L57">        return ValueMap.EMPTY; // fall back</span>
+    }
+
+    private String getPropertyName(final String name) {
+<span class="fc" id="L61">        final int pos = name.lastIndexOf(&quot;/&quot;);</span>
+<span class="pc bpc" id="L62" title="1 of 2 branches missed.">        if ( pos == -1 ) {</span>
+<span class="fc" id="L63">            return name;</span>
+        }
+<span class="nc" id="L65">        return name.substring(pos + 1);</span>
+    }
+
+    /**
+     * @see org.apache.sling.api.resource.ValueMap#get(java.lang.String, java.lang.Class)
+     */
+    @Override
+    public &lt;T&gt; T get(final String name, final Class&lt;T&gt; type) {
+<span class="fc" id="L73">        return this.getValueMap(name).get(this.getPropertyName(name), type);</span>
+    }
+
+    /**
+     * @see org.apache.sling.api.resource.ValueMap#get(java.lang.String, java.lang.Object)
+     */
+    @Override
+    public &lt;T&gt; T get(final String name, T defaultValue) {
+<span class="nc" id="L81">        return this.getValueMap(name).get(this.getPropertyName(name), defaultValue);</span>
+    }
+
+    /**
+     * @see org.apache.sling.api.wrappers.ValueMapDecorator#containsKey(java.lang.Object)
+     */
+    @Override
+    public boolean containsKey(final Object key) {
+<span class="nc bnc" id="L89" title="All 2 branches missed.">        if ( key == null ) {</span>
+<span class="nc" id="L90">            return false;</span>
+        }
+<span class="nc" id="L92">        final String name = key.toString();</span>
+<span class="nc" id="L93">        return this.getValueMap(name).containsKey(this.getPropertyName(name));</span>
+    }
+
+    /**
+     * @see org.apache.sling.api.wrappers.ValueMapDecorator#get(java.lang.Object)
+     */
+    @Override
+    public Object get(final Object key) {
+<span class="pc bpc" id="L101" title="1 of 2 branches missed.">        if ( key == null ) {</span>
+<span class="nc" id="L102">            return null;</span>
+        }
+<span class="fc" id="L104">        final String name = key.toString();</span>
+<span class="fc" id="L105">        return this.getValueMap(name).get(this.getPropertyName(name));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>
