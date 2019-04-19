@@ -4,22 +4,22 @@
 ## 1) File Structure
 
 
++ Projects
+    - Project1
+        + Code Change
+            - Upload POM.txt
+        + Data Analysis
+            - Analysis.txt
+        + Data Collection
+            - Version_X.X.X
+                + JaCoco Version X.X.X
+                + Bugs vX.X.X.csv
+                + LOC vX.X.X
+            - Version_Y.Y.Y
+                + JaCoco Version Y.Y.Y
+                + Bugs vY.Y.Y.csv
+                + LOC vY.Y.Y
 
-- Project1
-    + Code Change
-        - Upload POM.txt
-    + Data Analysis
-        - Analysis.txt
-    + Data Collection
-        - Version_X.X.X
-            + JaCoco Version X.X.X
-            + Bugs vX.X.X.csv
-            + LOC vX.X.X
-        - Version_Y.Y.Y
-            + JaCoco Version Y.Y.Y
-            + Bugs vY.Y.Y.csv
-            + LOC vY.Y.Y
-         
 
 - The repository contains a **Projects** folder which has all the data pertaining to the project.
 - Inside the project folder there are 5 project folders named **(File Upload, JfreeChart/Code Change,  common-collections)**
