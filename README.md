@@ -3,6 +3,24 @@
 
 ## 1) File Structure
 
+
+
+- Project1
+    + Code Change
+        - Upload POM.txt
+    + Data Analysis
+        - Analysis.txt
+    + Data Collection
+        - Version_X.X.X
+            + JaCoco Version X.X.X
+            + Bugs vX.X.X.csv
+            + LOC vX.X.X
+        - Version_Y.Y.Y
+            + JaCoco Version Y.Y.Y
+            + Bugs vY.Y.Y.csv
+            + LOC vY.Y.Y
+         
+
 - The repository contains a **Projects** folder which has all the data pertaining to the project.
 - Inside the project folder there are 5 project folders named **(File Upload, JfreeChart/Code Change,  common-collections)**
 - Inside each of the project folders mentioned in the previous line, there are three folders **Code Change, Data Analysis and Data Collection (Data collection contains raw data).**
@@ -13,9 +31,6 @@
 - **Data Analysis** inside the project name folder contains a file Analysis.txt, whcih has the analysis of that project.
 - **Code Change** inside the project name folder contains configuration code.
 
-- df
-    + asf
-        - sef
 
 ## 2) 
 
