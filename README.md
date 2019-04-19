@@ -5,6 +5,9 @@
 
 
 + Projects
+    - Scripts
+        + spearman_and_pearson.py
+        + data_for_script.py
     - Project1
         + Code Change
             - Upload POM.txt
@@ -32,7 +35,7 @@
 - **Code Change** inside the project name folder contains configuration code.
 
 
-## 2) 
+## 2) Steps to Run Projects/Scripts/spearman_and_pearson.py; install python 3 or above, pip and pip install pandas, scipy, numpy and matlpotlib libraries.
 
 ## 3) Team Members
 
