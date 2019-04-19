@@ -3,11 +3,10 @@
 
 ## 1) File Structure
 
-
++ Scripts
+    - spearman_and_pearson.py
+    - data_for_script.py
 + Projects
-    - Scripts
-        + spearman_and_pearson.py
-        + data_for_script.py
     - Project1
         + Code Change
             - Upload POM.txt
