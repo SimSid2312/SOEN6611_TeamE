@@ -1,7 +1,11 @@
 # SOEN6611_TeamE
+
 1) to explain the file structure of the repo (e.g., XXX folder contains the raw data of statement coverage); 2) the requirements (e.g., the libs) for running the script; 3) team name and members.
 
-## 1) 
+## 1) File Structure
+
+- The repository contains a **project** folder which has all the data pertaining to the project.
+- Inside the project folder there are 5 project folders named **(,,,,)**
 
 ## 2) 
 
