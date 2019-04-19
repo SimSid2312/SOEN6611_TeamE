@@ -10,7 +10,9 @@
 - 
 - 
 - **Data collection** contains raw data version wise. 
-    + Data Collection/Version_1.2.1/JacCoco Version 1.2.1** contains the Jacoco report.
+    + **Data Collection/Version_1.2.1/JacCoco Version 1.2.1** contains the **Jacoco reports** for the Data collection project for its 1.2.1 version.
+    + **Data Collection/Version_1.2.1/Bugs v1.2.1.csv** contains the **bug list**   for the Data collection project for its 1.2.1 version.
+    + **Data Collection/Version_1.2.1/LOC v1.2.1.csv** contains the **Lines of code**   for the Data collection project for its 1.2.1 version.
 
 ## 2) 
 
