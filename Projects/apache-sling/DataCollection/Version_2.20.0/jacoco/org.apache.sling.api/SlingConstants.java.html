@@ -1,0 +1,414 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SlingConstants.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Sling API</a> &gt; <a href="index.source.html" class="el_package">org.apache.sling.api</a> &gt; <span class="el_source">SlingConstants.java</span></div><h1>SlingConstants.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.apache.sling.api;
+
+/**
+ * The &lt;code&gt;SlingConstants&lt;/code&gt; interface provides some symbolic constants
+ * for well known constant strings in Sling. Even though these constants will
+ * never change, it is recommended that applications refer to the symbolic
+ * constants instead of code the strings themselves.
+ * &lt;p&gt;
+ * This class is not intended to be extended or instantiated because it just
+ * provides constants not intended to be overwritten.
+ */
+<span class="nc" id="L30">public class SlingConstants {</span>
+
+    /**
+     * The namespace prefix used throughout Sling (value is &quot;sling&quot;).
+     * &lt;p&gt;
+     * The actual use depends on the environment. For example a
+     * {@link org.apache.sling.api.resource.ResourceResolver} using a JCR
+     * repository may name Sling node types and items using namespaces mapped to
+     * this prefix. A JSP tag library for Sling may use this prefix as the
+     * namespace prefix for its tags.
+     */
+    public static final String NAMESPACE_PREFIX = &quot;sling&quot;;
+
+    /**
+     * The namespace URI prefix to be used by Sling projects to define
+     * namespaces (value is &quot;http://sling.apache.org/&quot;).
+     * &lt;p&gt;
+     * The actual namespace URI depends on the environment. For example a
+     * {@link org.apache.sling.api.resource.ResourceResolver} using a JCR
+     * repository may define its namespace as
+     * &lt;code&gt;&lt;em&gt;NAMESPACE_URI_ROOT + &quot;jcr/sling/1.0&quot;&lt;/em&gt;&lt;/code&gt;. A JSP
+     * tag library for Sling may define its namespace as
+     * &lt;code&gt;&lt;em&gt;NAMESPACE_URI_ROOT + &quot;taglib/sling/1.0&quot;&lt;/em&gt;&lt;/code&gt;.
+     */
+    public static final String NAMESPACE_URI_ROOT = &quot;http://sling.apache.org/&quot;;
+
+    /**
+     * The name of the request attribute containing the &lt;code&gt;Servlet&lt;/code&gt;
+     * which included the servlet currently being active (value is
+     * &quot;org.apache.sling.api.include.servlet&quot;). This attribute is only set if
+     * the serlvet or script is included via
+     * &lt;code&gt;RequestDispatcher.include&lt;/code&gt; from another servlet or script.
+     * &lt;p&gt;
+     * The type of the attribute value is &lt;code&gt;javax.servlet.Servlet&lt;/code&gt;.
+     */
+    public static final String ATTR_REQUEST_SERVLET = &quot;org.apache.sling.api.include.servlet&quot;;
+
+    /**
+     * The name of the request attribute containing the &lt;code&gt;Resource&lt;/code&gt;
+     * underlying the &lt;code&gt;Servlet&lt;/code&gt; which included the servlet currently
+     * being active (value is &quot;org.apache.sling.api.include.resource&quot;). This
+     * attribute is only set if the serlvet or script is included via
+     * &lt;code&gt;RequestDispatcher.include&lt;/code&gt; from another servlet or script.
+     * &lt;p&gt;
+     * The type of the attribute value is
+     * &lt;code&gt;org.apache.sling.api.resource.Resource&lt;/code&gt;.
+     */
+    public static final String ATTR_REQUEST_CONTENT = &quot;org.apache.sling.api.include.resource&quot;;
+
+    /**
+     * The name of the request attribute containing the
+     * &lt;code&gt;RequestPathInfo&lt;/code&gt; underlying the &lt;code&gt;Servlet&lt;/code&gt; which
+     * included the servlet currently being active (value is
+     * &quot;org.apache.sling.api.include.request_path_info&quot;). This attribute is only
+     * set if the serlvet or script is included via
+     * &lt;code&gt;RequestDispatcher.include&lt;/code&gt; from another servlet or script.
+     * &lt;p&gt;
+     * The type of the attribute value is
+     * &lt;code&gt;org.apache.sling.api.request.RequestPathInfo&lt;/code&gt;.
+     */
+    public static final String ATTR_REQUEST_PATH_INFO = &quot;org.apache.sling.api.include.request_path_info&quot;;
+
+    /**
+     * The name of the request attribute containing the
+     * &lt;code&gt;HttpServletRequest.getRequestURI()&lt;/code&gt; of the request which
+     * included the servlet currently being active underlying the
+     * &lt;code&gt;Servlet&lt;/code&gt; which included the servlet currently being active
+     * (value is &quot;javax.servlet.include.request_uri&quot;). This attribute is only
+     * set if the serlvet or script is included via
+     * &lt;code&gt;RequestDispatcher.include&lt;/code&gt; from another servlet or script.
+     * &lt;p&gt;
+     * The type of the attribute value is &lt;code&gt;String&lt;/code&gt;.
+     * &lt;p&gt;
+     * &lt;b&gt;Note:&lt;/b&gt; In Sling, the
+     * &lt;code&gt;HttpServletRequest.getRequestURI()&lt;/code&gt; method will always return
+     * the same result regardless of whether it is called from the client
+     * request processing servlet or script or from an included servlet or
+     * script. This request attribute is set for compatibility with the Servlet
+     * API specification.
+     */
+    public static final String ATTR_INCLUDE_REQUEST_URI = &quot;javax.servlet.include.request_uri&quot;;
+
+    /**
+     * The name of the request attribute containing the
+     * &lt;code&gt;HttpServletRequest.getContextPath()&lt;/code&gt; of the request which
+     * included the servlet currently being active underlying the
+     * &lt;code&gt;Servlet&lt;/code&gt; which included the servlet currently being active
+     * (value is &quot;javax.servlet.include.context_path&quot;). This attribute is only
+     * set if the serlvet or script is included via
+     * &lt;code&gt;RequestDispatcher.include&lt;/code&gt; from another servlet or script.
+     * &lt;p&gt;
+     * The type of the attribute value is &lt;code&gt;String&lt;/code&gt;.
+     * &lt;p&gt;
+     * &lt;b&gt;Note:&lt;/b&gt; In Sling, the
+     * &lt;code&gt;HttpServletRequest.getContextPath()&lt;/code&gt; method will always
+     * return the same result regardless of whether it is called from the client
+     * request processing servlet or script or from an included servlet or
+     * script. This request attribute is set for compatibility with the Servlet
+     * API specification.
+     */
+    public static final String ATTR_INCLUDE_CONTEXT_PATH = &quot;javax.servlet.include.context_path&quot;;
+
+    /**
+     * The name of the request attribute containing the
+     * &lt;code&gt;HttpServletRequest.getServletPath()&lt;/code&gt; of the request which
+     * included the servlet currently being active underlying the
+     * &lt;code&gt;Servlet&lt;/code&gt; which included the servlet currently being active
+     * (value is &quot;javax.servlet.include.servlet_path&quot;). This attribute is only
+     * set if the serlvet or script is included via
+     * &lt;code&gt;RequestDispatcher.include&lt;/code&gt; from another servlet or script.
+     * &lt;p&gt;
+     * The type of the attribute value is &lt;code&gt;String&lt;/code&gt;.
+     * &lt;p&gt;
+     * &lt;b&gt;Note:&lt;/b&gt; In Sling, the
+     * &lt;code&gt;HttpServletRequest.getServletPath()&lt;/code&gt; method will always
+     * return the same result regardless of whether it is called from the client
+     * request processing servlet or script or from an included servlet or
+     * script. This request attribute is set for compatibility with the Servlet
+     * API specification.
+     */
+    public static final String ATTR_INCLUDE_SERVLET_PATH = &quot;javax.servlet.include.servlet_path&quot;;
+
+    /**
+     * The name of the request attribute containing the
+     * &lt;code&gt;HttpServletRequest.getPathInfo()&lt;/code&gt; of the request which
+     * included the servlet currently being active underlying the
+     * &lt;code&gt;Servlet&lt;/code&gt; which included the servlet currently being active
+     * (value is &quot;javax.servlet.include.path_info&quot;). This attribute is only set
+     * if the serlvet or script is included via
+     * &lt;code&gt;RequestDispatcher.include&lt;/code&gt; from another servlet or script.
+     * &lt;p&gt;
+     * The type of the attribute value is &lt;code&gt;String&lt;/code&gt;.
+     * &lt;p&gt;
+     * &lt;b&gt;Note:&lt;/b&gt; In Sling, the &lt;code&gt;HttpServletRequest.getPathInfo()&lt;/code&gt;
+     * method will always return the same result regardless of whether it is
+     * called from the client request processing servlet or script or from an
+     * included servlet or script. This request attribute is set for
+     * compatibility with the Servlet API specification.
+     */
+    public static final String ATTR_INCLUDE_PATH_INFO = &quot;javax.servlet.include.path_info&quot;;
+
+    /**
+     * The name of the request attribute containing the
+     * &lt;code&gt;HttpServletRequest.getQueryString()&lt;/code&gt; of the request which
+     * included the servlet currently being active underlying the
+     * &lt;code&gt;Servlet&lt;/code&gt; which included the servlet currently being active
+     * (value is &quot;javax.servlet.include.query_string&quot;). This attribute is only
+     * set if the serlvet or script is included via
+     * &lt;code&gt;RequestDispatcher.include&lt;/code&gt; from another servlet or script.
+     * &lt;p&gt;
+     * The type of the attribute value is &lt;code&gt;String&lt;/code&gt;.
+     * &lt;p&gt;
+     * &lt;b&gt;Note:&lt;/b&gt; In Sling, the
+     * &lt;code&gt;HttpServletRequest.getQueryString()&lt;/code&gt; method will always
+     * return the same result regardless of whether it is called from the client
+     * request processing servlet or script or from an included servlet or
+     * script. This request attribute is set for compatibility with the Servlet
+     * API specification.
+     */
+    public static final String ATTR_INCLUDE_QUERY_STRING = &quot;javax.servlet.include.query_string&quot;;
+
+    // ---------- Error handling -----------------------------------------------
+
+    /**
+     * The name of the request attribute containing the exception thrown causing
+     * the error handler to be called (value is
+     * &quot;javax.servlet.error.exception&quot;). This attribute is only available to
+     * error handling servlets and only if an exception has been thrown causing
+     * error handling.
+     * &lt;p&gt;
+     * The type of the attribute value is &lt;code&gt;java.lang.Throwable&lt;/code&gt;.
+     */
+    public static final String ERROR_EXCEPTION = &quot;javax.servlet.error.exception&quot;;
+
+    /**
+     * The name of the request attribute containing the fully qualified class
+     * name of the exception thrown causing the error handler to be called
+     * (value is &quot;javax.servlet.error.exception_type&quot;). This attribute is only
+     * available to error handling servlets and only if an exception has been
+     * thrown causing error handling. This attribute is present for backwards
+     * compatibility only. Error handling servlet implementors are advised to
+     * use the {@link #ERROR_EXCEPTION Throwable} itself.
+     * &lt;p&gt;
+     * The type of the attribute value is &lt;code&gt;java.lang.String&lt;/code&gt;.
+     */
+    public static final String ERROR_EXCEPTION_TYPE = &quot;javax.servlet.error.exception_type&quot;;
+
+    /**
+     * The name of the request attribute containing the message of the error
+     * situation (value is &quot;javax.servlet.error.message&quot;). If an exception
+     * caused error handling, this is the exceptions message from
+     * &lt;code&gt;Throwable.getMessage()&lt;/code&gt;. If error handling is caused by a
+     * call to one of the &lt;code&gt;SlingHttpServletResponse.sendError&lt;/code&gt;
+     * methods, this attribute contains the optional message.
+     * &lt;p&gt;
+     * The type of the attribute value is &lt;code&gt;java.lang.String&lt;/code&gt;.
+     */
+    public static final String ERROR_MESSAGE = &quot;javax.servlet.error.message&quot;;
+
+    /**
+     * The name of the request attribute containing the URL requested by the
+     * client during whose processing the error handling was caused (value is
+     * &quot;javax.servlet.error.request_uri&quot;). This property is retrieved calling
+     * the &lt;code&gt;SlingHttpServletRequest.getRequestURI()&lt;/code&gt; method.
+     * &lt;p&gt;
+     * The type of the attribute value is &lt;code&gt;java.lang.String&lt;/code&gt;.
+     */
+    public static final String ERROR_REQUEST_URI = &quot;javax.servlet.error.request_uri&quot;;
+
+    /**
+     * The name of the request attribute containing the name of the servlet
+     * which caused the error handling (value is
+     * &quot;javax.servlet.error.servlet_name&quot;).
+     * &lt;p&gt;
+     * The type of the attribute value is &lt;code&gt;java.lang.String&lt;/code&gt;.
+     */
+    public static final String ERROR_SERVLET_NAME = &quot;javax.servlet.error.servlet_name&quot;;
+
+    /**
+     * The name of the request attribute containing the status code sent to the
+     * client (value is &quot;javax.servlet.error.status_code&quot;). Error handling
+     * servlets may set this status code on their response to the client or they
+     * may choose to set another status code. For example a handler for
+     * NOT_FOUND status (404) may opt to redirect to a new location and thus not
+     * set the 404 status but a MOVED_PERMANENTLY (301) status. If this
+     * attribute is not set and the error handler is not configured to set its
+     * own status code anyway, a default value of INTERNAL_SERVER_ERROR (500)
+     * should be sent.
+     * &lt;p&gt;
+     * The type of the attribute value is &lt;code&gt;java.lang.Integer&lt;/code&gt;.
+     */
+    public static final String ERROR_STATUS = &quot;javax.servlet.error.status_code&quot;;
+
+    /**
+     * The topic for the OSGi event which is sent when a resource has been added
+     * to the resource tree.
+     * The event contains at least the {@link #PROPERTY_PATH}, {@link #PROPERTY_RESOURCE_SUPER_TYPE}
+     * and {@link #PROPERTY_RESOURCE_TYPE} properties.
+     * @since 2.0.6 (Sling API Bundle 2.0.6)
+     *
+     * @deprecated Register a {@link org.apache.sling.api.resource.observation.ResourceChangeListener} instead
+     */
+    @Deprecated
+    public static final String TOPIC_RESOURCE_ADDED = &quot;org/apache/sling/api/resource/Resource/ADDED&quot;;
+
+    /**
+     * The topic for the OSGi event which is sent when a resource has been removed
+     * from the resource tree.
+     * The event contains at least the {@link #PROPERTY_PATH}. As the resource has already been removed
+     * no further information like resource type etc. might be available.
+     * @since 2.0.6 (Sling API Bundle 2.0.6)
+     *
+     * @deprecated Register a {@link org.apache.sling.api.resource.observation.ResourceChangeListener} instead
+     */
+    @Deprecated
+    public static final String TOPIC_RESOURCE_REMOVED = &quot;org/apache/sling/api/resource/Resource/REMOVED&quot;;
+
+    /**
+     * The topic for the OSGi event which is sent when a resource has been changed
+     * in the resource tree.
+     * The event contains at least the {@link #PROPERTY_PATH}, {@link #PROPERTY_RESOURCE_SUPER_TYPE}
+     * and {@link #PROPERTY_RESOURCE_TYPE} properties.
+     * Since 2.2.0 the event might contain these properties {@link #PROPERTY_ADDED_ATTRIBUTES},
+     * {@link #PROPERTY_REMOVED_ATTRIBUTES}, {@link #PROPERTY_CHANGED_ATTRIBUTES}. All of them are
+     * optional.
+     * @since 2.0.6 (Sling API Bundle 2.0.6)
+     *
+     * @deprecated Register a {@link org.apache.sling.api.resource.observation.ResourceChangeListener} instead
+     */
+    @Deprecated
+    public static final String TOPIC_RESOURCE_CHANGED = &quot;org/apache/sling/api/resource/Resource/CHANGED&quot;;
+
+    /**
+     * The topic for the OSGi event which is sent when a resource provider has been
+     * added to the resource tree.
+     * The event contains at least the {@link #PROPERTY_PATH} property.
+     * @since 2.0.6 (Sling API Bundle 2.0.6)
+     */
+    public static final String TOPIC_RESOURCE_PROVIDER_ADDED = &quot;org/apache/sling/api/resource/ResourceProvider/ADDED&quot;;
+
+    /**
+     * The topic for the OSGi event which is sent when a resource provider has been
+     * removed from the resource tree.
+     * The event contains at least the {@link #PROPERTY_PATH} property.
+     * @since 2.0.6 (Sling API Bundle 2.0.6)
+     */
+    public static final String TOPIC_RESOURCE_PROVIDER_REMOVED = &quot;org/apache/sling/api/resource/ResourceProvider/REMOVED&quot;;
+
+    /**
+     * The topic for the OSGi event which is sent when the resource mapping changes.
+     * @since 2.2.0 (Sling API Bundle 2.2.0)
+     */
+    public static final String TOPIC_RESOURCE_RESOLVER_MAPPING_CHANGED = &quot;org/apache/sling/api/resource/ResourceResolverMapping/CHANGED&quot;;
+
+    /**
+     * The name of the event property holding the resource path.
+     * @since 2.0.6 (Sling API Bundle 2.0.6)
+     */
+    public static final String PROPERTY_PATH = &quot;path&quot;;
+
+    /**
+     * The name of the event property holding the userid. This property is optional.
+     * @since 2.1.0  (Sling API Bundle 2.1.0)
+     */
+    public static final String PROPERTY_USERID = &quot;userid&quot;;
+
+    /**
+     * The name of the event property holding the resource type.
+     * @since 2.0.6 (Sling API Bundle 2.0.6)
+     */
+    public static final String PROPERTY_RESOURCE_TYPE = &quot;resourceType&quot;;
+
+    /**
+     * The name of the event property holding the resource super type.
+     * @since 2.0.6 (Sling API Bundle 2.0.6)
+     */
+    public static final String PROPERTY_RESOURCE_SUPER_TYPE = &quot;resourceSuperType&quot;;
+
+    /**
+     * The name of the event property holding the changed attribute names
+     * of a resource for an {@link #TOPIC_RESOURCE_CHANGED} event.
+     * The value of the property is a string array.
+     * @since 2.2.0 (Sling API Bundle 2.2.0)
+     */
+    public static final String PROPERTY_CHANGED_ATTRIBUTES = &quot;resourceChangedAttributes&quot;;
+
+    /**
+     * The name of the event property holding the added attribute names
+     * of a resource for an {@link #TOPIC_RESOURCE_CHANGED} event.
+     * The value of the property is a string array.
+     * @since 2.2.0 (Sling API Bundle 2.2.0)
+     */
+    public static final String PROPERTY_ADDED_ATTRIBUTES = &quot;resourceAddedAttributes&quot;;
+
+    /**
+     * The name of the event property holding the removed attribute names
+     * of a resource for an {@link #TOPIC_RESOURCE_CHANGED} event.
+     * The value of the property is a string array.
+     * @since 2.2.0 (Sling API Bundle 2.2.0)
+     */
+    public static final String PROPERTY_REMOVED_ATTRIBUTES = &quot;resourceRemovedAttributes&quot;;
+
+    /**
+     * The topic for the OSGi event which is sent when an adapter factory has been added.
+     * The event contains at least the {@link #PROPERTY_ADAPTABLE_CLASSES},
+     * and {@link #PROPERTY_ADAPTER_CLASSES} poperties.
+     * @since 2.0.6 (Sling API Bundle 2.0.6)
+     */
+    public static final String TOPIC_ADAPTER_FACTORY_ADDED = &quot;org/apache/sling/api/adapter/AdapterFactory/ADDED&quot;;
+
+    /**
+     * The topic for the OSGi event which is sent when an adapter factory has been removed.
+     * The event contains at least the {@link #PROPERTY_ADAPTABLE_CLASSES},
+     * and {@link #PROPERTY_ADAPTER_CLASSES} poperties.
+     * @since 2.0.6 (Sling API Bundle 2.0.6)
+     */
+    public static final String TOPIC_ADAPTER_FACTORY_REMOVED = &quot;org/apache/sling/api/adapter/AdapterFactory/REMOVED&quot;;
+
+    /**
+     * The event property listing the fully qualified names of
+     * classes which can be adapted by this adapter factory (value is
+     * &quot;adaptables&quot;). The type of the value is a string array.
+     * @since 2.0.6 (Sling API Bundle 2.0.6)
+     */
+    public static final String PROPERTY_ADAPTABLE_CLASSES = &quot;adaptables&quot;;
+
+    /**
+     * The event property listing the fully qualified names of
+     * classes to which this factory can adapt adaptables (value is &quot;adapters&quot;).
+     * The type of the value is a string array.
+     * @since 2.0.6 (Sling API Bundle 2.0.6)
+     */
+    public static final String PROPERTY_ADAPTER_CLASSES = &quot;adapters&quot;;
+
+    /**
+     * The name of the request attribute providing the name of the currently
+     * executing servlet (value is &quot;sling.core.current.servletName&quot;). This
+     * attribute is set immediately before calling the
+     * &lt;code&gt;Servlet.service()&lt;/code&gt; method and reset to any previously
+     * stored value after the service method returns.
+     * @since 2.1 (Sling API Bundle 2.1.0)
+     */
+    public static final String SLING_CURRENT_SERVLET_NAME = &quot;sling.core.current.servletName&quot;;
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

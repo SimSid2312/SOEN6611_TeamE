@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ResourceProvider.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Sling API</a> &gt; <a href="index.source.html" class="el_package">org.apache.sling.api.resource</a> &gt; <span class="el_source">ResourceProvider.java</span></div><h1>ResourceProvider.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.apache.sling.api.resource;
+
+import java.util.Iterator;
+
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+import javax.servlet.http.HttpServletRequest;
+
+import org.osgi.annotation.versioning.ConsumerType;
+
+/**
+ * API for providers of resources. Used by the {@link ResourceResolver} to
+ * transparently access resources from different locations such as a JCR
+ * repository (the default) or OSGi bundles.
+ * &lt;p&gt;
+ * This interface is intended to be implemented by providers of resource
+ * instances on behalf of the {@link ResourceResolver}. It
+ * is not intended to be used by client applications directly. A resource
+ * provider can either directly implement this service interface, e.g.
+ * when no user authentication is provided (like for bundle resources)
+ * or a {@link ResourceProviderFactory} service can be implemented which
+ * upon successful authentication returns a resource provider with the
+ * given user credentials.
+ *
+ * @deprecated Use the {@link org.apache.sling.spi.resource.provider.ResourceProvider}
+ */
+@ConsumerType
+@Deprecated
+public interface ResourceProvider {
+
+    /**
+     * The service name to use when registering implementations of this
+     * interface as services (value is
+     * &quot;org.apache.sling.api.resource.ResourceProvider&quot;).
+     */
+<span class="nc" id="L54">    String SERVICE_NAME = ResourceProvider.class.getName();</span>
+
+    /**
+     * The name of the service registration property containing the root paths
+     * of the resources provided by this provider (value is &quot;provider.roots&quot;).
+     */
+    String ROOTS = &quot;provider.roots&quot;;
+
+    /**
+     * The name of the service registration property containing the a boolean
+     * flag whether this provider owns the tree registered by the roots. The
+     * default for this value is {@code false}. If a provider owns a root
+     * no other providers are asked for resources under this root if this
+     * provider does not have a resource. (value is &quot;provider.ownsRoots&quot;).
+     *
+     * @since 2.2 (Sling API Bundle 2.2.0)
+     */
+    String OWNS_ROOTS = &quot;provider.ownsRoots&quot;;
+
+    /**
+     * The name of the service registration property containing the a boolean
+     * flag indicating if the ResourceAccessSecurity service should be used for
+     * this provider or not. ResourceProvider implementations are encouraged
+     * to use the ResourceAccessSecurity service for access control unless
+     * the underlying storage already provides it.
+     * The default for this value is {@code false}.
+     * (value is &quot;provider.useResourceAccessSecurity&quot;)
+     * @since 2.4 (Sling API Bundle 2.5.0)
+     */
+    String USE_RESOURCE_ACCESS_SECURITY = &quot;provider.useResourceAccessSecurity&quot;;
+
+    /**
+     * The resource type be set on resources returned by the
+     * {@link #listChildren(Resource)} method to enable traversing the
+     * resource
+     * tree down to a deeply nested provided resource which has no concrete
+     * parent hierarchy (value is&quot;sling:syntheticResourceProviderResource&quot;).
+     *
+     * @see #listChildren(Resource)
+     */
+    String RESOURCE_TYPE_SYNTHETIC = &quot;sling:syntheticResourceProviderResource&quot;;
+
+    /**
+     * Returns a resource from this resource provider or {@code null} if
+     * the resource provider cannot find it. The path should have one of the
+     * {@link #ROOTS} strings as its prefix.
+     * &lt;p&gt;
+     * This method is called to resolve a resource for the given request.
+     * The properties of the request, such as request
+     * parameters, may be use to parameterize the resource resolution. An
+     * example of such parameterization is support for a JSR-311
+     * style resource provider to support the parameterized URL patterns.
+     *
+     * @param resourceResolver
+     *            The {@link ResourceResolver} to which the returned
+     *            {@link Resource} is attached.
+     * @param request The request
+     * @param path The resource path
+     * @return {@code null} If this provider does not have a resource for
+     *         the path.
+     * @throws org.apache.sling.api.SlingException
+     *             may be thrown in case of any problem creating the {@code Resource} instance.
+     * @deprecated since 2.2.0 (and JCR Resource 2.1.0), this method will not be invoked.
+     */
+    @Deprecated
+    @Nullable Resource getResource(@NotNull ResourceResolver resourceResolver, @NotNull HttpServletRequest request, @NotNull String path);
+
+    /**
+     * Returns a resource from this resource provider or {@code null} if
+     * the resource provider cannot find it. The path should have one of the {@link #ROOTS}
+     * strings as its prefix.
+     *
+     * The resource provider must not return cached instances for a resource as
+     * the resource resolver will update the resource metadata of the resource
+     * at the end of the resolution process and this metadata might be different
+     * depending on the full path of resource resolution passed into the
+     * resource resolver.
+     *
+     * @param resourceResolver
+     *            The {@link ResourceResolver} to which the returned {@link Resource} is attached.
+     * @param path The full path of the resource.
+     * @return {@code null} If this provider does not have a resource for
+     *         the path.
+     * @throws org.apache.sling.api.SlingException
+     *             may be thrown in case of any problem creating the {@code Resource} instance.
+     */
+    @Nullable Resource getResource(@NotNull ResourceResolver resourceResolver, @NotNull String path);
+
+    /**
+     * Returns an {@code Iterator} of {@link Resource} objects loaded from
+     * the children of the given {@code Resource}. The returned {@link Resource} instances
+     *  are attached to the same
+     * {@link ResourceResolver} as the given {@code parent} resource.
+     * &lt;p&gt;
+     * This method may be called for resource providers whose root path list contains a path such
+     * that the resource path is a
+     * prefix of the list entry. This allows for the enumeration of deeply nested provided resources
+     * for which no actual parent
+     * hierarchy exists.
+     * &lt;p&gt;
+     * The returned iterator may in turn contain resources which do not actually exist but are required
+     *  to traverse the resource
+     * tree. Such resources SHOULD be {@link SyntheticResource} objects whose resource type MUST be set to
+     * {@link #RESOURCE_TYPE_SYNTHETIC}.
+     *
+     * As with {@link #getResource(ResourceResolver, String)} the returned Resource objects must
+     * not be cached objects.
+     *
+     * @param parent
+     *            The {@link Resource Resource} whose children are requested.
+     * @return An {@code Iterator} of {@link Resource} objects or {@code null} if the resource
+     *         provider has no children for the given resource.
+     * @throws NullPointerException
+     *             If {@code parent} is {@code null}.
+     * @throws org.apache.sling.api.SlingException
+     *             If any error occurs acquiring the child resource iterator.
+     */
+    @Nullable Iterator&lt;Resource&gt; listChildren(@NotNull Resource parent);
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

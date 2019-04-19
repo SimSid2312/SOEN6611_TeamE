@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ResourceResolverWrapper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Sling API</a> &gt; <a href="index.source.html" class="el_package">org.apache.sling.api.wrappers</a> &gt; <span class="el_source">ResourceResolverWrapper.java</span></div><h1>ResourceResolverWrapper.java</h1><pre class="source lang-java linenums">/*******************************************************************************
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+package org.apache.sling.api.wrappers;
+
+import java.util.Iterator;
+import java.util.Map;
+import org.jetbrains.annotations.NotNull;
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.sling.api.resource.LoginException;
+import org.apache.sling.api.resource.PersistenceException;
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.ResourceWrapper;
+import org.osgi.annotation.versioning.ConsumerType;
+
+/**
+ * The {@code ResourceResolverWrapper} is a wrapper for any {@code ResourceResolver}, delegating all method calls to the wrapped resource
+ * resolver by default. Extensions of this class may overwrite any method to return different values as appropriate.
+ */
+@ConsumerType
+public class ResourceResolverWrapper implements ResourceResolver {
+
+    private ResourceResolver wrapped;
+
+    /**
+     * Creates a new wrapper instance, delegating all calls to the given {@code resolver}.
+     *
+     * @param resolver the wrapped resource resolver
+     */
+<span class="fc" id="L45">    public ResourceResolverWrapper(ResourceResolver resolver) {</span>
+<span class="fc" id="L46">        wrapped = resolver;</span>
+<span class="fc" id="L47">    }</span>
+
+    /**
+     * Wraps and returns the {@code Resource} obtained by calling {@code resolve} on the wrapped resource resolver.
+     *
+     * @param request The http servlet request object providing more hints at
+     *                how to resolve the &lt;code&gt;absPath&lt;/code&gt;. This parameter may be
+     *                &lt;code&gt;null&lt;/code&gt; in which case the implementation should use
+     *                reasonable defaults.
+     * @param absPath The absolute path to be resolved to a resource. If this
+     *                parameter is &lt;code&gt;null&lt;/code&gt;, it is assumed to address the
+     *                root of the resource tree. If the path is relative it is
+     *                assumed relative to the root, that is a slash is prepended to
+     *                the path before resolving it.
+     * @return a wrapped resource obtained through the wrapped resource resolver
+     */
+    @NotNull
+    @Override
+    public Resource resolve(@NotNull HttpServletRequest request, @NotNull String absPath) {
+<span class="fc" id="L66">        return ResourceResolverResourceWrapper.wrap(this, wrapped.resolve(request, absPath));</span>
+    }
+
+    /**
+     * Wraps and returns the {@code Resource} obtained by calling {@code resolve} on the wrapped resource resolver.
+     *
+     * @param absPath The absolute path to be resolved to a resource. If this
+     *                parameter is &lt;code&gt;null&lt;/code&gt;, it is assumed to address the
+     *                root of the resource tree. If the path is relative it is
+     *                assumed relative to the root, that is a slash is prepended to
+     *                the path before resolving it.
+     * @return a wrapped resource obtained through the wrapped resource resolver
+     */
+    @NotNull
+    @Override
+    public Resource resolve(@NotNull String absPath) {
+<span class="fc" id="L82">        return ResourceResolverResourceWrapper.wrap(this, wrapped.resolve(absPath));</span>
+    }
+
+    /**
+     * Wraps and returns the {@code Resource} obtained by calling {@code resolve} on the wrapped resource resolver.
+     *
+     * @param request The http servlet request object used to resolve the
+     *                resource for. This must not be &lt;code&gt;null&lt;/code&gt;.
+     * @return a wrapped resource obtained through the wrapped resource resolver
+     */
+    @SuppressWarnings(&quot;deprecation&quot;)
+    @NotNull
+    @Override
+    public Resource resolve(@NotNull HttpServletRequest request) {
+<span class="fc" id="L96">        return ResourceResolverResourceWrapper.wrap(this, wrapped.resolve(request));</span>
+    }
+
+    @NotNull
+    @Override
+    public String map(@NotNull String resourcePath) {
+<span class="fc" id="L102">        return wrapped.map(resourcePath);</span>
+    }
+
+    @Override
+    public String map(@NotNull HttpServletRequest request, @NotNull String resourcePath) {
+<span class="fc" id="L107">        return wrapped.map(request, resourcePath);</span>
+    }
+
+    /**
+     * Wraps and returns the {@code Resource} obtained by calling {@code getResource} on the wrapped resource resolver.
+     *
+     * @param path The absolute path to the resource object to be loaded. The
+     *             path may contain relative path specifiers like &lt;code&gt;.&lt;/code&gt;
+     *             (current location) and &lt;code&gt;..&lt;/code&gt; (parent location),
+     *             which are resolved by this method. If the path is relative,
+     *             that is the first character is not a slash, implementations
+     *             are expected to apply a search path algorithm to resolve the
+     *             relative path to a resource.
+     * @return a wrapped resource obtained through the wrapped resource resolver
+     */
+    @Override
+    public Resource getResource(@NotNull String path) {
+<span class="fc" id="L124">        return ResourceResolverResourceWrapper.wrap(this, wrapped.getResource(path));</span>
+    }
+
+    /**
+     * Wraps and returns the {@code Resource} obtained by calling {@code getResource} on the wrapped resource resolver.
+     *
+     * @param base The base {@link Resource} against which a relative path
+     *             argument given by &lt;code&gt;path&lt;/code&gt; is resolved. This
+     *             parameter may be &lt;code&gt;null&lt;/code&gt; if the &lt;code&gt;path&lt;/code&gt; is
+     *             known to be absolute.
+     * @param path The path to the resource object to be loaded. If the path is
+     *             relative, i.e. does not start with a slash (&lt;code&gt;/&lt;/code&gt;),
+     *             the resource relative to the given &lt;code&gt;base&lt;/code&gt; resource
+     *             is returned. The path may contain relative path specifiers
+     *             like &lt;code&gt;.&lt;/code&gt; (current location) and &lt;code&gt;..&lt;/code&gt;
+     *             (parent location), which are resolved by this method.
+     * @return a wrapped resource obtained through the wrapped resource resolver
+     */
+    @Override
+    public Resource getResource(Resource base, @NotNull String path) {
+<span class="fc" id="L144">        return ResourceResolverResourceWrapper.wrap(this, wrapped.getResource(base, path));</span>
+    }
+
+    @NotNull
+    @Override
+    public String[] getSearchPath() {
+<span class="fc" id="L150">        return wrapped.getSearchPath();</span>
+    }
+
+    /**
+     * Wraps and returns the {@code Iterator} obtained by calling {@code listChildren} on the wrapped resource resolver.
+     *
+     * @param parent The {@link Resource Resource} whose children are requested.
+     * @return a wrapped iterator obtained through the wrapped resource resolver
+     */
+    @NotNull
+    @Override
+    public Iterator&lt;Resource&gt; listChildren(@NotNull Resource parent) {
+<span class="fc" id="L162">        return new ResourceIteratorWrapper(this, wrapped.listChildren(parent));</span>
+    }
+
+    /**
+     * Wraps and returns the {@code Resource} obtained by calling {@code getParent} on the wrapped resource resolver.
+     *
+     * @param child The {@link Resource Resource} whose parent is requested.
+     * @return a wrapped resource obtained through the wrapped resource resolver
+     */
+    @Override
+    public Resource getParent(@NotNull Resource child) {
+<span class="fc" id="L173">        return ResourceResolverResourceWrapper.wrap(this, wrapped.getParent(child));</span>
+    }
+
+    /**
+     * Wraps and returns the {@code Iterable} obtained by calling {@code getChildren} on the wrapped resource resolver.
+     *
+     * @param parent The {@link Resource Resource} whose children are requested.
+     * @return a wrapped iterable obtained through the wrapped resource resolver
+     */
+    @NotNull
+    @Override
+    public Iterable&lt;Resource&gt; getChildren(@NotNull final Resource parent) {
+<span class="fc" id="L185">        final ResourceResolverWrapper resourceResolverWrapper = this;</span>
+<span class="fc" id="L186">        return new Iterable&lt;Resource&gt;() {</span>
+            @Override
+            public Iterator&lt;Resource&gt; iterator() {
+<span class="fc" id="L189">                return new ResourceIteratorWrapper(resourceResolverWrapper, wrapped.getChildren(parent).iterator());</span>
+            }
+        };
+    }
+
+    /**
+     * Wraps and returns the {@code Iterator} obtained by calling {@code findResources} on the wrapped resource resolver.
+     *
+     * @param query    The query string to use to find the resources.
+     * @param language The language in which the query is formulated. The
+     *                 language should always be specified. However for
+     *                 compatibility with older version, if no language
+     *                 is specified, &quot;xpath&quot; is used.
+     * @return a wrapped iterator obtained through the wrapped resource resolver
+     */
+    @NotNull
+    @Override
+    public Iterator&lt;Resource&gt; findResources(@NotNull String query, String language) {
+<span class="fc" id="L207">        return new ResourceIteratorWrapper(this, wrapped.findResources(query, language));</span>
+    }
+
+    @NotNull
+    @Override
+    public Iterator&lt;Map&lt;String, Object&gt;&gt; queryResources(@NotNull String query, String language) {
+<span class="fc" id="L213">        return wrapped.queryResources(query, language);</span>
+    }
+
+    @Override
+    public boolean hasChildren(@NotNull Resource resource) {
+<span class="fc" id="L218">        return wrapped.hasChildren(resource);</span>
+    }
+
+    /**
+     * Wraps and returns the {@code ResourceResolver} obtained by calling {@code clone} on the wrapped resource resolver.
+     *
+     * @param authenticationInfo The map or credential data to overlay the
+     *                           original credential data with for the creation of a new
+     *                           resource resolver. This may be &lt;code&gt;null&lt;/code&gt; in which case
+     *                           the same credential data is used as was used to create this
+     *                           instance.
+     * @return a wrapped resource resolver
+     */
+    @NotNull
+    @Override
+    public ResourceResolver clone(Map&lt;String, Object&gt; authenticationInfo) throws LoginException {
+<span class="fc" id="L234">        ResourceResolver toWrap = wrapped.clone(authenticationInfo);</span>
+<span class="fc" id="L235">        return new ResourceResolverWrapper(toWrap);</span>
+    }
+
+    @Override
+    public boolean isLive() {
+<span class="fc" id="L240">        return wrapped.isLive();</span>
+    }
+
+    @Override
+    public void close() {
+<span class="fc" id="L245">        wrapped.close();</span>
+<span class="fc" id="L246">    }</span>
+
+    @Override
+    public String getUserID() {
+<span class="fc" id="L250">        return wrapped.getUserID();</span>
+    }
+
+    @NotNull
+    @Override
+    public Iterator&lt;String&gt; getAttributeNames() {
+<span class="fc" id="L256">        return wrapped.getAttributeNames();</span>
+    }
+
+    @Override
+    public Object getAttribute(@NotNull String name) {
+<span class="fc" id="L261">        return wrapped.getAttribute(name);</span>
+    }
+
+    @Override
+    public void delete(@NotNull Resource resource) throws PersistenceException {
+<span class="fc" id="L266">        wrapped.delete(resource);</span>
+<span class="fc" id="L267">    }</span>
+
+    /**
+     * Wraps the {@code Resource} obtained by calling {@code create} on the wrapped resource resolver.
+     *
+     * @param parent     The parent resource
+     * @param name       The name of the child resource - this is a plain name, not a path!
+     * @param properties Optional properties for the resource
+     * @return a wrapped resource obtained through the wrapped resource resolver
+     */
+    @NotNull
+    @Override
+    public Resource create(@NotNull Resource parent, @NotNull String name, Map&lt;String, Object&gt; properties) throws PersistenceException {
+<span class="fc" id="L280">        return ResourceResolverResourceWrapper.wrap(this, wrapped.create(parent, name, properties));</span>
+    }
+
+    @Override
+    public void revert() {
+<span class="fc" id="L285">        wrapped.revert();</span>
+<span class="fc" id="L286">    }</span>
+
+    @Override
+    public void commit() throws PersistenceException {
+<span class="fc" id="L290">        wrapped.commit();</span>
+<span class="fc" id="L291">    }</span>
+
+    @Override
+    public boolean hasChanges() {
+<span class="fc" id="L295">        return wrapped.hasChanges();</span>
+    }
+
+    @Override
+    public String getParentResourceType(Resource resource) {
+<span class="fc" id="L300">        return wrapped.getParentResourceType(resource);</span>
+    }
+
+    @Override
+    public String getParentResourceType(String resourceType) {
+<span class="fc" id="L305">        return wrapped.getParentResourceType(resourceType);</span>
+    }
+
+    @Override
+    public boolean isResourceType(Resource resource, String resourceType) {
+<span class="fc" id="L310">        return wrapped.isResourceType(resource, resourceType);</span>
+    }
+
+    @Override
+    public void refresh() {
+<span class="fc" id="L315">        wrapped.refresh();</span>
+<span class="fc" id="L316">    }</span>
+
+    /**
+     * Wraps the {@code Resource} obtained by calling {@code copy} on the wrapped resource resolver.
+     *
+     * @param srcAbsPath  the path of the resource to be copied.
+     * @param destAbsPath the location to which the resource at
+     *                    &lt;code&gt;srcAbsPath&lt;/code&gt; is to be copied.
+     * @return a wrapped resource obtained through the wrapped resource resolver
+     */
+    @Override
+    public Resource copy(String srcAbsPath, String destAbsPath) throws PersistenceException {
+<span class="fc" id="L328">        return ResourceResolverResourceWrapper.wrap(this, wrapped.copy(srcAbsPath, destAbsPath));</span>
+    }
+
+    /**
+     * Wraps the {@code Resource} obtained by calling {@code move} on the wrapped resource resolver.
+     *
+     * @param srcAbsPath  the path of the resource to be moved.
+     * @param destAbsPath the location to which the resource at
+     *                    &lt;code&gt;srcAbsPath&lt;/code&gt; is to be moved.
+     * @return a wrapped resource obtained through the wrapped resource resolver
+     */
+    @Override
+    public Resource move(String srcAbsPath, String destAbsPath) throws PersistenceException {
+<span class="fc" id="L341">        return ResourceResolverResourceWrapper.wrap(this, wrapped.move(srcAbsPath, destAbsPath));</span>
+    }
+
+    @Override
+    public &lt;AdapterType&gt; AdapterType adaptTo(@NotNull Class&lt;AdapterType&gt; type) {
+<span class="fc" id="L346">        return wrapped.adaptTo(type);</span>
+    }
+
+    /**
+     * {@code ResourceWrapper} that overwrites the {@link #getResourceResolver()} to return the {@link ResourceResolverWrapper}.
+     */
+    private static class ResourceResolverResourceWrapper extends ResourceWrapper {
+
+        private final ResourceResolverWrapper resolver;
+
+        /**
+         * Creates a new wrapper instance delegating all method calls to the given {@code resource}.
+         *
+         * @param resolver the wrapping resource resolver
+         * @param resource the wrapped resource
+         */
+        ResourceResolverResourceWrapper(ResourceResolverWrapper resolver, Resource resource) {
+<span class="fc" id="L363">            super(resource);</span>
+<span class="fc" id="L364">            this.resolver = resolver;</span>
+<span class="fc" id="L365">        }</span>
+
+        /**
+         * Returns the wrapping resource resolver from which this resource was obtained.
+         *
+         * @return the wrapping resource resolver
+         */
+        @Override
+        public ResourceResolver getResourceResolver() {
+<span class="fc" id="L374">            return resolver;</span>
+        }
+
+        private static Resource wrap(ResourceResolverWrapper resolver, Resource resource) {
+<span class="pc bpc" id="L378" title="1 of 2 branches missed.">            if (resource != null) {</span>
+<span class="fc" id="L379">                return new ResourceResolverResourceWrapper(resolver, resource);</span>
+            }
+<span class="nc" id="L381">            return null;</span>
+        }
+    }
+
+    /**
+     * {@code IteratorWrapper} that wraps every returned {@code Resource} with the {@code ResourceResolverResourceWrapper}.
+     *
+     * @see ResourceResolverResourceWrapper
+     */
+    private static class ResourceIteratorWrapper extends IteratorWrapper&lt;Resource&gt; {
+
+        private final ResourceResolverWrapper resolver;
+
+        public ResourceIteratorWrapper(ResourceResolverWrapper resolver, Iterator&lt;Resource&gt; wrappedIterator) {
+<span class="fc" id="L395">            super(wrappedIterator);</span>
+<span class="fc" id="L396">            this.resolver = resolver;</span>
+<span class="fc" id="L397">        }</span>
+
+        @Override
+        public Resource next() {
+<span class="fc" id="L401">            return ResourceResolverResourceWrapper.wrap(resolver, super.next());</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>
