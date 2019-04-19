@@ -35,7 +35,9 @@
 - **Code Change** inside the project name folder contains configuration code.
 
 
-## 2) Steps to Run Projects/Scripts/spearman_and_pearson.py; install python 3 or above, pip and pip install pandas, scipy, numpy and matlpotlib libraries.
+## 2) Steps to Run Projects/Scripts/spearman_and_pearson.py  
+- Install python 3 or above, pip and pip install pandas, scipy, numpy and matlpotlib libraries.
+- Run python file by opening the terminal and running **python spearman_and_pearson.py**.
 
 ## 3) Team Members
 
