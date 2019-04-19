@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ObjectConverter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Sling API</a> &gt; <a href="index.source.html" class="el_package">org.apache.sling.api.wrappers.impl</a> &gt; <span class="el_source">ObjectConverter.java</span></div><h1>ObjectConverter.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.apache.sling.api.wrappers.impl;
+
+import java.lang.reflect.Array;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+/**
+ * Converts objects to specific types.
+ */
+public final class ObjectConverter {
+    
+<span class="nc" id="L33">    private ObjectConverter() {</span>
+        // static methods only
+<span class="nc" id="L35">    }</span>
+
+    /**
+     * Converts the object to the given type.
+     * @param obj object
+     * @param type type
+     * @param &lt;T&gt; Target type
+     * @return the converted object
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public static &lt;T&gt; T convert(Object obj, Class&lt;T&gt; type) {
+<span class="fc bfc" id="L46" title="All 2 branches covered.">        if (obj == null) {</span>
+<span class="fc" id="L47">            return null;</span>
+        }
+        
+        // check if direct assignment is possible
+<span class="fc bfc" id="L51" title="All 2 branches covered.">        if (type.isAssignableFrom(obj.getClass())) {</span>
+<span class="fc" id="L52">            return (T)obj;</span>
+        }
+        
+        // convert array elements individually
+<span class="fc bfc" id="L56" title="All 2 branches covered.">        if (type.isArray()) {</span>
+<span class="fc" id="L57">            return (T)convertToArray(obj, type.getComponentType());</span>
+        }
+        
+        // convert Calendar in Date and vice versa
+<span class="fc bfc" id="L61" title="All 4 branches covered.">        if (Calendar.class.isAssignableFrom(type) &amp;&amp; obj instanceof Date) {</span>
+<span class="fc" id="L62">            return (T)DateUtils.toCalendar((Date)obj);</span>
+        }
+<span class="fc bfc" id="L64" title="All 4 branches covered.">        if (type == Date.class &amp;&amp; obj instanceof Calendar) {</span>
+<span class="fc" id="L65">            return (T)DateUtils.toDate((Calendar)obj);</span>
+        }
+
+        // no direct conversion - format to string and try to parse to target type 
+<span class="fc" id="L69">        String result = getSingleValue(obj);</span>
+<span class="fc bfc" id="L70" title="All 2 branches covered.">        if (result == null) {</span>
+<span class="fc" id="L71">            return null;</span>
+        }
+<span class="fc bfc" id="L73" title="All 2 branches covered.">        if (type == String.class) {</span>
+<span class="fc" id="L74">            return (T)result.toString();</span>
+        }
+<span class="fc bfc" id="L76" title="All 2 branches covered.">        if (type == Boolean.class) {</span>
+            // do not rely on Boolean.parseBoolean to avoid converting nonsense to &quot;false&quot; without noticing
+<span class="fc bfc" id="L78" title="All 2 branches covered.">            if (&quot;true&quot;.equalsIgnoreCase(result)) {</span>
+<span class="fc" id="L79">                return (T)Boolean.TRUE;</span>
+            }
+<span class="fc bfc" id="L81" title="All 2 branches covered.">            else if (&quot;false&quot;.equalsIgnoreCase(result)) {</span>
+<span class="fc" id="L82">                return (T)Boolean.FALSE;</span>
+            }
+            else {
+<span class="fc" id="L85">                return null;</span>
+            }
+        }
+        try {
+<span class="fc bfc" id="L89" title="All 2 branches covered.">            if (type == Byte.class) {</span>
+<span class="fc" id="L90">                return (T)(Byte)Byte.parseByte(result);</span>
+            }
+<span class="fc bfc" id="L92" title="All 2 branches covered.">            if (type == Short.class) {</span>
+<span class="fc" id="L93">                return (T)(Short)Short.parseShort(result);</span>
+            }
+<span class="fc bfc" id="L95" title="All 2 branches covered.">            if (type == Integer.class) {</span>
+<span class="fc" id="L96">                return (T)(Integer)Integer.parseInt(result);</span>
+            }
+<span class="fc bfc" id="L98" title="All 2 branches covered.">            if (type == Long.class) {</span>
+<span class="fc" id="L99">                return (T)(Long)Long.parseLong(result);</span>
+            }
+<span class="fc bfc" id="L101" title="All 2 branches covered.">            if (type == Float.class) {</span>
+<span class="fc" id="L102">                return (T)(Float)Float.parseFloat(result);</span>
+            }
+<span class="fc bfc" id="L104" title="All 2 branches covered.">            if (type == Double.class) {</span>
+<span class="fc" id="L105">                return (T)(Double)Double.parseDouble(result);</span>
+            }
+<span class="fc bfc" id="L107" title="All 2 branches covered.">            if (type == BigDecimal.class) {</span>
+<span class="fc" id="L108">                return (T)new BigDecimal(result);</span>
+            }
+        }
+<span class="fc" id="L111">        catch (NumberFormatException e) {</span>
+<span class="fc" id="L112">            return null;</span>
+        }
+<span class="fc bfc" id="L114" title="All 2 branches covered.">        if (Calendar.class.isAssignableFrom(type)) {</span>
+<span class="fc" id="L115">            return (T)DateUtils.calendarFromString(result);</span>
+        }
+<span class="fc bfc" id="L117" title="All 2 branches covered.">        if (type == Date.class) {</span>
+<span class="fc" id="L118">            return (T)DateUtils.dateFromString(result);</span>
+        }
+<span class="fc" id="L120">        return null;</span>
+    }
+
+    /**
+     * Gets a single value of String from the object. If the object is an array it returns it's first element.
+     * @param obj object or object array.
+     * @return result of &lt;code&gt;toString()&lt;/code&gt; on object or first element of an object array. If @param obj is null
+     * or it's an array with first element that is null, then null is returned.
+     */
+    private static String getSingleValue(Object obj) {
+        final String result;
+<span class="pc bpc" id="L131" title="1 of 2 branches missed.">        if (obj == null) {</span>
+<span class="nc" id="L132">            result = null;</span>
+<span class="nc" id="L133">        }</span>
+<span class="fc bfc" id="L134" title="All 2 branches covered.">        else if (obj.getClass().isArray()) {</span>
+<span class="fc bfc" id="L135" title="All 2 branches covered.">            if (Array.getLength(obj) == 0) {</span>
+<span class="fc" id="L136">                result = null;</span>
+<span class="fc" id="L137">            }</span>
+            else {
+<span class="fc" id="L139">                result = getSingleValue(Array.get(obj, 0));</span>
+            }
+<span class="fc" id="L141">        }</span>
+<span class="fc bfc" id="L142" title="All 2 branches covered.">        else if (obj instanceof Calendar) {</span>
+<span class="fc" id="L143">            result = DateUtils.calendarToString((Calendar)obj);</span>
+<span class="fc" id="L144">        }</span>
+<span class="fc bfc" id="L145" title="All 2 branches covered.">        else if (obj instanceof Date) {</span>
+<span class="fc" id="L146">            result = DateUtils.dateToString((Date)obj);</span>
+<span class="fc" id="L147">        }</span>
+        else {
+<span class="fc" id="L149">            result = obj.toString();</span>
+        }
+<span class="fc" id="L151">        return result;</span>
+    }
+
+    /**
+     * Converts the object to an array of the given type
+     * @param obj the object or object array
+     * @param type the component type of the array
+     * @return and array of type T
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    private static &lt;T&gt; T[] convertToArray(Object obj, Class&lt;T&gt; type) {
+<span class="fc bfc" id="L162" title="All 2 branches covered.">        if (obj.getClass().isArray()) {</span>
+<span class="fc" id="L163">            List&lt;Object&gt; resultList = new ArrayList&lt;Object&gt;();</span>
+<span class="fc bfc" id="L164" title="All 2 branches covered.">            for (int i = 0; i &lt; Array.getLength(obj); i++) {</span>
+<span class="fc" id="L165">                T singleValueResult = convert(Array.get(obj, i), type);</span>
+<span class="fc bfc" id="L166" title="All 2 branches covered.">                if (singleValueResult != null) {</span>
+<span class="fc" id="L167">                    resultList.add(singleValueResult);</span>
+                }
+            }
+<span class="fc" id="L170">            return resultList.toArray((T[])Array.newInstance(type, resultList.size()));</span>
+        }
+        else {
+<span class="fc" id="L173">            final T singleValueResult = convert(obj, type);</span>
+            // return null for type conversion errors instead of single element array with value null
+<span class="fc bfc" id="L175" title="All 2 branches covered.">            if (singleValueResult == null) {</span>
+<span class="fc" id="L176">                return (T[])Array.newInstance(type, 0);</span>
+            }
+<span class="fc" id="L178">            final T[] arrayResult = (T[])Array.newInstance(type, 1);</span>
+<span class="fc" id="L179">            arrayResult[0] = singleValueResult;</span>
+<span class="fc" id="L180">            return arrayResult;</span>
+        }
+    }
+    
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

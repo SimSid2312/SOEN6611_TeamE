@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Path.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Sling API</a> &gt; <a href="index.source.html" class="el_package">org.apache.sling.api.resource.path</a> &gt; <span class="el_source">Path.java</span></div><h1>Path.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.apache.sling.api.resource.path;
+
+import java.util.regex.Pattern;
+
+import javax.annotation.Nonnull;
+
+/**
+ * Simple helper class for path matching.
+ *
+ * @since 1.0.0 (Sling API Bundle 2.11.0)
+ */
+public class Path implements Comparable&lt;Path&gt; {
+
+    /**
+     * The prefix to be used for glob patterns
+     * @since 1.2.0 (Sling API Bundle 2.15.0)
+     */
+    public static final String GLOB_PREFIX = &quot;glob:&quot;;
+
+    private final String path;
+    private final String prefix;
+    private final boolean isPattern;
+    private final Pattern regexPattern;
+
+    /**
+     * &lt;p&gt;Create a new path object either from a concrete path or from a glob pattern.&lt;/p&gt;
+     *
+     * &lt;p&gt;A glob pattern must start with the {@code glob:} prefix (e.g. &lt;code&gt;glob:**&amp;#47;*.html&lt;/code&gt;). The following rules are used
+     * to interpret glob patterns:&lt;/p&gt;
+     * &lt;ul&gt;
+     *     &lt;li&gt;The {@code *} character matches zero or more characters of a name component without crossing directory boundaries.&lt;/li&gt;
+     *     &lt;li&gt;The {@code **} characters match zero or more characters crossing directory boundaries.&lt;/li&gt;
+     * &lt;/ul&gt;
+     *
+     * @param path The resource path or a glob pattern.
+     * @throws NullPointerException If {@code otherPath} is {@code null}
+     * @throws IllegalArgumentException If the provided path is not absolute, or if the glob pattern does not start with a slash.
+     */
+<span class="fc" id="L57">    public Path(@Nonnull final String path) {</span>
+<span class="fc bfc" id="L58" title="All 2 branches covered.">        if ( path.equals(&quot;/&quot;) ) {</span>
+<span class="fc" id="L59">            this.path = &quot;/&quot;;</span>
+<span class="fc bfc" id="L60" title="All 2 branches covered.">        } else if ( path.endsWith(&quot;/&quot;) ) {</span>
+<span class="fc" id="L61">            this.path = path.substring(0, path.length() - 1);</span>
+<span class="fc" id="L62">        } else {</span>
+<span class="fc" id="L63">            this.path = path;</span>
+        }
+<span class="fc bfc" id="L65" title="All 2 branches covered.">        if (this.path.startsWith(GLOB_PREFIX)) {</span>
+<span class="fc" id="L66">            final String patternPath = path.substring(GLOB_PREFIX.length());</span>
+<span class="fc" id="L67">            this.isPattern = true;</span>
+<span class="fc" id="L68">            this.regexPattern = Pattern.compile(toRegexPattern(patternPath));</span>
+<span class="fc" id="L69">            int lastSlash = 0;</span>
+<span class="fc" id="L70">            int pos = 1;</span>
+<span class="fc bfc" id="L71" title="All 2 branches covered.">            while ( patternPath.length() &gt; pos ) {</span>
+<span class="fc" id="L72">                final char c = patternPath.charAt(pos);</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">                if ( c == '/') {</span>
+<span class="fc" id="L74">                    lastSlash = pos;</span>
+<span class="fc bfc" id="L75" title="All 2 branches covered.">                } else if ( c == '*') {</span>
+<span class="fc" id="L76">                    break;</span>
+                }
+<span class="fc" id="L78">                pos++;</span>
+            }
+
+<span class="fc bfc" id="L81" title="All 2 branches covered.">            this.prefix = (pos == patternPath.length() ? patternPath : patternPath.substring(0, lastSlash + 1));</span>
+<span class="fc" id="L82">        } else {</span>
+<span class="fc" id="L83">            this.isPattern = false;</span>
+<span class="fc" id="L84">            this.regexPattern = null;</span>
+<span class="fc bfc" id="L85" title="All 2 branches covered.">            this.prefix = this.path.equals(&quot;/&quot;) ? &quot;/&quot; : this.path.concat(&quot;/&quot;);</span>
+        }
+<span class="fc bfc" id="L87" title="All 2 branches covered.">        if ( !this.prefix.startsWith(&quot;/&quot;) ) {</span>
+<span class="fc" id="L88">            throw new IllegalArgumentException(&quot;Path must be absolute: &quot; + path);</span>
+        }
+<span class="fc" id="L90">    }</span>
+
+    /**
+     * If this {@code Path} object holds a path (and not a pattern), this method
+     * checks whether the provided path is equal to this path or a sub path of it.
+     * If a glob pattern is provided as the argument, it performs the same check
+     * and respects the provided pattern. This means it returns {@code true} if this
+     * path is a parent to any potential path matching the provided pattern. For
+     * example if this path is {@code /apps/foo} and the provided pattern is
+     * {@code glob:/apps/foo/bar/*.jsp} this method will return true. Same if
+     * the provided pattern is {@code glob:/apps&amp;#47;**&amp;#47;hello.html}.
+     * If this {@code Path} object holds a pattern, it checks whether the
+     * provided path matches the pattern. If this path object holds a pattern
+     * and a pattern is provided as the argument, it returns only {@code true}
+     * if the pattern is the same.
+     * If the provided argument is not an absolute path (e.g. if it is a relative
+     * path or a pattern), this method returns {@code false}.
+     *
+     * @param otherPath Absolute path to check.
+     * @return {@code true} If other path is within the sub tree of this path
+     *         or matches the pattern.
+     * @see Path#isPattern()
+     * @throws NullPointerException If {@code otherPath} is {@code null}
+     * @throws IllegalArgumentException If the provided path is not absolute, or if the glob pattern does not start with a slash.
+     */
+    public boolean matches(final String otherPath) {
+<span class="fc bfc" id="L116" title="All 2 branches covered.">        if ( otherPath.startsWith(GLOB_PREFIX) ) {</span>
+<span class="fc bfc" id="L117" title="All 2 branches covered.">            if ( this.isPattern ) {</span>
+                // both are patterns, then they must be equal.
+                // need to compare Pattern.pattern() as that class does
+                // not implement a semantic equals(...) method
+<span class="fc" id="L121">                final Path oPath = new Path(otherPath);</span>
+<span class="fc" id="L122">                return this.regexPattern.pattern().equals(oPath.regexPattern.pattern());</span>
+            }
+
+            // this is path, provided argument is a pattern
+
+            // simple check, if this is root, everything is a sub pattern
+<span class="fc bfc" id="L128" title="All 2 branches covered.">            if ( &quot;/&quot;.equals(this.path) ) {</span>
+<span class="fc" id="L129">                return true;</span>
+            }
+            // simplest case - the prefix of the glob pattern matches already
+            // for example: this path = /apps
+            //              glob      = /apps/**
+            // then we iterate by removing the last path segment
+<span class="fc" id="L135">            String subPath = otherPath;</span>
+<span class="fc bfc" id="L136" title="All 2 branches covered.">            while ( subPath != null ) {</span>
+<span class="fc" id="L137">                final Path oPath = new Path(subPath);</span>
+<span class="fc bfc" id="L138" title="All 2 branches covered.">                if ( oPath.matches(this.path) ) {</span>
+<span class="fc" id="L139">                    return true;</span>
+                }
+<span class="fc" id="L141">                final int lastSlash = subPath.lastIndexOf('/');</span>
+<span class="fc bfc" id="L142" title="All 2 branches covered.">                if ( lastSlash == GLOB_PREFIX.length() ) {</span>
+<span class="fc" id="L143">                    subPath = null;</span>
+<span class="fc" id="L144">                } else {</span>
+<span class="fc" id="L145">                    subPath = subPath.substring(0, lastSlash);</span>
+                }
+            }
+
+<span class="fc" id="L149">            return false;</span>
+        }
+
+        // provided argument is a path
+<span class="fc bfc" id="L153" title="All 2 branches covered.">        if ( !otherPath.startsWith(&quot;/&quot;) ) {</span>
+<span class="fc" id="L154">            throw new IllegalArgumentException(&quot;Path must be absolute: &quot; + otherPath);</span>
+        }
+<span class="fc bfc" id="L156" title="All 2 branches covered.">        if (isPattern) {</span>
+<span class="fc" id="L157">            return this.regexPattern.matcher(otherPath).matches();</span>
+        }
+<span class="fc bfc" id="L159" title="All 4 branches covered.">        return this.path.equals(otherPath) || otherPath.startsWith(this.prefix);</span>
+    }
+
+    /**
+     * Return the path if this {@code Path} object holds a path,
+     * returns the pattern otherwise.
+     * @return The path or pattern.
+     * @see #isPattern()
+     */
+    public String getPath() {
+<span class="fc" id="L169">        return this.path;</span>
+    }
+
+    /**
+     * Returns {code true} if this {@code Path} object is holding a pattern
+     * @return {code true} for a pattern, {@code false} for a path.
+     * @since 1.2.0 (Sling API Bundle 2.15.0)
+     */
+    public boolean isPattern() {
+<span class="fc" id="L178">        return this.isPattern;</span>
+    }
+
+    @Override
+    public int compareTo(@Nonnull final Path o) {
+<span class="fc" id="L183">        return this.getPath().compareTo(o.getPath());</span>
+    }
+
+    @Override
+    public int hashCode() {
+<span class="fc" id="L188">        return this.getPath().hashCode();</span>
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+<span class="fc bfc" id="L193" title="All 2 branches covered.">        if (this == obj) {</span>
+<span class="fc" id="L194">            return true;</span>
+        }
+<span class="fc bfc" id="L196" title="All 4 branches covered.">        if (obj == null || !(obj instanceof Path)) {</span>
+<span class="fc" id="L197">            return false;</span>
+        }
+<span class="fc" id="L199">        return this.getPath().equals(((Path)obj).getPath());</span>
+    }
+
+    private static String toRegexPattern(String pattern) {
+<span class="fc" id="L203">        StringBuilder stringBuilder = new StringBuilder(&quot;^&quot;);</span>
+<span class="fc" id="L204">        int index = 0;</span>
+<span class="fc bfc" id="L205" title="All 2 branches covered.">        while (index &lt; pattern.length()) {</span>
+<span class="fc" id="L206">            char currentChar = pattern.charAt(index++);</span>
+<span class="fc bfc" id="L207" title="All 3 branches covered.">            switch (currentChar) {</span>
+                case '*':
+<span class="fc bfc" id="L209" title="All 2 branches covered.">                    if (getCharAtIndex(pattern, index) == '*') {</span>
+<span class="fc" id="L210">                        stringBuilder.append(&quot;.*&quot;);</span>
+<span class="fc" id="L211">                        ++index;</span>
+<span class="fc" id="L212">                    } else {</span>
+<span class="fc" id="L213">                        stringBuilder.append(&quot;[^/]*&quot;);</span>
+                    }
+<span class="fc" id="L215">                    break;</span>
+                case '/':
+<span class="fc" id="L217">                    stringBuilder.append(currentChar);</span>
+<span class="fc" id="L218">                    break;</span>
+                default:
+<span class="fc bfc" id="L220" title="All 2 branches covered.">                    if (isRegexMeta(currentChar)) {</span>
+<span class="fc" id="L221">                        stringBuilder.append(Pattern.quote(Character.toString(currentChar)));</span>
+<span class="fc" id="L222">                    } else {</span>
+<span class="fc" id="L223">                        stringBuilder.append(currentChar);</span>
+                    }
+            }
+        }
+<span class="fc" id="L227">        return stringBuilder.append('$').toString();</span>
+    }
+
+    private static char getCharAtIndex(String string, int index) {
+<span class="fc bfc" id="L231" title="All 2 branches covered.">        return index &lt; string.length() ? string.charAt(index) : 0;</span>
+    }
+
+    private static boolean isRegexMeta(char character) {
+<span class="fc bfc" id="L235" title="All 2 branches covered.">        return &quot;&lt;([{\\^-=$!|]})?*+.&gt;&quot;.indexOf(character) != -1;</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="fc" id="L240">        return &quot;Path [path=&quot; + path + &quot;]&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>
