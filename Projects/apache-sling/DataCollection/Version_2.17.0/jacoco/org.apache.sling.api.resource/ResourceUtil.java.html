@@ -1,0 +1,813 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ResourceUtil.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Sling API</a> &gt; <a href="index.source.html" class="el_package">org.apache.sling.api.resource</a> &gt; <span class="el_source">ResourceUtil.java</span></div><h1>ResourceUtil.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.apache.sling.api.resource;
+
+import java.text.MessageFormat;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+
+import org.apache.sling.api.wrappers.ValueMapDecorator;
+
+/**
+ * The &lt;code&gt;ResourceUtil&lt;/code&gt; class provides helper methods dealing with
+ * resources.
+ * &lt;p&gt;
+ * This class is not intended to be extended or instantiated because it just
+ * provides static utility methods not intended to be overwritten.
+ */
+<span class="nc" id="L40">public class ResourceUtil {</span>
+
+    /**
+     * Resolves relative path segments '.' and '..' in the absolute path.
+     * Returns {@code null} if not possible (.. points above root) or if path is not
+     * absolute.
+     *
+     * @param path The path to normalize
+     * @return The normalized path or {@code null}.
+     */
+    public static @CheckForNull String normalize(@Nonnull String path) {
+
+        // don't care for empty paths
+<span class="fc bfc" id="L53" title="All 2 branches covered.">        if (path.length() == 0) {</span>
+<span class="fc" id="L54">            return path;</span>
+        }
+
+        // prepare the path buffer with trailing slash (simplifies impl)
+<span class="fc bfc" id="L58" title="All 2 branches covered.">        int absOffset = (path.charAt(0) == '/') ? 0 : 1;</span>
+<span class="fc" id="L59">        char[] buf = new char[path.length() + 1 + absOffset];</span>
+<span class="fc bfc" id="L60" title="All 2 branches covered.">        if (absOffset == 1) {</span>
+<span class="fc" id="L61">            buf[0] = '/';</span>
+        }
+<span class="fc" id="L63">        path.getChars(0, path.length(), buf, absOffset);</span>
+<span class="fc" id="L64">        buf[buf.length - 1] = '/';</span>
+
+<span class="fc" id="L66">        int lastSlash = 0; // last slash in path</span>
+<span class="fc" id="L67">        int numDots = 0; // number of consecutive dots after last slash</span>
+
+<span class="fc" id="L69">        int bufPos = 0;</span>
+<span class="fc bfc" id="L70" title="All 2 branches covered.">        for (int bufIdx = lastSlash; bufIdx &lt; buf.length; bufIdx++) {</span>
+<span class="fc" id="L71">            char c = buf[bufIdx];</span>
+<span class="fc bfc" id="L72" title="All 2 branches covered.">            if (c == '/') {</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">                if (numDots == 2) {</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">                    if (bufPos == 0) {</span>
+<span class="fc" id="L75">                        return null;</span>
+                    }
+
+                    do {
+<span class="fc" id="L79">                        bufPos--;</span>
+<span class="fc bfc" id="L80" title="All 4 branches covered.">                    } while (bufPos &gt; 0 &amp;&amp; buf[bufPos] != '/');</span>
+                }
+
+<span class="fc" id="L83">                lastSlash = bufIdx;</span>
+<span class="fc" id="L84">                numDots = 0;</span>
+<span class="fc bfc" id="L85" title="All 6 branches covered.">            } else if (c == '.' &amp;&amp; useDot(buf, bufIdx) &amp;&amp; numDots &lt; 2) {</span>
+<span class="fc" id="L86">                numDots++;</span>
+            } else {
+                // find the next slash
+<span class="fc" id="L89">                int nextSlash = bufIdx + 1;</span>
+<span class="pc bpc" id="L90" title="1 of 4 branches missed.">                while (nextSlash &lt; buf.length &amp;&amp; buf[nextSlash] != '/') {</span>
+<span class="fc" id="L91">                    nextSlash++;</span>
+                }
+
+                // append up to the next slash (or end of path)
+<span class="fc bfc" id="L95" title="All 2 branches covered.">                if (bufPos &lt; lastSlash) {</span>
+<span class="fc" id="L96">                    int segLen = nextSlash - bufIdx + 1;</span>
+<span class="fc" id="L97">                    System.arraycopy(buf, lastSlash, buf, bufPos, segLen);</span>
+<span class="fc" id="L98">                    bufPos += segLen;</span>
+<span class="fc" id="L99">                } else {</span>
+<span class="fc" id="L100">                    bufPos = nextSlash;</span>
+                }
+
+<span class="fc" id="L103">                numDots = 0;</span>
+<span class="fc" id="L104">                lastSlash = nextSlash;</span>
+<span class="fc" id="L105">                bufIdx = nextSlash;</span>
+            }
+        }
+
+        String resolved;
+<span class="pc bpc" id="L110" title="1 of 4 branches missed.">        if (bufPos == 0 &amp;&amp; numDots == 0) {</span>
+<span class="fc bfc" id="L111" title="All 2 branches covered.">            resolved = (absOffset == 0) ? &quot;/&quot; : &quot;&quot;;</span>
+<span class="fc bfc" id="L112" title="All 2 branches covered.">        } else if ((bufPos - absOffset) == path.length()) {</span>
+<span class="fc" id="L113">            resolved = path;</span>
+        } else {
+<span class="fc" id="L115">            resolved = new String(buf, absOffset, bufPos - absOffset);</span>
+        }
+
+<span class="fc" id="L118">        return resolved;</span>
+    }
+
+    // use this dot only if followed by /
+    // don't use if followed by neither . nor /
+    // keep checking till a non-dot is found
+    private static boolean useDot(char[] buf, int bufIdx) {
+<span class="fc bfc" id="L125" title="All 2 branches covered.">        while(bufIdx &lt; buf.length -1) {</span>
+<span class="fc bfc" id="L126" title="All 2 branches covered.">            if(buf[bufIdx] == '/') {</span>
+<span class="fc" id="L127">                return true;</span>
+            }
+<span class="fc bfc" id="L129" title="All 2 branches covered.">            else if(buf[bufIdx] != '.') {</span>
+<span class="fc" id="L130">                return false;</span>
+            }
+<span class="fc" id="L132">            bufIdx++;</span>
+        }
+<span class="fc" id="L134">        return true;</span>
+    }
+    /**
+     * Utility method returns the parent path of the given &lt;code&gt;path&lt;/code&gt;,
+     * which is normalized by {@link #normalize(String)} before resolving the
+     * parent.
+     *
+     * @param path The path whose parent is to be returned.
+     * @return &lt;code&gt;null&lt;/code&gt; if &lt;code&gt;path&lt;/code&gt; is the root path (
+     *         &lt;code&gt;/&lt;/code&gt;) or if &lt;code&gt;path&lt;/code&gt; is a single name
+     *         containing no slash (&lt;code&gt;/&lt;/code&gt;) characters.
+     * @throws IllegalArgumentException If the path cannot be normalized by the
+     *             {@link #normalize(String)} method.
+     * @throws NullPointerException If &lt;code&gt;path&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;.
+     */
+    public static @CheckForNull String getParent(@Nonnull String path) {
+<span class="fc bfc" id="L150" title="All 2 branches covered.">        if (&quot;/&quot;.equals(path)) {</span>
+<span class="fc" id="L151">            return null;</span>
+        }
+
+        // normalize path (remove . and ..)
+<span class="fc" id="L155">        path = normalize(path);</span>
+
+        // if normalized to root, there is no parent
+<span class="fc bfc" id="L158" title="All 4 branches covered.">        if (path == null || &quot;/&quot;.equals(path)) {</span>
+<span class="fc" id="L159">            return null;</span>
+        }
+
+<span class="fc" id="L162">        String workspaceName = null;</span>
+
+<span class="fc" id="L164">        final int wsSepPos = path.indexOf(&quot;:/&quot;);</span>
+<span class="fc bfc" id="L165" title="All 2 branches covered.">        if (wsSepPos != -1) {</span>
+<span class="fc" id="L166">            workspaceName = path.substring(0, wsSepPos);</span>
+<span class="fc" id="L167">            path = path.substring(wsSepPos + 1);</span>
+        }
+
+        // find the last slash, after which to cut off
+<span class="fc" id="L171">        int lastSlash = path.lastIndexOf('/');</span>
+<span class="fc bfc" id="L172" title="All 2 branches covered.">        if (lastSlash &lt; 0) {</span>
+            // no slash in the path
+<span class="fc" id="L174">            return null;</span>
+<span class="fc bfc" id="L175" title="All 2 branches covered.">        } else if (lastSlash == 0) {</span>
+            // parent is root
+<span class="fc bfc" id="L177" title="All 2 branches covered.">            if (workspaceName != null) {</span>
+<span class="fc" id="L178">                return workspaceName + &quot;:/&quot;;</span>
+            }
+<span class="fc" id="L180">            return &quot;/&quot;;</span>
+        }
+
+<span class="fc" id="L183">        String parentPath = path.substring(0, lastSlash);</span>
+<span class="fc bfc" id="L184" title="All 2 branches covered.">        if (workspaceName != null) {</span>
+<span class="fc" id="L185">            return workspaceName + &quot;:&quot; + parentPath;</span>
+        }
+<span class="fc" id="L187">        return parentPath;</span>
+    }
+
+    /**
+     * Utility method returns the ancestor's path at the given &lt;code&gt;level&lt;/code&gt;
+     * relative to &lt;code&gt;path&lt;/code&gt;, which is normalized by {@link #normalize(String)}
+     * before resolving the ancestor.
+     *
+     * &lt;ul&gt;
+     * &lt;li&gt;&lt;code&gt;level&lt;/code&gt; = 0 returns the &lt;code&gt;path&lt;/code&gt;.&lt;/li&gt;
+     * &lt;li&gt;&lt;code&gt;level&lt;/code&gt; = 1 returns the parent of &lt;code&gt;path&lt;/code&gt;, if it exists, &lt;code&gt;null&lt;/code&gt; otherwise.&lt;/li&gt;
+     * &lt;li&gt;&lt;code&gt;level&lt;/code&gt; = 2 returns the grandparent of &lt;code&gt;path&lt;/code&gt;, if it exists, &lt;code&gt;null&lt;/code&gt; otherwise.&lt;/li&gt;
+     * &lt;/ul&gt;
+     *
+     * @param path The path whose ancestor is to be returned.
+     * @param level The relative level of the ancestor, relative to &lt;code&gt;path&lt;/code&gt;.
+     * @return &lt;code&gt;null&lt;/code&gt; if &lt;code&gt;path&lt;/code&gt; doesn't have an ancestor at the
+     *            specified &lt;code&gt;level&lt;/code&gt;.
+     * @throws IllegalArgumentException If the path cannot be normalized by the
+     *             {@link #normalize(String)} method or if &lt;code&gt;level&lt;/code&gt; &amp;lt; 0.
+     * @throws NullPointerException If &lt;code&gt;path&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;.
+     * @since 2.2 (Sling API Bundle 2.2.0)
+     */
+    public static String getParent(final String path, final int level) {
+<span class="fc bfc" id="L211" title="All 2 branches covered.">        if ( level &lt; 0 ) {</span>
+<span class="fc" id="L212">            throw new IllegalArgumentException(&quot;level must be non-negative&quot;);</span>
+        }
+<span class="fc" id="L214">        String result = path;</span>
+<span class="fc bfc" id="L215" title="All 2 branches covered.">        for(int i=0; i&lt;level; i++) {</span>
+<span class="fc" id="L216">            result = getParent(result);</span>
+<span class="fc bfc" id="L217" title="All 2 branches covered.">            if ( result == null ) {</span>
+<span class="fc" id="L218">                break;</span>
+            }
+        }
+<span class="fc" id="L221">        return result;</span>
+    }
+
+    /**
+     * Utility method returns the parent resource of the resource.
+     *
+     * @param rsrc The resource to get the parent of.
+     * @return The parent resource or null if the rsrc is the root.
+     * @throws NullPointerException If &lt;code&gt;rsrc&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;.
+     * @throws org.apache.sling.api.SlingException If an error occurs trying to
+     *             get the resource object from the path.
+     * @throws IllegalStateException if the resource resolver has already been
+     *             closed}.
+     * @deprecated since 2.1.0, use {@link Resource#getParent()} instead
+     */
+    @Deprecated
+    public static @CheckForNull Resource getParent(@Nonnull Resource rsrc) {
+<span class="nc" id="L238">        return rsrc.getParent();</span>
+    }
+
+    /**
+     * Utility method returns the name of the resource.
+     *
+     * @param rsrc The resource to get the name from.
+     * @return The name of the resource
+     * @throws NullPointerException If &lt;code&gt;rsrc&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;.
+     * @deprecated since 2.1.0, use {@link Resource#getName()} instead
+     */
+    @Deprecated
+    public static @Nonnull String getName(@Nonnull Resource rsrc) {
+        /*
+         * Same as AbstractResource.getName() implementation to prevent problems
+         * if there are implementations of the pre-2.1.0 Resource interface in
+         * the framework.
+         */
+<span class="nc" id="L256">        return getName(rsrc.getPath());</span>
+    }
+
+    /**
+     * Utility method returns the name of the given &lt;code&gt;path&lt;/code&gt;, which is
+     * normalized by {@link #normalize(String)} before resolving the name.
+     *
+     * @param path The path whose name (the last path element) is to be
+     *            returned.
+     * @return The empty string if &lt;code&gt;path&lt;/code&gt; is the root path (
+     *         &lt;code&gt;/&lt;/code&gt;) or if &lt;code&gt;path&lt;/code&gt; is a single name
+     *         containing no slash (&lt;code&gt;/&lt;/code&gt;) characters.
+     * @throws IllegalArgumentException If the path cannot be normalized by the
+     *             {@link #normalize(String)} method.
+     * @throws NullPointerException If &lt;code&gt;path&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;.
+     */
+    public static @Nonnull String getName(@Nonnull String path) {
+<span class="fc bfc" id="L273" title="All 2 branches covered.">        if (&quot;/&quot;.equals(path)) {</span>
+<span class="fc" id="L274">            return &quot;&quot;;</span>
+        }
+
+        // normalize path (remove . and ..)
+<span class="fc" id="L278">        path = normalize(path);</span>
+<span class="fc bfc" id="L279" title="All 2 branches covered.">        if (&quot;/&quot;.equals(path)) {</span>
+<span class="fc" id="L280">            return &quot;&quot;;</span>
+        }
+
+        // find the last slash
+<span class="fc" id="L284">        return path.substring(path.lastIndexOf('/') + 1);</span>
+    }
+
+    /**
+     * Returns &lt;code&gt;true&lt;/code&gt; if the resource &lt;code&gt;res&lt;/code&gt; is a synthetic
+     * resource.
+     * &lt;p&gt;
+     * This method checks whether the resource is an instance of the
+     * &lt;code&gt;org.apache.sling.resource.SyntheticResource&lt;/code&gt; class.
+     *
+     * @param res The &lt;code&gt;Resource&lt;/code&gt; to check whether it is a synthetic
+     *            resource.
+     * @return &lt;code&gt;true&lt;/code&gt; if &lt;code&gt;res&lt;/code&gt; is a synthetic resource.
+     *         &lt;code&gt;false&lt;/code&gt; is returned if &lt;code&gt;res&lt;/code&gt; is
+     *         &lt;code&gt;null&lt;/code&gt; or not an instance of the
+     *         &lt;code&gt;org.apache.sling.resource.SyntheticResource&lt;/code&gt; class.
+     */
+    public static boolean isSyntheticResource(@Nonnull Resource res) {
+<span class="fc bfc" id="L302" title="All 2 branches covered.">        if (res instanceof SyntheticResource) {</span>
+<span class="fc" id="L303">            return true;</span>
+        }
+
+<span class="fc bfc" id="L306" title="All 2 branches covered.">        if (!(res instanceof ResourceWrapper)) {</span>
+<span class="fc" id="L307">            return false;</span>
+        }
+
+        do {
+<span class="fc" id="L311">            res = ((ResourceWrapper) res).getResource();</span>
+<span class="pc bpc" id="L312" title="1 of 2 branches missed.">        } while (res instanceof ResourceWrapper);</span>
+
+<span class="fc" id="L314">        return res instanceof SyntheticResource;</span>
+    }
+
+    /**
+     * Returns &lt;code&gt;true&lt;/code&gt; if the resource &lt;code&gt;res&lt;/code&gt; is a &quot;star
+     * resource&quot;. A &lt;i&gt;star resource&lt;/i&gt; is a resource returned from the
+     * &lt;code&gt;ResourceResolver.resolve(HttpServletRequest)&lt;/code&gt; whose path
+     * terminates in a &lt;code&gt;/*&lt;/code&gt;. Generally such resource result from
+     * requests to something like &lt;code&gt;/some/path/*&lt;/code&gt; or
+     * &lt;code&gt;/some/path/*.html&lt;/code&gt; which may be used web applications to
+     * uniformly handle resources to be created.
+     * &lt;p&gt;
+     * This method checks whether the resource path ends with a &lt;code&gt;/*&lt;/code&gt;
+     * indicating such a star resource.
+     *
+     * @param res The &lt;code&gt;Resource&lt;/code&gt; to check whether it is a star
+     *            resource.
+     * @return &lt;code&gt;true&lt;/code&gt; if &lt;code&gt;res&lt;/code&gt; is to be considered a star
+     *         resource.
+     * @throws NullPointerException if &lt;code&gt;res&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;.
+     */
+    public static boolean isStarResource(@Nonnull Resource res) {
+<span class="fc" id="L336">        return res.getPath().endsWith(&quot;/*&quot;);</span>
+    }
+
+    /**
+     * Returns &lt;code&gt;true&lt;/code&gt; if the resource &lt;code&gt;res&lt;/code&gt; is a
+     * non-existing resource.
+     * &lt;p&gt;
+     * This method checks the resource type of the resource to match the
+     * well-known resource type &lt;code&gt;sling:nonexisting&lt;/code&gt; of the
+     * &lt;code&gt;NonExistingResource&lt;/code&gt; class defined in the Sling API.
+     *
+     * @param res The &lt;code&gt;Resource&lt;/code&gt; to check whether it is a
+     *            non-existing resource.
+     * @return &lt;code&gt;true&lt;/code&gt; if &lt;code&gt;res&lt;/code&gt; is to be considered a
+     *         non-existing resource.
+     * @throws NullPointerException if &lt;code&gt;res&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;.
+     */
+    public static boolean isNonExistingResource(@Nonnull Resource res) {
+<span class="fc" id="L354">        return Resource.RESOURCE_TYPE_NON_EXISTING.equals(res.getResourceType());</span>
+    }
+
+    /**
+     * Returns an &lt;code&gt;Iterator&lt;/code&gt; of {@link Resource} objects loaded from
+     * the children of the given &lt;code&gt;Resource&lt;/code&gt;.
+     * &lt;p&gt;
+     * This is a convenience method for
+     * {@link ResourceResolver#listChildren(Resource)}.
+     *
+     * @param parent The {@link Resource Resource} whose children are requested.
+     * @return An &lt;code&gt;Iterator&lt;/code&gt; of {@link Resource} objects.
+     * @throws NullPointerException If &lt;code&gt;parent&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;.
+     * @throws IllegalStateException if the resource resolver has already been
+     *             closed}.
+     * @throws org.apache.sling.api.SlingException If any error occurs acquiring
+     *             the child resource iterator.
+     * @see ResourceResolver#listChildren(Resource)
+     * @deprecated since 2.1.0, use {@link Resource#listChildren()} instead
+     */
+    @Deprecated
+    public static @Nonnull Iterator&lt;Resource&gt; listChildren(@Nonnull Resource parent) {
+        /*
+         * Same as AbstractResource.listChildren() implementation to prevent
+         * problems if there are implementations of the pre-2.1.0 Resource
+         * interface in the framework.
+         */
+<span class="nc" id="L381">        return parent.getResourceResolver().listChildren(parent);</span>
+    }
+
+    /**
+     * Returns an &lt;code&gt;ValueMap&lt;/code&gt; object for the given
+     * &lt;code&gt;Resource&lt;/code&gt;. This method calls {@link Resource#getValueMap()}.
+     * If &lt;code&gt;null&lt;/code&gt; is provided as the resource an empty map is returned as
+     * well.
+     * &lt;p&gt;For backward compatibility reasons the map returned is not immutable,
+     * but it is not recommend to rely on this behavior.&lt;/p&gt;
+     *
+     * @param res The &lt;code&gt;Resource&lt;/code&gt; to adapt to the value map.
+     * @return A value map.
+     */
+    public static @Nonnull ValueMap getValueMap(final Resource res) {
+<span class="fc bfc" id="L396" title="All 2 branches covered.">        if ( res == null ) {</span>
+            // use empty map
+<span class="fc" id="L398">            return new ValueMapDecorator(new HashMap&lt;String, Object&gt;());</span>
+        }
+<span class="fc" id="L400">        return res.getValueMap();</span>
+    }
+
+    /**
+     * Helper method, which returns the given resource type as returned from the
+     * {@link org.apache.sling.api.resource.Resource#getResourceType()} as a
+     * relative path.
+     *
+     * @param type The resource type to be converted into a path
+     * @return The resource type as a path.
+     * @since 2.0.6 (Sling API Bundle 2.0.6)
+     */
+    public static @Nonnull String resourceTypeToPath(@Nonnull final String type) {
+<span class="fc" id="L413">        return type.replace(':', '/');</span>
+    }
+
+    /**
+     * Returns the super type of the given resource type. This method converts
+     * the resource type to a resource path by calling
+     * {@link #resourceTypeToPath(String)} and uses the
+     * &lt;code&gt;resourceResolver&lt;/code&gt; to get the corresponding resource. If the
+     * resource exists, the {@link Resource#getResourceSuperType()} method is
+     * called.
+     *
+     * @param resourceResolver The &lt;code&gt;ResourceResolver&lt;/code&gt; used to access
+     *            the resource whose path (relative or absolute) is given by the
+     *            &lt;code&gt;resourceType&lt;/code&gt; parameter.
+     * @param resourceType The resource type whose super type is to be returned.
+     *            This type is turned into a path by calling the
+     *            {@link #resourceTypeToPath(String)} method before trying to
+     *            get the resource through the &lt;code&gt;resourceResolver&lt;/code&gt;.
+     * @return the super type of the &lt;code&gt;resourceType&lt;/code&gt; or
+     *         &lt;code&gt;null&lt;/code&gt; if the resource type does not exists or returns
+     *         &lt;code&gt;null&lt;/code&gt; for its super type.
+     * @throws IllegalStateException if the resource resolver has already been
+     *             closed}.
+     * @since 2.0.6 (Sling API Bundle 2.0.6)
+     * @deprecated Use {@link ResourceResolver#getParentResourceType(String)}
+     */
+    @Deprecated
+    public static @CheckForNull String getResourceSuperType(
+            final @Nonnull ResourceResolver resourceResolver, final String resourceType) {
+<span class="nc" id="L442">        return resourceResolver.getParentResourceType(resourceType);</span>
+    }
+
+    /**
+     * Returns the super type of the given resource. This method checks first if
+     * the resource itself knows its super type by calling
+     * {@link Resource#getResourceSuperType()}. If that returns
+     * &lt;code&gt;null&lt;/code&gt; {@link #getResourceSuperType(ResourceResolver, String)}
+     * is invoked with the resource type of the resource.
+     *
+     * @param resource The resource to return the resource super type for.
+     * @return the super type of the &lt;code&gt;resource&lt;/code&gt; or &lt;code&gt;null&lt;/code&gt;
+     *         if no super type could be computed.
+     * @throws IllegalStateException if the resource resolver has already been
+     *             closed}.
+     * @since 2.0.6 (Sling API Bundle 2.0.6)
+     * @deprecated Use {@link ResourceResolver#getParentResourceType(Resource)}
+     */
+    @Deprecated
+    public static @CheckForNull String findResourceSuperType(@Nonnull final Resource resource) {
+<span class="pc bpc" id="L462" title="1 of 2 branches missed.">        if ( resource == null ) {</span>
+<span class="fc" id="L463">            return null;</span>
+        }
+<span class="nc" id="L465">        return resource.getResourceResolver().getParentResourceType(resource);</span>
+    }
+
+    /**
+     * Check if the resource is of the given type. This method first checks the
+     * resource type of the resource, then its super resource type and continues
+     * to go up the resource super type hierarchy.
+     *
+     * In case the type of the given resource or the given resource type starts with one of the resource resolver's search paths
+     * it is converted to a relative resource type by stripping off the resource resolver's search path 
+     * before doing the comparison.
+     * 
+     * @param resource the resource to check
+     * @param resourceType the resource type to check the resource against
+     * @return &lt;code&gt;false&lt;/code&gt; if &lt;code&gt;resource&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;.
+     *         Otherwise returns the result of calling
+     *         {@link Resource#isResourceType(String)} with the given
+     *         &lt;code&gt;resourceType&lt;/code&gt;.
+     * @throws IllegalStateException if the resource resolver has already been
+     *             closed}.
+     * @since 2.0.6 (Sling API Bundle 2.0.6)
+     * @deprecated Use {@link ResourceResolver#isResourceType(Resource, String)}
+     */
+    @Deprecated
+    public static boolean isA(@Nonnull final Resource resource, final String resourceType) {
+<span class="pc bpc" id="L490" title="1 of 2 branches missed.">        if ( resource == null ) {</span>
+<span class="fc" id="L491">            return false;</span>
+        }
+<span class="nc" id="L493">        return resource.getResourceResolver().isResourceType(resource, resourceType);</span>
+    }
+
+    /**
+     * Return an iterator for objects of the specified type. A new iterator is
+     * returned which tries to adapt the provided resources to the given type
+     * (using {@link Resource#adaptTo(Class)}. If a resource in the original
+     * iterator is not adaptable to the given class, this object is skipped.
+     * This implies that the number of objects returned by the new iterator
+     * might be less than the number of resource objects.
+     *
+     * @param iterator A resource iterator.
+     * @param &lt;T&gt; The adapted type
+     * @param type The adapted type
+     * @return An iterator of the adapted objects
+     * @since 2.0.6 (Sling API Bundle 2.0.6)
+     */
+    public static @Nonnull &lt;T&gt; Iterator&lt;T&gt; adaptTo(final @Nonnull Iterator&lt;Resource&gt; iterator,
+            final Class&lt;T&gt; type) {
+<span class="fc" id="L512">        return new Iterator&lt;T&gt;() {</span>
+
+<span class="fc" id="L514">            private T nextObject = seek();</span>
+
+            @Override
+            public boolean hasNext() {
+<span class="fc bfc" id="L518" title="All 2 branches covered.">                return nextObject != null;</span>
+            }
+
+            @Override
+            public T next() {
+<span class="fc bfc" id="L523" title="All 2 branches covered.">                if (!hasNext()) {</span>
+<span class="fc" id="L524">                    throw new NoSuchElementException();</span>
+                }
+<span class="fc" id="L526">                final T object = nextObject;</span>
+<span class="fc" id="L527">                nextObject = seek();</span>
+<span class="fc" id="L528">                return object;</span>
+            }
+
+            @Override
+            public void remove() {
+<span class="nc" id="L533">                throw new UnsupportedOperationException();</span>
+            }
+
+            private T seek() {
+<span class="fc" id="L537">                T result = null;</span>
+<span class="fc bfc" id="L538" title="All 4 branches covered.">                while (result == null &amp;&amp; iterator.hasNext()) {</span>
+<span class="fc" id="L539">                    final Resource r = iterator.next();</span>
+<span class="fc" id="L540">                    result = r.adaptTo(type);</span>
+<span class="fc" id="L541">                }</span>
+<span class="fc" id="L542">                return result;</span>
+            }
+        };
+    }
+
+    /**
+     * Creates or gets the resource at the given path.
+     *
+     * @param resolver The resource resolver to use for creation
+     * @param path     The full path to be created
+     * @param resourceType The optional resource type of the final resource to create
+     * @param intermediateResourceType THe optional resource type of all intermediate resources
+     * @param autoCommit If set to true, a commit is performed after each resource creation.
+     * @return The resource for the path.
+     * @throws org.apache.sling.api.SlingException If an error occurs trying to
+     *             get/create the resource object from the path.
+     * @throws IllegalStateException if the resource resolver has already been
+     *             closed}.
+     * @throws PersistenceException If a persistence error occurs.
+     * @since 2.3.0  (Sling API Bundle 2.4.0)
+     */
+    public static @Nonnull Resource getOrCreateResource(
+                            final @Nonnull ResourceResolver resolver,
+                            final @Nonnull String path,
+                            final String resourceType,
+                            final String intermediateResourceType,
+                            final boolean autoCommit)
+    throws PersistenceException {
+        final Map&lt;String, Object&gt; props;
+<span class="nc bnc" id="L571" title="All 2 branches missed.">        if ( resourceType == null ) {</span>
+<span class="nc" id="L572">            props = null;</span>
+        } else {
+<span class="nc" id="L574">            props = Collections.singletonMap(ResourceResolver.PROPERTY_RESOURCE_TYPE, (Object)resourceType);</span>
+        }
+<span class="nc" id="L576">        return getOrCreateResource(resolver, path, props, intermediateResourceType, autoCommit);</span>
+    }
+
+    /**
+     * Creates or gets the resource at the given path.
+     * If an exception occurs, it retries the operation up to five times if autoCommit is enabled.
+     * In this case, {@link ResourceResolver#revert()} is called on the resolver before the
+     * creation is retried.
+     *
+     * @param resolver The resource resolver to use for creation
+     * @param path     The full path to be created
+     * @param resourceProperties The optional resource properties of the final resource to create
+     * @param intermediateResourceType THe optional resource type of all intermediate resources
+     * @param autoCommit If set to true, a commit is performed after each resource creation.
+     * @return The resource for the path.
+     * @throws org.apache.sling.api.SlingException If an error occurs trying to
+     *             get/create the resource object from the path.
+     * @throws IllegalStateException if the resource resolver has already been
+     *             closed}.
+     * @throws PersistenceException If a persistence error occurs.
+     * @since 2.3.0  (Sling API Bundle 2.4.0)
+     */
+    public static @Nonnull Resource getOrCreateResource(
+            final @Nonnull ResourceResolver resolver,
+            final @Nonnull String path,
+            final Map&lt;String, Object&gt; resourceProperties,
+            final String intermediateResourceType,
+            final boolean autoCommit)
+    throws PersistenceException {
+<span class="nc" id="L605">        PersistenceException mostRecentPE = null;</span>
+<span class="nc bnc" id="L606" title="All 2 branches missed.">        for(int i=0;i&lt;5;i++) {</span>
+            try {
+<span class="nc" id="L608">                return ResourceUtil.getOrCreateResourceInternal(resolver,</span>
+                        path,
+                        resourceProperties,
+                        intermediateResourceType,
+                        autoCommit);
+<span class="nc" id="L613">            } catch ( final PersistenceException pe ) {</span>
+<span class="nc bnc" id="L614" title="All 2 branches missed.">                if ( autoCommit ) {</span>
+                    // in case of exception, revert to last clean state and retry
+<span class="nc" id="L616">                    resolver.revert();</span>
+<span class="nc" id="L617">                    resolver.refresh();</span>
+<span class="nc" id="L618">                    mostRecentPE = pe;</span>
+                } else {
+<span class="nc" id="L620">                    throw pe;</span>
+                }
+            }
+        }
+<span class="nc" id="L624">        throw mostRecentPE;</span>
+    }
+
+    /**
+     * Creates or gets the resource at the given path.
+     *
+     * @param resolver The resource resolver to use for creation
+     * @param path     The full path to be created
+     * @param resourceProperties The optional resource properties of the final resource to create
+     * @param intermediateResourceType THe optional resource type of all intermediate resources
+     * @param autoCommit If set to true, a commit is performed after each resource creation.
+     * @return The resource for the path.
+     * @throws org.apache.sling.api.SlingException If an error occurs trying to
+     *             get/create the resource object from the path.
+     * @throws IllegalStateException if the resource resolver has already been
+     *             closed}.
+     * @throws PersistenceException If a persistence error occurs.
+     */
+    private static Resource getOrCreateResourceInternal(
+            final ResourceResolver resolver,
+            final String path,
+            final Map&lt;String, Object&gt; resourceProperties,
+            final String intermediateResourceType,
+            final boolean autoCommit)
+    throws PersistenceException {
+<span class="nc" id="L649">        Resource rsrc = resolver.getResource(path);</span>
+<span class="nc bnc" id="L650" title="All 2 branches missed.">        if ( rsrc == null ) {</span>
+<span class="nc" id="L651">            final int lastPos = path.lastIndexOf('/');</span>
+<span class="nc" id="L652">            final String name = path.substring(lastPos + 1);</span>
+
+            final Resource parentResource;
+<span class="nc bnc" id="L655" title="All 2 branches missed.">            if ( lastPos == 0 ) {</span>
+<span class="nc" id="L656">                parentResource = resolver.getResource(&quot;/&quot;);</span>
+            } else {
+<span class="nc" id="L658">                final String parentPath = path.substring(0, lastPos);</span>
+<span class="nc" id="L659">                parentResource = getOrCreateResource(resolver,</span>
+                        parentPath,
+                        intermediateResourceType,
+                        intermediateResourceType,
+                        autoCommit);
+            }
+<span class="nc bnc" id="L665" title="All 2 branches missed.">            if ( autoCommit ) {</span>
+<span class="nc" id="L666">                resolver.refresh();</span>
+            }
+            try {
+<span class="nc" id="L669">                int retry = 5;</span>
+<span class="nc bnc" id="L670" title="All 4 branches missed.">                while ( retry &gt; 0 &amp;&amp; rsrc == null ) {</span>
+<span class="nc" id="L671">                    rsrc = resolver.create(parentResource, name, resourceProperties);</span>
+                    // check for SNS
+<span class="nc bnc" id="L673" title="All 2 branches missed.">                    if ( !name.equals(rsrc.getName()) ) {</span>
+<span class="nc" id="L674">                        resolver.refresh();</span>
+<span class="nc" id="L675">                        resolver.delete(rsrc);</span>
+<span class="nc" id="L676">                        rsrc = resolver.getResource(parentResource, name);</span>
+                    }
+<span class="nc" id="L678">                    retry--;</span>
+                }
+<span class="nc bnc" id="L680" title="All 2 branches missed.">                if ( rsrc == null ) {</span>
+<span class="nc" id="L681">                    throw new PersistenceException(&quot;Unable to create resource.&quot;);</span>
+                }
+<span class="nc" id="L683">            } catch ( final PersistenceException pe ) {</span>
+                // this could be thrown because someone else tried to create this
+                // node concurrently
+<span class="nc" id="L686">                resolver.refresh();</span>
+<span class="nc" id="L687">                rsrc = resolver.getResource(parentResource, name);</span>
+<span class="nc bnc" id="L688" title="All 2 branches missed.">                if ( rsrc == null ) {</span>
+<span class="nc" id="L689">                    throw pe;</span>
+                }
+<span class="nc" id="L691">            }</span>
+<span class="nc bnc" id="L692" title="All 2 branches missed.">            if ( autoCommit ) {</span>
+                try {
+<span class="nc" id="L694">                    resolver.commit();</span>
+<span class="nc" id="L695">                    resolver.refresh();</span>
+<span class="nc" id="L696">                    rsrc = resolver.getResource(parentResource, name);</span>
+<span class="nc" id="L697">                } catch ( final PersistenceException pe ) {</span>
+                    // try again - maybe someone else did create the resource in the meantime
+                    // or we ran into Jackrabbit's stale item exception in a clustered environment
+<span class="nc" id="L700">                    resolver.revert();</span>
+<span class="nc" id="L701">                    resolver.refresh();</span>
+<span class="nc" id="L702">                    rsrc = resolver.getResource(parentResource, name);</span>
+<span class="nc bnc" id="L703" title="All 2 branches missed.">                    if ( rsrc == null ) {</span>
+<span class="nc" id="L704">                        rsrc = resolver.create(parentResource, name, resourceProperties);</span>
+<span class="nc" id="L705">                        resolver.commit();</span>
+                    }
+<span class="nc" id="L707">                }</span>
+            }
+        }
+<span class="nc" id="L710">        return rsrc;</span>
+    }
+
+    /**
+     * Create a unique name for a child of the &lt;code&gt;parent&lt;/code&gt;.
+     * Creates a unique name and test if child already exists.
+     * If child resource with the same name exists, iterate until a unique one is found.
+     *
+     * @param parent The parent resource
+     * @param name   The name of the child resource
+     * @return a unique non-existing name for child resource for a given &lt;code&gt;parent&lt;/code&gt;
+     *
+     * @throws PersistenceException if it can not find unique name for child resource.
+     * @throws NullPointerException if &lt;code&gt;parent&lt;/code&gt; is null
+     * @throws IllegalStateException if the resource resolver has already been
+     *             closed}.
+     * @since 2.5 (Sling API Bundle 2.7.0)
+     */
+    public static String createUniqueChildName(final Resource parent, final String name)
+    throws PersistenceException {
+<span class="nc bnc" id="L730" title="All 2 branches missed.">        if (parent.getChild(name) != null) {</span>
+            // leaf node already exists, create new unique name
+<span class="nc" id="L732">            String childNodeName = null;</span>
+<span class="nc" id="L733">            int i = 0;</span>
+            do {
+<span class="nc" id="L735">                childNodeName = name + String.valueOf(i);</span>
+                //just so that it does not run into an infinite loop
+                // this should not happen though :)
+<span class="nc bnc" id="L738" title="All 2 branches missed.">                if (i == Integer.MAX_VALUE) {</span>
+<span class="nc" id="L739">                    String message = MessageFormat.format(&quot;can not find a unique name {0} for {1}&quot;, name, parent.getPath());</span>
+<span class="nc" id="L740">                    throw new PersistenceException(message);</span>
+                }
+<span class="nc" id="L742">                i++;</span>
+<span class="nc bnc" id="L743" title="All 2 branches missed.">            } while (parent.getChild(childNodeName) != null);</span>
+
+<span class="nc" id="L745">            return childNodeName;</span>
+        }
+<span class="nc" id="L747">        return name;</span>
+    }
+
+    /**
+     * Unwrap the resource and return the wrapped implementation.
+     * @param rsrc The resource to unwrap
+     * @return The unwrapped resource
+     * @since 2.5  (Sling API Bundle 2.7.0)
+     */
+    public static @Nonnull Resource unwrap(final @Nonnull Resource rsrc) {
+<span class="nc" id="L757">        Resource result = rsrc;</span>
+<span class="nc bnc" id="L758" title="All 2 branches missed.">        while ( result instanceof ResourceWrapper ) {</span>
+<span class="nc" id="L759">            result = ((ResourceWrapper)result).getResource();</span>
+        }
+<span class="nc" id="L761">        return result;</span>
+    }
+
+    /**
+     * A batch resource remover deletes resources in batches. Once the batch
+     * size (threshold) is reached, an intermediate commit is performed. Resource
+     * trees are deleted resource by resource starting with the deepest children first.
+     * Once all resources have been passed to the batch resource remover, a final
+     * commit needs to be called on the resource resolver.
+     * @since 2.6  (Sling API Bundle 2.8.0)
+     */
+    public static class BatchResourceRemover {
+
+        private final int max;
+
+        private int count;
+
+<span class="nc" id="L778">        public BatchResourceRemover(final int batchSize) {</span>
+<span class="nc bnc" id="L779" title="All 2 branches missed.">            this.max = (batchSize &lt; 1 ? 50 : batchSize);</span>
+<span class="nc" id="L780">        }</span>
+
+        public void delete(@Nonnull final Resource rsrc)
+        throws PersistenceException {
+<span class="nc" id="L784">            final ResourceResolver resolver = rsrc.getResourceResolver();</span>
+<span class="nc bnc" id="L785" title="All 2 branches missed.">            for(final Resource child : rsrc.getChildren()) {</span>
+<span class="nc" id="L786">                delete(child);</span>
+<span class="nc" id="L787">            }</span>
+<span class="nc" id="L788">            resolver.delete(rsrc);</span>
+<span class="nc" id="L789">            count++;</span>
+<span class="nc bnc" id="L790" title="All 2 branches missed.">            if ( count &gt;= max ) {</span>
+<span class="nc" id="L791">                resolver.commit();</span>
+<span class="nc" id="L792">                count = 0;</span>
+            }
+<span class="nc" id="L794">        }</span>
+    }
+
+    /**
+     * Create a batch resource remover.
+     * A batch resource remove can be used to delete resources in batches.
+     * Once the passed in threshold of deleted resources is reached, an intermediate
+     * commit is called on the resource resolver. In addition the batch remover
+     * deletes a resource recursively.
+     * Once all resources to delete are passed to the remover, a final commit needs
+     * to be call on the resource resolver.
+     * @param threshold The threshold for the intermediate saves.
+     * @return A new batch resource remover.
+     * Since 2.6
+     */
+    public static @Nonnull BatchResourceRemover getBatchResourceRemover(final int threshold) {
+<span class="nc" id="L810">        return new BatchResourceRemover(threshold);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ResponseUtil.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Sling API</a> &gt; <a href="index.source.html" class="el_package">org.apache.sling.api.request</a> &gt; <span class="el_source">ResponseUtil.java</span></div><h1>ResponseUtil.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.apache.sling.api.request;
+
+import java.io.IOException;
+import java.io.Writer;
+
+import javax.annotation.Nonnull;
+
+/**
+ * Response related utility methods
+ * &lt;p&gt;
+ * This class is not intended to be extended or instantiated because it just
+ * provides static utility methods not intended to be overwritten.
+ *
+ * @since 2.1 (Sling API Bundle 2.1.0)
+ */
+<span class="nc" id="L34">public class ResponseUtil {</span>
+
+    private static class XmlEscapingWriter extends Writer {
+        private final Writer target;
+
+<span class="fc" id="L39">        XmlEscapingWriter(Writer target) {</span>
+<span class="fc" id="L40">            this.target = target;</span>
+<span class="fc" id="L41">        }</span>
+
+        @Override
+        public void close() throws IOException {
+<span class="nc" id="L45">            target.close();</span>
+<span class="nc" id="L46">        }</span>
+
+        @Override
+        public void flush() throws IOException {
+<span class="nc" id="L50">            target.flush();</span>
+<span class="nc" id="L51">        }</span>
+
+        @Override
+        public void write(char[] buffer, int offset, int length) throws IOException {
+<span class="fc bfc" id="L55" title="All 2 branches covered.">            for(int i = offset; i &lt; offset + length; i++) {</span>
+<span class="fc" id="L56">                write(buffer[i]);</span>
+            }
+<span class="fc" id="L58">        }</span>
+
+        @Override
+        public void write(char[] cbuf) throws IOException {
+<span class="fc" id="L62">            write(cbuf, 0, cbuf.length);</span>
+<span class="fc" id="L63">        }</span>
+
+        @Override
+        public void write(int c) throws IOException {
+<span class="fc bfc" id="L67" title="All 2 branches covered.">            if(c == '&amp;') {</span>
+<span class="fc" id="L68">                target.write(&quot;&amp;amp;&quot;);</span>
+<span class="fc bfc" id="L69" title="All 2 branches covered.">            } else if(c == '&lt;') {</span>
+<span class="fc" id="L70">                target.write(&quot;&amp;lt;&quot;);</span>
+<span class="fc bfc" id="L71" title="All 2 branches covered.">            } else if(c == '&gt;') {</span>
+<span class="fc" id="L72">                target.write(&quot;&amp;gt;&quot;);</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">            } else if(c == '&quot;') {</span>
+<span class="fc" id="L74">                target.write(&quot;&amp;quot;&quot;);</span>
+<span class="fc bfc" id="L75" title="All 2 branches covered.">            } else if(c == '\'') {</span>
+<span class="fc" id="L76">                target.write(&quot;&amp;apos;&quot;);</span>
+            } else {
+<span class="fc" id="L78">                target.write(c);</span>
+            }
+<span class="fc" id="L80">        }</span>
+
+        @Override
+        public void write(String str, int off, int len) throws IOException {
+<span class="nc" id="L84">            write(str.toCharArray(), off, len);</span>
+<span class="nc" id="L85">        }</span>
+
+        @Override
+        public void write(String str) throws IOException {
+<span class="fc" id="L89">            write(str.toCharArray());</span>
+<span class="fc" id="L90">        }</span>
+    }
+
+    /**
+     * Escape XML text
+     * @param input The input text
+     * @return The escaped text
+     */
+    public static String escapeXml(final String input) {
+<span class="pc bpc" id="L99" title="1 of 2 branches missed.">        if (input == null) {</span>
+<span class="nc" id="L100">            return null;</span>
+        }
+
+<span class="fc" id="L103">        final StringBuilder b = new StringBuilder(input.length());</span>
+<span class="fc bfc" id="L104" title="All 2 branches covered.">        for(int i = 0;i  &lt; input.length(); i++) {</span>
+<span class="fc" id="L105">            final char c = input.charAt(i);</span>
+<span class="fc bfc" id="L106" title="All 2 branches covered.">            if(c == '&amp;') {</span>
+<span class="fc" id="L107">                b.append(&quot;&amp;amp;&quot;);</span>
+<span class="fc bfc" id="L108" title="All 2 branches covered.">            } else if(c == '&lt;') {</span>
+<span class="fc" id="L109">                b.append(&quot;&amp;lt;&quot;);</span>
+<span class="fc bfc" id="L110" title="All 2 branches covered.">            } else if(c == '&gt;') {</span>
+<span class="fc" id="L111">                b.append(&quot;&amp;gt;&quot;);</span>
+<span class="fc bfc" id="L112" title="All 2 branches covered.">            } else if(c == '&quot;') {</span>
+<span class="fc" id="L113">                b.append(&quot;&amp;quot;&quot;);</span>
+<span class="fc bfc" id="L114" title="All 2 branches covered.">            } else if(c == '\'') {</span>
+<span class="fc" id="L115">                b.append(&quot;&amp;apos;&quot;);</span>
+            } else {
+<span class="fc" id="L117">                b.append(c);</span>
+            }
+        }
+<span class="fc" id="L120">        return b.toString();</span>
+    }
+
+    /**
+     * Return a Writer that writes escaped XML text to target
+     * @param target writer
+     * @return Wrapped writer escaping XML
+     */
+    public static @Nonnull Writer getXmlEscapingWriter(@Nonnull Writer target) {
+<span class="fc" id="L129">        return new XmlEscapingWriter(target);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

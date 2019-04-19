@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PathSet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Apache Sling API</a> &gt; <a href="index.source.html" class="el_package">org.apache.sling.api.resource.path</a> &gt; <span class="el_source">PathSet.java</span></div><h1>PathSet.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.apache.sling.api.resource.path;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+
+/**
+ * Simple helper class for path matching against a set of paths.
+ *
+ * @since 1.0.0 (Sling API Bundle 2.11.0)
+ */
+public class PathSet implements Iterable&lt;Path&gt; {
+
+    /** Empty path set. */
+<span class="fc" id="L35">    public static final PathSet EMPTY_SET = new PathSet(Collections.&lt;Path&gt; emptySet());</span>
+
+    /**
+     * Create a path set from a collection of path objects
+     * @param paths The collection of path objects
+     * @return The path set
+     */
+    public static PathSet fromPathCollection(final Collection&lt;Path&gt; paths) {
+<span class="fc" id="L43">        final Set&lt;Path&gt; set = new HashSet&lt;Path&gt;();</span>
+<span class="fc bfc" id="L44" title="All 2 branches covered.">        for(final Path p : paths) {</span>
+<span class="fc" id="L45">            set.add(p);</span>
+<span class="fc" id="L46">        }</span>
+<span class="fc" id="L47">        optimize(set);</span>
+<span class="fc" id="L48">        return new PathSet(set);</span>
+    }
+
+    /**
+     * Create a path set from a collection of path objects
+     * @param paths The collection of path objects
+     * @return The path set
+     */
+    public static PathSet fromPaths(final Path...paths) {
+<span class="fc" id="L57">        final Set&lt;Path&gt; set = new HashSet&lt;Path&gt;();</span>
+<span class="fc bfc" id="L58" title="All 2 branches covered.">        for(final Path p : paths) {</span>
+<span class="fc" id="L59">            set.add(p);</span>
+        }
+<span class="fc" id="L61">        optimize(set);</span>
+<span class="fc" id="L62">        return new PathSet(set);</span>
+    }
+
+    /**
+     * Create a path set from a collection of strings
+     * @param paths The collection of strings
+     * @return The path set
+     */
+    public static PathSet fromStringCollection(final Collection&lt;String&gt; paths) {
+<span class="fc" id="L71">        final Set&lt;Path&gt; set = new HashSet&lt;Path&gt;();</span>
+<span class="fc bfc" id="L72" title="All 2 branches covered.">        for(final String p : paths) {</span>
+<span class="fc" id="L73">            set.add(new Path(p));</span>
+<span class="fc" id="L74">        }</span>
+<span class="fc" id="L75">        optimize(set);</span>
+<span class="fc" id="L76">        return new PathSet(set);</span>
+    }
+
+    /**
+     * Create a path set from a collection of strings
+     * @param strings The array of strings
+     * @return The path set
+     */
+    public static PathSet fromStrings(final String...strings) {
+<span class="fc" id="L85">        final Set&lt;Path&gt; set = new HashSet&lt;Path&gt;();</span>
+<span class="fc bfc" id="L86" title="All 2 branches covered.">        for(final String p : strings) {</span>
+<span class="fc" id="L87">            set.add(new Path(p));</span>
+        }
+<span class="fc" id="L89">        optimize(set);</span>
+<span class="fc" id="L90">        return new PathSet(set);</span>
+    }
+
+    /**
+     * Optimize the set by filtering out paths which are a sub path
+     * of another path in the set.
+     * @param set The path set
+     */
+    private static void optimize(final Set&lt;Path&gt; set) {
+<span class="fc" id="L99">        final Iterator&lt;Path&gt; i = set.iterator();</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">        while ( i.hasNext() ) {</span>
+<span class="fc" id="L101">            final Path next = i.next();</span>
+<span class="fc" id="L102">            boolean found = false;</span>
+<span class="fc bfc" id="L103" title="All 2 branches covered.">            for(final Path p : set) {</span>
+<span class="fc bfc" id="L104" title="All 4 branches covered.">                if ( p != next &amp;&amp; p.matches(next.getPath()) ) {</span>
+<span class="fc" id="L105">                    found = true;</span>
+<span class="fc" id="L106">                    break;</span>
+                }
+<span class="fc" id="L108">            }</span>
+<span class="fc bfc" id="L109" title="All 2 branches covered.">            if ( found ) {</span>
+<span class="fc" id="L110">                i.remove();</span>
+            }
+<span class="fc" id="L112">        }</span>
+<span class="fc" id="L113">    }</span>
+
+    private final Set&lt;Path&gt; paths;
+
+    /**
+     * Create a path set from a set of paths
+     * @param paths A set of paths
+     */
+<span class="fc" id="L121">    private PathSet(final Set&lt;Path&gt; paths) {</span>
+<span class="fc" id="L122">        this.paths = paths;</span>
+<span class="fc" id="L123">    }</span>
+
+    /**
+     * Check whether the provided path is in the sub tree of any
+     * of the paths in this set.
+     * @param otherPath The path to match
+     * @return The path which matches the provided path, {@code null} otherwise.
+     * @see Path#matches(String)
+     */
+    public Path matches(final String otherPath) {
+<span class="fc bfc" id="L133" title="All 2 branches covered.">         for(final Path p : this.paths) {</span>
+<span class="fc bfc" id="L134" title="All 2 branches covered.">             if ( p.matches(otherPath) ) {</span>
+<span class="fc" id="L135">                 return p;</span>
+             }
+<span class="fc" id="L137">         }</span>
+<span class="fc" id="L138">         return null;</span>
+    }
+
+    /**
+     * Generate a path set of paths from this set which
+     * are in the sub tree of the provided path
+     * @param path The base path
+     * @return Path set, might be empty
+     */
+    public PathSet getSubset(final String path) {
+<span class="nc" id="L148">        return getSubset(new Path(path));</span>
+    }
+
+    /**
+     * Generate a path set of paths from this set which
+     * are in the sub tree of the provided path
+     * @param path The base path
+     * @return Path set, might be empty
+     * @since 1.2.0 (Sling API Bundle 2.15.0)
+     */
+    public PathSet getSubset(final Path path) {
+<span class="nc" id="L159">        final Set&lt;Path&gt; result = new HashSet&lt;Path&gt;();</span>
+<span class="nc bnc" id="L160" title="All 2 branches missed.">        for(final Path p : this.paths) {</span>
+<span class="nc bnc" id="L161" title="All 2 branches missed.">            if ( path.matches(p.getPath()) ) {</span>
+<span class="nc" id="L162">                result.add(p);</span>
+            }
+<span class="nc" id="L164">        }</span>
+<span class="nc" id="L165">        return new PathSet(result);</span>
+    }
+
+    /**
+     * Generate a path set of paths from this set which
+     * are in at least one of the sub tree of the provided path set.
+     * @param set The base path set
+     * @return Path set
+     */
+    public PathSet getSubset(final PathSet set) {
+<span class="fc" id="L175">        final Set&lt;Path&gt; result = new HashSet&lt;Path&gt;();</span>
+<span class="fc bfc" id="L176" title="All 2 branches covered.">        for(final Path p : this.paths) {</span>
+<span class="fc bfc" id="L177" title="All 2 branches covered.">            if ( set.matches(p.getPath()) != null ) {</span>
+<span class="fc" id="L178">                result.add(p);</span>
+            }
+<span class="fc" id="L180">        }</span>
+<span class="fc" id="L181">        return new PathSet(result);</span>
+    }
+
+    /**
+     * Create a unmodifiable set of strings
+     * @return A set of strings
+     */
+    public Set&lt;String&gt; toStringSet() {
+<span class="fc" id="L189">        final Set&lt;String&gt; set = new HashSet&lt;String&gt;();</span>
+<span class="fc bfc" id="L190" title="All 2 branches covered.">        for(final Path p : this) {</span>
+<span class="fc" id="L191">            set.add(p.getPath());</span>
+<span class="fc" id="L192">        }</span>
+<span class="fc" id="L193">        return Collections.unmodifiableSet(set);</span>
+    }
+
+    /**
+     * Return an unmodifiable iterator for the paths.
+     * @return An iterator for the paths
+     */
+    @Override
+    public Iterator&lt;Path&gt; iterator() {
+<span class="fc" id="L202">        return Collections.unmodifiableSet(this.paths).iterator();</span>
+    }
+
+    @Override
+    public int hashCode() {
+<span class="nc" id="L207">        return paths.hashCode();</span>
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+<span class="nc bnc" id="L212" title="All 2 branches missed.">        if (this == obj) {</span>
+<span class="nc" id="L213">            return true;</span>
+        }
+<span class="nc bnc" id="L215" title="All 4 branches missed.">        if (obj == null || !(obj instanceof PathSet)) {</span>
+<span class="nc" id="L216">            return false;</span>
+        }
+<span class="nc" id="L218">        return this.paths.equals(((PathSet)obj).paths);</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L223">        return &quot;PathSet [paths=&quot; + paths + &quot;]&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>
