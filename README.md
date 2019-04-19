@@ -1,6 +1,11 @@
 # SOEN6611_TeamE
+1) to explain the file structure of the repo (e.g., XXX folder contains the raw data of statement coverage); 2) the requirements (e.g., the libs) for running the script; 3) team name and members.
 
-## Team Members
+## 1) 
+
+## 2) 
+
+## 3) Team Members
 
 - Jasraj Singh Bedi  40046931
 - Neelisha Fernandes 40053845
