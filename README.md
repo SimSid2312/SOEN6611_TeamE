@@ -1,45 +1,49 @@
 # SOEN6611_TeamE
 
 
-## 1) File Structure
+## 1. File Structure
 
 + Scripts
-    - spearman_and_pearson.py
-    - data_for_script.py
+    - main.py (Python script to calculate pearson and spearman correlation coefficient)
 + Projects
     - OverallDataAnalysis
-    - Project1 e.g. apache-sling
+        - Files related to correlation of metrics for all projects.
+    - {Project_wise_folder} e.g. apache-sling
         + Code Change
-            - Upload POM.txt
+            - ConfigurationChanges.txt
         + Data Analysis
-            - Analysis.txt
+            - Files related to correlation of metrics.
         + Data Collection
             - Version_X.X.X
-                + JaCoco Version X.X.X
-                + Bugs vX.X.X.csv
-                + LOC vX.X.X
+                + JaCoco
+                + Pitest
+                + Bugs_vX.X.X.csv
+                + CLOC_vX.X.X
             - Version_Y.Y.Y
-                + JaCoco Version Y.Y.Y
-                + Bugs vY.Y.Y.csv
-                + LOC vY.Y.Y
+                + JaCoco
+                + Pitest
+                + Bugs_vY.Y.Y.csv
+                + CLOC_vY.Y.Y
 
 
 - The repository contains a **Projects** folder which has all the data pertaining to the project.
-- Inside the project folder there are 5 project folders named **(File Upload, JfreeChart/Code Change,  common-collections)**
-- Inside each of the project folders mentioned in the previous line, there are three folders **Code Change, Data Analysis and Data Collection (Data collection contains raw data).**
+- Inside the project folder there are 5 project folders named **(FileUpload, JfreeChart, Common-IO, apache-sling, common-collections)**
+- The **Projects** folder also includes overall data analysis folder containing various data analysis files for all metrics and all projects.
+- Inside each of the project folders, there are three folders **CodeChange, DataAnalysis and DataCollection**.
 - **Data collection** contains raw data version wise. 
-    + **File Upload/Data Collection/Version_1.2.1/JacCoco Version 1.2.1** contains the **Jacoco reports** for the File Upload project for its 1.2.1 version.
-    + **File Upload/Data Collection/Version_1.2.1/Bugs v1.2.1.csv** contains the **bug list**   for the File Upload project for its 1.2.1 version.
-    + **File Upload/Data Collection/Version_1.2.1/LOC v1.2.1.csv** contains the **Lines of code**   for the File Upload project for its 1.2.1 version.
-- **Data Analysis** inside the project name folder contains a file Analysis.txt, whcih has the analysis of that project.
+    + **File Upload/Data Collection/Version_1.2.1/JacCoco** contains the **Jacoco reports** for the File Upload project for its 1.2.1 version.
+    + **File Upload/Data Collection/Version_1.2.1/pitest** contains the **PiTest report** for the File Upload project for its 1.2.1 version.
+    + **File Upload/Data Collection/Version_1.2.1/CLOC_v1.2.1.csv** contains the **Lines of code** for the File Upload project for its 1.2.1 version.
+    + **File Upload/Data Collection/Version_1.2.1/Bug_v1.2.1.csv** contains the **Bug list** for the File Upload project for its 1.2.1 version.
+- **Data Analysis** inside the project name folder contains data analysis of all matrics for all versions of that project.
 - **Code Change** inside the project name folder contains configuration code.
 
 
-## 2) Steps to Run Projects/Scripts/spearman_and_pearson.py  
+## 2. Steps to Run Projects/Scripts/main.py  
 - Install python 3 or above, **pip and pip install pandas, scipy, numpy and matlpotlib** libraries.
-- Run python file by opening the terminal and running **python spearman_and_pearson.py**.
+- Run python file by opening the terminal and running **python main.py**.
 
-## 3) Team Members
+## 3. Team Members
 
 - Jasraj Singh Bedi | 40046931 | jasraj3453@gmail.com
 - Himanshu Kohli | 40070839 | atomicboy2012@gmail.com
