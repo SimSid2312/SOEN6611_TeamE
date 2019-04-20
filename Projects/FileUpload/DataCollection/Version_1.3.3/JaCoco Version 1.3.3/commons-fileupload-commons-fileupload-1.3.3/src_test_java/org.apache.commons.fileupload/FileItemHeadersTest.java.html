@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileItemHeadersTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-fileupload-commons-fileupload-1.3.3 (18-Apr-2019 2:10:31 AM)</a> &gt; <a href="../../index.html" class="el_group">commons-fileupload-commons-fileupload-1.3.3</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.fileupload</a> &gt; <span class="el_source">FileItemHeadersTest.java</span></div><h1>FileItemHeadersTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.fileupload;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Iterator;
+
+import org.apache.commons.fileupload.util.FileItemHeadersImpl;
+import org.junit.Test;
+
+/**
+ * Unit tests {@link FileItemHeaders} and
+ * {@link FileItemHeadersImpl}.
+ *
+ * @version $Id$
+ */
+<span class="fc" id="L35">public class FileItemHeadersTest {</span>
+
+    /**
+     * @throws Exception
+     */
+    @Test
+    public void testFileItemHeaders() throws Exception {
+<span class="fc" id="L42">        FileItemHeadersImpl aMutableFileItemHeaders = new FileItemHeadersImpl();</span>
+<span class="fc" id="L43">        aMutableFileItemHeaders.addHeader(&quot;Content-Disposition&quot;, &quot;form-data; name=\&quot;FileItem\&quot;; filename=\&quot;file1.txt\&quot;&quot;);</span>
+<span class="fc" id="L44">        aMutableFileItemHeaders.addHeader(&quot;Content-Type&quot;, &quot;text/plain&quot;);</span>
+
+<span class="fc" id="L46">        aMutableFileItemHeaders.addHeader(&quot;TestHeader&quot;, &quot;headerValue1&quot;);</span>
+<span class="fc" id="L47">        aMutableFileItemHeaders.addHeader(&quot;TestHeader&quot;, &quot;headerValue2&quot;);</span>
+<span class="fc" id="L48">        aMutableFileItemHeaders.addHeader(&quot;TestHeader&quot;, &quot;headerValue3&quot;);</span>
+<span class="fc" id="L49">        aMutableFileItemHeaders.addHeader(&quot;testheader&quot;, &quot;headerValue4&quot;);</span>
+
+<span class="fc" id="L51">        Iterator&lt;String&gt; headerNameEnumeration = aMutableFileItemHeaders.getHeaderNames();</span>
+<span class="fc" id="L52">        assertEquals(&quot;content-disposition&quot;, headerNameEnumeration.next());</span>
+<span class="fc" id="L53">        assertEquals(&quot;content-type&quot;, headerNameEnumeration.next());</span>
+<span class="fc" id="L54">        assertEquals(&quot;testheader&quot;, headerNameEnumeration.next());</span>
+<span class="fc" id="L55">        assertFalse(headerNameEnumeration.hasNext());</span>
+
+<span class="fc" id="L57">        assertEquals(aMutableFileItemHeaders.getHeader(&quot;Content-Disposition&quot;), &quot;form-data; name=\&quot;FileItem\&quot;; filename=\&quot;file1.txt\&quot;&quot;);</span>
+<span class="fc" id="L58">        assertEquals(aMutableFileItemHeaders.getHeader(&quot;Content-Type&quot;), &quot;text/plain&quot;);</span>
+<span class="fc" id="L59">        assertEquals(aMutableFileItemHeaders.getHeader(&quot;content-type&quot;), &quot;text/plain&quot;);</span>
+<span class="fc" id="L60">        assertEquals(aMutableFileItemHeaders.getHeader(&quot;TestHeader&quot;), &quot;headerValue1&quot;);</span>
+<span class="fc" id="L61">        assertNull(aMutableFileItemHeaders.getHeader(&quot;DummyHeader&quot;));</span>
+
+        Iterator&lt;String&gt; headerValueEnumeration;
+
+<span class="fc" id="L65">        headerValueEnumeration = aMutableFileItemHeaders.getHeaders(&quot;Content-Type&quot;);</span>
+<span class="fc" id="L66">        assertTrue(headerValueEnumeration.hasNext());</span>
+<span class="fc" id="L67">        assertEquals(headerValueEnumeration.next(), &quot;text/plain&quot;);</span>
+<span class="fc" id="L68">        assertFalse(headerValueEnumeration.hasNext());</span>
+
+<span class="fc" id="L70">        headerValueEnumeration = aMutableFileItemHeaders.getHeaders(&quot;content-type&quot;);</span>
+<span class="fc" id="L71">        assertTrue(headerValueEnumeration.hasNext());</span>
+<span class="fc" id="L72">        assertEquals(headerValueEnumeration.next(), &quot;text/plain&quot;);</span>
+<span class="fc" id="L73">        assertFalse(headerValueEnumeration.hasNext());</span>
+
+<span class="fc" id="L75">        headerValueEnumeration = aMutableFileItemHeaders.getHeaders(&quot;TestHeader&quot;);</span>
+<span class="fc" id="L76">        assertTrue(headerValueEnumeration.hasNext());</span>
+<span class="fc" id="L77">        assertEquals(headerValueEnumeration.next(), &quot;headerValue1&quot;);</span>
+<span class="fc" id="L78">        assertTrue(headerValueEnumeration.hasNext());</span>
+<span class="fc" id="L79">        assertEquals(headerValueEnumeration.next(), &quot;headerValue2&quot;);</span>
+<span class="fc" id="L80">        assertTrue(headerValueEnumeration.hasNext());</span>
+<span class="fc" id="L81">        assertEquals(headerValueEnumeration.next(), &quot;headerValue3&quot;);</span>
+<span class="fc" id="L82">        assertTrue(headerValueEnumeration.hasNext());</span>
+<span class="fc" id="L83">        assertEquals(headerValueEnumeration.next(), &quot;headerValue4&quot;);</span>
+<span class="fc" id="L84">        assertFalse(headerValueEnumeration.hasNext());</span>
+
+<span class="fc" id="L86">        headerValueEnumeration = aMutableFileItemHeaders.getHeaders(&quot;DummyHeader&quot;);</span>
+<span class="fc" id="L87">        assertFalse(headerValueEnumeration.hasNext());</span>
+<span class="fc" id="L88">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.3.201901230119</span>commons-fileupload-commons-fileupload-1.3.3 (18-Apr-2019 2:10:31 AM)</div></body></html>

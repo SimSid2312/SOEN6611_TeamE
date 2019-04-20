@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>DiskFileItemSerializeTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-fileupload-commons-fileupload-1.3.2 (18-Apr-2019 2:58:27 AM)</a> &gt; <a href="../../index.html" class="el_group">commons-fileupload-commons-fileupload-1.3.2</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.fileupload</a> &gt; <span class="el_source">DiskFileItemSerializeTest.java</span></div><h1>DiskFileItemSerializeTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.fileupload;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.junit.Test;
+
+/**
+ * Serialization Unit tests for
+ *  {@link org.apache.commons.fileupload.disk.DiskFileItem}.
+ *
+ * @version $Id$
+ */
+<span class="fc" id="L42">public class DiskFileItemSerializeTest {</span>
+
+    /**
+     * Content type for regular form items.
+     */
+    private static final String textContentType = &quot;text/plain&quot;;
+
+    /**
+     * Very low threshold for testing memory versus disk options.
+     */
+    private static final int threshold = 16;
+
+    /**
+     * Helper method to test creation of a field when a repository is used.
+     */
+    public void testInMemoryObject(byte[] testFieldValueBytes, File repository) {
+<span class="fc" id="L58">        FileItem item = createFileItem(testFieldValueBytes, repository);</span>
+
+        // Check state is as expected
+<span class="fc" id="L61">        assertTrue(&quot;Initial: in memory&quot;, item.isInMemory());</span>
+<span class="fc" id="L62">        assertEquals(&quot;Initial: size&quot;, item.getSize(), testFieldValueBytes.length);</span>
+<span class="fc" id="L63">        compareBytes(&quot;Initial&quot;, item.get(), testFieldValueBytes);</span>
+
+        // Serialize &amp; Deserialize
+<span class="fc" id="L66">        FileItem newItem = (FileItem)serializeDeserialize(item);</span>
+
+        // Test deserialized content is as expected
+<span class="fc" id="L69">        assertTrue(&quot;Check in memory&quot;, newItem.isInMemory());</span>
+<span class="fc" id="L70">        compareBytes(&quot;Check&quot;, testFieldValueBytes, newItem.get());</span>
+
+        // Compare FileItem's (except byte[])
+<span class="fc" id="L73">        compareFileItems(item, newItem);</span>
+<span class="fc" id="L74">    }</span>
+    
+    /**
+     * Helper method to test creation of a field.
+     */
+    private void testInMemoryObject(byte[] testFieldValueBytes) {
+<span class="fc" id="L80">        testInMemoryObject(testFieldValueBytes, null);</span>
+<span class="fc" id="L81">    }</span>
+    
+    /**
+     * Test creation of a field for which the amount of data falls below the
+     * configured threshold.
+     */
+    @Test
+    public void testBelowThreshold() throws Exception {
+        // Create the FileItem
+<span class="fc" id="L90">        byte[] testFieldValueBytes = createContentBytes(threshold - 1);</span>
+<span class="fc" id="L91">        testInMemoryObject(testFieldValueBytes);</span>
+<span class="fc" id="L92">    }</span>
+
+    /**
+     * Test creation of a field for which the amount of data equals the
+     * configured threshold.
+     */
+    @Test
+    public void testThreshold() throws Exception {
+        // Create the FileItem
+<span class="fc" id="L101">        byte[] testFieldValueBytes = createContentBytes(threshold);</span>
+<span class="fc" id="L102">        testInMemoryObject(testFieldValueBytes);</span>
+<span class="fc" id="L103">    }</span>
+
+    /**
+     * Test creation of a field for which the amount of data falls above the
+     * configured threshold.
+     */
+    @Test
+    public void testAboveThreshold() throws Exception {
+        // Create the FileItem
+<span class="fc" id="L112">        byte[] testFieldValueBytes = createContentBytes(threshold + 1);</span>
+<span class="fc" id="L113">        FileItem item = createFileItem(testFieldValueBytes);</span>
+
+        // Check state is as expected
+<span class="fc" id="L116">        assertFalse(&quot;Initial: in memory&quot;, item.isInMemory());</span>
+<span class="fc" id="L117">        assertEquals(&quot;Initial: size&quot;, item.getSize(), testFieldValueBytes.length);</span>
+<span class="fc" id="L118">        compareBytes(&quot;Initial&quot;, item.get(), testFieldValueBytes);</span>
+
+        // Serialize &amp; Deserialize
+<span class="fc" id="L121">        FileItem newItem = (FileItem)serializeDeserialize(item);</span>
+
+        // Test deserialized content is as expected
+<span class="fc" id="L124">        assertFalse(&quot;Check in memory&quot;, newItem.isInMemory());</span>
+<span class="fc" id="L125">        compareBytes(&quot;Check&quot;, testFieldValueBytes, newItem.get());</span>
+
+        // Compare FileItem's (except byte[])
+<span class="fc" id="L128">        compareFileItems(item, newItem);</span>
+<span class="fc" id="L129">    }</span>
+    
+    /**
+     * Test serialization and deserialization when repository is not null.
+     */
+    @Test
+    public void testValidRepository() throws Exception {
+        // Create the FileItem
+<span class="fc" id="L137">        byte[] testFieldValueBytes = createContentBytes(threshold);</span>
+<span class="fc" id="L138">        File repository = new File(System.getProperty(&quot;java.io.tmpdir&quot;));</span>
+<span class="fc" id="L139">        testInMemoryObject(testFieldValueBytes, repository);</span>
+<span class="fc" id="L140">    }</span>
+    
+    /**
+     * Test deserialization fails when repository is not valid.
+     */
+    @Test(expected=IOException.class)
+    public void testInvalidRepository() throws Exception {
+        // Create the FileItem
+<span class="fc" id="L148">        byte[] testFieldValueBytes = createContentBytes(threshold);</span>
+<span class="fc" id="L149">        File repository = new File(System.getProperty(&quot;java.io.tmpdir&quot;) + &quot;file&quot;);</span>
+<span class="fc" id="L150">        FileItem item = createFileItem(testFieldValueBytes, repository);</span>
+<span class="nc" id="L151">        deserialize(serialize(item));</span>
+<span class="nc" id="L152">    }</span>
+    
+    /**
+     * Test deserialization fails when repository contains a null character.
+     */
+    @Test(expected=IOException.class)
+    public void testInvalidRepositoryWithNullChar() throws Exception {
+        // Create the FileItem
+<span class="fc" id="L160">        byte[] testFieldValueBytes = createContentBytes(threshold);</span>
+<span class="fc" id="L161">        File repository = new File(System.getProperty(&quot;java.io.tmpdir&quot;) + &quot;\0&quot;);</span>
+<span class="fc" id="L162">        FileItem item = createFileItem(testFieldValueBytes, repository);</span>
+<span class="nc" id="L163">        deserialize(serialize(item));</span>
+<span class="nc" id="L164">    }</span>
+
+    /**
+     * Compare FileItem's (except the byte[] content)
+     */
+    private void compareFileItems(FileItem origItem, FileItem newItem) {
+<span class="pc bpc" id="L170" title="1 of 2 branches missed.">        assertTrue(&quot;Compare: is in Memory&quot;,   origItem.isInMemory()   == newItem.isInMemory());</span>
+<span class="pc bpc" id="L171" title="1 of 2 branches missed.">        assertTrue(&quot;Compare: is Form Field&quot;,  origItem.isFormField()  == newItem.isFormField());</span>
+<span class="fc" id="L172">        assertEquals(&quot;Compare: Field Name&quot;,   origItem.getFieldName(),   newItem.getFieldName());</span>
+<span class="fc" id="L173">        assertEquals(&quot;Compare: Content Type&quot;, origItem.getContentType(), newItem.getContentType());</span>
+<span class="fc" id="L174">        assertEquals(&quot;Compare: File Name&quot;,    origItem.getName(),        newItem.getName());</span>
+<span class="fc" id="L175">    }</span>
+
+    /**
+     * Compare content bytes.
+     */
+    private void compareBytes(String text, byte[] origBytes, byte[] newBytes) {
+<span class="fc" id="L181">        assertNotNull(&quot;origBytes must not be null&quot;, origBytes);</span>
+<span class="fc" id="L182">        assertNotNull(&quot;newBytes must not be null&quot;, newBytes);</span>
+<span class="fc" id="L183">        assertEquals(text + &quot; byte[] length&quot;, origBytes.length, newBytes.length);</span>
+<span class="fc bfc" id="L184" title="All 2 branches covered.">        for (int i = 0; i &lt; origBytes.length; i++) {</span>
+<span class="fc" id="L185">            assertEquals(text + &quot; byte[&quot; + i + &quot;]&quot;, origBytes[i], newBytes[i]);</span>
+        }
+<span class="fc" id="L187">    }</span>
+
+    /**
+     * Create content bytes of a specified size.
+     */
+    private byte[] createContentBytes(int size) {
+<span class="fc" id="L193">        StringBuilder buffer = new StringBuilder(size);</span>
+<span class="fc" id="L194">        byte count = 0;</span>
+<span class="fc bfc" id="L195" title="All 2 branches covered.">        for (int i = 0; i &lt; size; i++) {</span>
+<span class="fc" id="L196">            buffer.append(count+&quot;&quot;);</span>
+<span class="fc" id="L197">            count++;</span>
+<span class="fc bfc" id="L198" title="All 2 branches covered.">            if (count &gt; 9) {</span>
+<span class="fc" id="L199">                count = 0;</span>
+            }
+        }
+<span class="fc" id="L202">        return buffer.toString().getBytes();</span>
+    }
+
+    /**
+     * Create a FileItem with the specfied content bytes and repository.
+     */
+    private FileItem createFileItem(byte[] contentBytes, File repository) {
+<span class="fc" id="L209">        FileItemFactory factory = new DiskFileItemFactory(threshold, repository);</span>
+<span class="fc" id="L210">        String textFieldName = &quot;textField&quot;;</span>
+
+<span class="fc" id="L212">        FileItem item = factory.createItem(</span>
+<span class="fc" id="L213">                textFieldName,</span>
+<span class="fc" id="L214">                textContentType,</span>
+<span class="fc" id="L215">                true,</span>
+<span class="fc" id="L216">                &quot;My File Name&quot;</span>
+        );
+        try {
+<span class="fc" id="L219">            OutputStream os = item.getOutputStream();</span>
+<span class="fc" id="L220">            os.write(contentBytes);</span>
+<span class="fc" id="L221">            os.close();</span>
+<span class="pc" id="L222">        } catch(IOException e) {</span>
+<span class="nc" id="L223">            fail(&quot;Unexpected IOException&quot; + e);</span>
+        }
+
+<span class="fc" id="L226">        return item;</span>
+
+    }
+    
+    /**
+     * Create a FileItem with the specfied content bytes.
+     */
+    private FileItem createFileItem(byte[] contentBytes) {
+<span class="fc" id="L234">        return createFileItem(contentBytes, null);</span>
+    }
+    
+    /**
+     * Do serialization
+     */
+    private ByteArrayOutputStream serialize(Object target) throws Exception {
+<span class="fc" id="L241">        ByteArrayOutputStream baos = new ByteArrayOutputStream();</span>
+<span class="fc" id="L242">        ObjectOutputStream oos = new ObjectOutputStream(baos);</span>
+<span class="fc" id="L243">        oos.writeObject(target);</span>
+<span class="fc" id="L244">        oos.flush();</span>
+<span class="fc" id="L245">        oos.close();</span>
+<span class="fc" id="L246">        return baos;</span>
+    }
+    
+    /**
+     * Do deserialization
+     */
+    private Object deserialize(ByteArrayOutputStream baos) throws Exception {
+<span class="fc" id="L253">        Object result = null;</span>
+<span class="fc" id="L254">        ByteArrayInputStream bais =</span>
+<span class="fc" id="L255">                new ByteArrayInputStream(baos.toByteArray());</span>
+<span class="fc" id="L256">        ObjectInputStream ois = new ObjectInputStream(bais);</span>
+<span class="fc" id="L257">        result = ois.readObject();</span>
+<span class="fc" id="L258">        bais.close();</span>
+
+<span class="fc" id="L260">        return result;</span>
+    }
+    
+    /**
+     * Do serialization and deserialization.
+     */
+    private Object serializeDeserialize(Object target) {
+        // Serialize the test object
+<span class="fc" id="L268">        ByteArrayOutputStream baos = null;</span>
+        try {
+<span class="fc" id="L270">            baos = serialize(target);</span>
+<span class="pc" id="L271">        } catch (Exception e) {</span>
+<span class="nc" id="L272">            fail(&quot;Exception during serialization: &quot; + e);</span>
+        }
+        
+        // Deserialize the test object
+<span class="fc" id="L276">        Object result = null;</span>
+        try {
+<span class="fc" id="L278">            result = deserialize(baos);</span>
+<span class="pc" id="L279">        } catch (Exception e) {</span>
+<span class="nc" id="L280">            fail(&quot;Exception during deserialization: &quot; + e);</span>
+        }
+        
+<span class="fc" id="L283">        return result;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.3.201901230119</span>commons-fileupload-commons-fileupload-1.3.2 (18-Apr-2019 2:58:27 AM)</div></body></html>

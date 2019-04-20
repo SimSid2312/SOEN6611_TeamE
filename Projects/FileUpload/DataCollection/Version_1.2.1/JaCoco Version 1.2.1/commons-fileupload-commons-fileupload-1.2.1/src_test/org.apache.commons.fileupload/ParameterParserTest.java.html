@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ParameterParserTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-fileupload-commons-fileupload-1.2.1 (18-Apr-2019 4:46:35 AM)</a> &gt; <a href="../../index.html" class="el_group">commons-fileupload-commons-fileupload-1.2.1</a> &gt; <a href="../index.html" class="el_bundle">src/test</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.fileupload</a> &gt; <span class="el_source">ParameterParserTest.java</span></div><h1>ParameterParserTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.fileupload;
+
+import junit.framework.Test;
+import junit.framework.TestCase;
+import junit.framework.TestSuite;
+import java.util.Map;
+
+/**
+ * Unit tests for {@link ParameterParser}.
+ *
+ * @author &lt;a href=&quot;mailto:oleg@ural.ru&quot;&gt;Oleg Kalnichevski&lt;/a&gt;
+ */
+public class ParameterParserTest extends TestCase
+{
+
+    // ------------------------------------------------------------ Constructor
+    public ParameterParserTest(String testName)
+    {
+<span class="fc" id="L35">        super(testName);</span>
+<span class="fc" id="L36">    }</span>
+
+    // ------------------------------------------------------------------- Main
+    public static void main(String args[])
+    {
+<span class="nc" id="L41">        String[] testCaseName = { ParameterParserTest.class.getName()};</span>
+<span class="nc" id="L42">        junit.textui.TestRunner.main(testCaseName);</span>
+<span class="nc" id="L43">    }</span>
+
+    // ------------------------------------------------------- TestCase Methods
+
+    public static Test suite()
+    {
+<span class="fc" id="L49">        return new TestSuite(ParameterParserTest.class);</span>
+    }
+
+    public void testParsing()
+    {
+<span class="fc" id="L54">        String s =</span>
+<span class="fc" id="L55">            &quot;test; test1 =  stuff   ; test2 =  \&quot;stuff; stuff\&quot;; test3=\&quot;stuff&quot;;</span>
+<span class="fc" id="L56">        ParameterParser parser = new ParameterParser();</span>
+<span class="fc" id="L57">        Map params = parser.parse(s, ';');</span>
+<span class="fc" id="L58">        assertEquals(null, params.get(&quot;test&quot;));</span>
+<span class="fc" id="L59">        assertEquals(&quot;stuff&quot;, params.get(&quot;test1&quot;));</span>
+<span class="fc" id="L60">        assertEquals(&quot;stuff; stuff&quot;, params.get(&quot;test2&quot;));</span>
+<span class="fc" id="L61">        assertEquals(&quot;\&quot;stuff&quot;, params.get(&quot;test3&quot;));</span>
+
+<span class="fc" id="L63">        params = parser.parse(s, new char[] { ',', ';' });</span>
+<span class="fc" id="L64">        assertEquals(null, params.get(&quot;test&quot;));</span>
+<span class="fc" id="L65">        assertEquals(&quot;stuff&quot;, params.get(&quot;test1&quot;));</span>
+<span class="fc" id="L66">        assertEquals(&quot;stuff; stuff&quot;, params.get(&quot;test2&quot;));</span>
+<span class="fc" id="L67">        assertEquals(&quot;\&quot;stuff&quot;, params.get(&quot;test3&quot;));</span>
+
+<span class="fc" id="L69">        s = &quot;  test  , test1=stuff   ,  , test2=, test3, &quot;;</span>
+<span class="fc" id="L70">        params = parser.parse(s, ',');</span>
+<span class="fc" id="L71">        assertEquals(null, params.get(&quot;test&quot;));</span>
+<span class="fc" id="L72">        assertEquals(&quot;stuff&quot;, params.get(&quot;test1&quot;));</span>
+<span class="fc" id="L73">        assertEquals(null, params.get(&quot;test2&quot;));</span>
+<span class="fc" id="L74">        assertEquals(null, params.get(&quot;test3&quot;));</span>
+
+<span class="fc" id="L76">        s = &quot;  test&quot;;</span>
+<span class="fc" id="L77">        params = parser.parse(s, ';');</span>
+<span class="fc" id="L78">        assertEquals(null, params.get(&quot;test&quot;));</span>
+
+<span class="fc" id="L80">        s = &quot;  &quot;;</span>
+<span class="fc" id="L81">        params = parser.parse(s, ';');</span>
+<span class="fc" id="L82">        assertEquals(0, params.size());</span>
+
+<span class="fc" id="L84">        s = &quot; = stuff &quot;;</span>
+<span class="fc" id="L85">        params = parser.parse(s, ';');</span>
+<span class="fc" id="L86">        assertEquals(0, params.size());</span>
+<span class="fc" id="L87">    }</span>
+
+    public void testContentTypeParsing()
+    {
+<span class="fc" id="L91">        String s = &quot;text/plain; Charset=UTF-8&quot;;</span>
+<span class="fc" id="L92">        ParameterParser parser = new ParameterParser();</span>
+<span class="fc" id="L93">        parser.setLowerCaseNames(true);</span>
+<span class="fc" id="L94">        Map params = parser.parse(s, ';');</span>
+<span class="fc" id="L95">        assertEquals(&quot;UTF-8&quot;, params.get(&quot;charset&quot;));</span>
+<span class="fc" id="L96">    }</span>
+
+    public void testParsingEscapedChars()
+    {
+<span class="fc" id="L100">        String s = &quot;param = \&quot;stuff\\\&quot;; more stuff\&quot;&quot;;</span>
+<span class="fc" id="L101">        ParameterParser parser = new ParameterParser();</span>
+<span class="fc" id="L102">        Map params = parser.parse(s, ';');</span>
+<span class="fc" id="L103">        assertEquals(1, params.size());</span>
+<span class="fc" id="L104">        assertEquals(&quot;stuff\\\&quot;; more stuff&quot;, params.get(&quot;param&quot;));</span>
+
+<span class="fc" id="L106">        s = &quot;param = \&quot;stuff\\\\\&quot;; anotherparam&quot;;</span>
+<span class="fc" id="L107">        params = parser.parse(s, ';');</span>
+<span class="fc" id="L108">        assertEquals(2, params.size());</span>
+<span class="fc" id="L109">        assertEquals(&quot;stuff\\\\&quot;, params.get(&quot;param&quot;));</span>
+<span class="fc" id="L110">        assertNull(params.get(&quot;anotherparam&quot;));</span>
+<span class="fc" id="L111">    }</span>
+
+    // See: http://issues.apache.org/jira/browse/FILEUPLOAD-139
+    public void testFileUpload139() 
+    {
+<span class="fc" id="L116">        ParameterParser parser = new ParameterParser();</span>
+<span class="fc" id="L117">        String s = &quot;Content-type: multipart/form-data , boundary=AaB03x&quot;;</span>
+<span class="fc" id="L118">        Map params = parser.parse(s, new char[] { ',', ';' });</span>
+<span class="fc" id="L119">        assertEquals(&quot;AaB03x&quot;, params.get(&quot;boundary&quot;));</span>
+
+<span class="fc" id="L121">        s = &quot;Content-type: multipart/form-data, boundary=AaB03x&quot;;</span>
+<span class="fc" id="L122">        params = parser.parse(s, new char[] { ';', ',' });</span>
+<span class="fc" id="L123">        assertEquals(&quot;AaB03x&quot;, params.get(&quot;boundary&quot;));</span>
+
+<span class="fc" id="L125">        s = &quot;Content-type: multipart/mixed, boundary=BbC04y&quot;;</span>
+<span class="fc" id="L126">        params = parser.parse(s, new char[] { ',', ';' });</span>
+<span class="fc" id="L127">        assertEquals(&quot;BbC04y&quot;, params.get(&quot;boundary&quot;));</span>
+<span class="fc" id="L128">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.3.201901230119</span>commons-fileupload-commons-fileupload-1.2.1 (18-Apr-2019 4:46:35 AM)</div></body></html>

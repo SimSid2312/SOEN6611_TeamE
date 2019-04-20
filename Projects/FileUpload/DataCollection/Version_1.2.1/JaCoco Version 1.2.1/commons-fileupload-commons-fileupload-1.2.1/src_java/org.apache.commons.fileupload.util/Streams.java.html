@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>Streams.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-fileupload-commons-fileupload-1.2.1 (18-Apr-2019 4:46:35 AM)</a> &gt; <a href="../../index.html" class="el_group">commons-fileupload-commons-fileupload-1.2.1</a> &gt; <a href="../index.html" class="el_bundle">src/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.fileupload.util</a> &gt; <span class="el_source">Streams.java</span></div><h1>Streams.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.fileupload.util;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+
+/** Utility class for working with streams.
+ */
+public final class Streams {
+    /**
+     * Private constructor, to prevent instantiation.
+     * This class has only static methods.
+     */
+    private Streams() {
+        // Does nothing
+    }
+
+    /**
+     * Default buffer size for use in
+     * {@link #copy(InputStream, OutputStream, boolean)}.
+     */
+    private static final int DEFAULT_BUFFER_SIZE = 8192;
+
+    /**
+     * Copies the contents of the given {@link InputStream}
+     * to the given {@link OutputStream}. Shortcut for
+     * &lt;pre&gt;
+     *   copy(pInputStream, pOutputStream, new byte[8192]);
+     * &lt;/pre&gt;
+     * @param pInputStream The input stream, which is being read.
+     * It is guaranteed, that {@link InputStream#close()} is called
+     * on the stream.
+     * @param pOutputStream The output stream, to which data should
+     * be written. May be null, in which case the input streams
+     * contents are simply discarded.
+     * @param pClose True guarantees, that {@link OutputStream#close()}
+     * is called on the stream. False indicates, that only
+     * {@link OutputStream#flush()} should be called finally.
+     *
+     * @return Number of bytes, which have been copied.
+     * @throws IOException An I/O error occurred.
+     */
+    public static long copy(InputStream pInputStream,
+            OutputStream pOutputStream, boolean pClose)
+            throws IOException {
+<span class="fc" id="L64">        return copy(pInputStream, pOutputStream, pClose,</span>
+<span class="fc" id="L65">                new byte[DEFAULT_BUFFER_SIZE]);</span>
+    }
+
+    /**
+     * Copies the contents of the given {@link InputStream}
+     * to the given {@link OutputStream}.
+     * @param pIn The input stream, which is being read.
+     *   It is guaranteed, that {@link InputStream#close()} is called
+     *   on the stream.
+     * @param pOut The output stream, to which data should
+     *   be written. May be null, in which case the input streams
+     *   contents are simply discarded.
+     * @param pClose True guarantees, that {@link OutputStream#close()}
+     *   is called on the stream. False indicates, that only
+     *   {@link OutputStream#flush()} should be called finally.
+     * @param pBuffer Temporary buffer, which is to be used for
+     *   copying data.
+     * @return Number of bytes, which have been copied.
+     * @throws IOException An I/O error occurred.
+     */
+    public static long copy(InputStream pIn,
+            OutputStream pOut, boolean pClose,
+            byte[] pBuffer)
+    throws IOException {
+<span class="fc" id="L89">        OutputStream out = pOut;</span>
+<span class="fc" id="L90">        InputStream in = pIn;</span>
+        try {
+<span class="fc" id="L92">            long total = 0;</span>
+<span class="fc" id="L93">            for (;;) {</span>
+<span class="fc" id="L94">                int res = in.read(pBuffer);</span>
+<span class="fc bfc" id="L95" title="All 2 branches covered.">                if (res == -1) {</span>
+<span class="fc" id="L96">                    break;</span>
+                }
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">                if (res &gt; 0) {</span>
+<span class="fc" id="L99">                    total += res;</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">                    if (out != null) {</span>
+<span class="fc" id="L101">                        out.write(pBuffer, 0, res);</span>
+                    }
+                }
+            }
+<span class="fc bfc" id="L105" title="All 2 branches covered.">            if (out != null) {</span>
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">                if (pClose) {</span>
+<span class="fc" id="L107">                    out.close();</span>
+<span class="fc" id="L108">                } else {</span>
+<span class="nc" id="L109">                    out.flush();</span>
+                }
+<span class="fc" id="L111">                out = null;</span>
+            }
+<span class="fc" id="L113">            in.close();</span>
+<span class="fc" id="L114">            in = null;</span>
+<span class="fc" id="L115">            return total;</span>
+        } finally {
+<span class="fc bfc" id="L117" title="All 2 branches covered.">            if (in != null) {</span>
+                try {
+<span class="fc" id="L119">                    in.close();</span>
+<span class="fc" id="L120">                } catch (Throwable t) {</span>
+                    /* Ignore me */
+                }
+            }
+<span class="fc bfc" id="L124" title="All 4 branches covered.">            if (pClose  &amp;&amp;  out != null) {</span>
+                try {
+<span class="fc" id="L126">                    out.close();</span>
+<span class="pc" id="L127">                } catch (Throwable t) {</span>
+                    /* Ignore me */
+                }
+            }
+        }
+    }
+
+    /**
+     * This convenience method allows to read a
+     * {@link org.apache.commons.fileupload.FileItemStream}'s
+     * content into a string. The platform's default character encoding
+     * is used for converting bytes into characters.
+     * @param pStream The input stream to read.
+     * @see #asString(InputStream, String)
+     * @return The streams contents, as a string.
+     * @throws IOException An I/O error occurred.
+     */
+    public static String asString(InputStream pStream) throws IOException {
+<span class="nc" id="L145">        ByteArrayOutputStream baos = new ByteArrayOutputStream();</span>
+<span class="nc" id="L146">        copy(pStream, baos, true);</span>
+<span class="nc" id="L147">        return baos.toString();</span>
+    }
+
+    /**
+     * This convenience method allows to read a
+     * {@link org.apache.commons.fileupload.FileItemStream}'s
+     * content into a string, using the given character encoding.
+     * @param pStream The input stream to read.
+     * @param pEncoding The character encoding, typically &quot;UTF-8&quot;.
+     * @see #asString(InputStream)
+     * @return The streams contents, as a string.
+     * @throws IOException An I/O error occurred.
+     */
+    public static String asString(InputStream pStream, String pEncoding)
+            throws IOException {
+<span class="nc" id="L162">        ByteArrayOutputStream baos = new ByteArrayOutputStream();</span>
+<span class="nc" id="L163">        copy(pStream, baos, true);</span>
+<span class="nc" id="L164">        return baos.toString(pEncoding);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.3.201901230119</span>commons-fileupload-commons-fileupload-1.2.1 (18-Apr-2019 4:46:35 AM)</div></body></html>

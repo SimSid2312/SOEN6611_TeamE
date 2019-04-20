@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>SizesTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-fileupload-commons-fileupload-1.4 (18-Apr-2019 3:46:35 AM)</a> &gt; <a href="../../index.html" class="el_group">commons-fileupload-commons-fileupload-1.4</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.fileupload</a> &gt; <span class="el_source">SizesTest.java</span></div><h1>SizesTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.fileupload;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Iterator;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.fileupload.FileUploadBase.FileUploadIOException;
+import org.apache.commons.fileupload.FileUploadBase.SizeException;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.fileupload.util.Streams;
+import org.junit.Test;
+
+/**
+ * Unit test for items with varying sizes.
+ */
+<span class="fc" id="L42">public class SizesTest {</span>
+
+    /**
+     * Runs a test with varying file sizes.
+     */
+    @Test
+    public void testFileUpload()
+            throws IOException, FileUploadException {
+<span class="fc" id="L50">        ByteArrayOutputStream baos = new ByteArrayOutputStream();</span>
+<span class="fc" id="L51">        int add = 16;</span>
+<span class="fc" id="L52">        int num = 0;</span>
+<span class="fc bfc" id="L53" title="All 2 branches covered.">        for (int i = 0;  i &lt; 16384;  i += add) {</span>
+<span class="fc bfc" id="L54" title="All 2 branches covered.">            if (++add == 32) {</span>
+<span class="fc" id="L55">                add = 16;</span>
+            }
+<span class="fc" id="L57">            String header = &quot;-----1234\r\n&quot;</span>
+<span class="fc" id="L58">                + &quot;Content-Disposition: form-data; name=\&quot;field&quot; + (num++) + &quot;\&quot;\r\n&quot;</span>
+<span class="fc" id="L59">                + &quot;\r\n&quot;;</span>
+<span class="fc" id="L60">            baos.write(header.getBytes(&quot;US-ASCII&quot;));</span>
+<span class="fc bfc" id="L61" title="All 2 branches covered.">            for (int j = 0;  j &lt; i;  j++) {</span>
+<span class="fc" id="L62">                baos.write((byte) j);</span>
+            }
+<span class="fc" id="L64">            baos.write(&quot;\r\n&quot;.getBytes(&quot;US-ASCII&quot;));</span>
+        }
+<span class="fc" id="L66">        baos.write(&quot;-----1234--\r\n&quot;.getBytes(&quot;US-ASCII&quot;));</span>
+
+<span class="fc" id="L68">        List&lt;FileItem&gt; fileItems =</span>
+<span class="fc" id="L69">                Util.parseUpload(new ServletFileUpload(new DiskFileItemFactory()), baos.toByteArray());</span>
+<span class="fc" id="L70">        Iterator&lt;FileItem&gt; fileIter = fileItems.iterator();</span>
+<span class="fc" id="L71">        add = 16;</span>
+<span class="fc" id="L72">        num = 0;</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">        for (int i = 0;  i &lt; 16384;  i += add) {</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">            if (++add == 32) {</span>
+<span class="fc" id="L75">                add = 16;</span>
+            }
+<span class="fc" id="L77">            FileItem item = fileIter.next();</span>
+<span class="fc" id="L78">            assertEquals(&quot;field&quot; + (num++), item.getFieldName());</span>
+<span class="fc" id="L79">            byte[] bytes = item.get();</span>
+<span class="fc" id="L80">            assertEquals(i, bytes.length);</span>
+<span class="fc bfc" id="L81" title="All 2 branches covered.">            for (int j = 0;  j &lt; i;  j++) {</span>
+<span class="fc" id="L82">                assertEquals((byte) j, bytes[j]);</span>
+            }
+        }
+<span class="pc bpc" id="L85" title="1 of 2 branches missed.">        assertTrue(!fileIter.hasNext());</span>
+<span class="fc" id="L86">    }</span>
+
+    /** Checks, whether limiting the file size works.
+     */
+    @Test
+    public void testFileSizeLimit()
+            throws IOException, FileUploadException {
+<span class="fc" id="L93">        final String request =</span>
+<span class="fc" id="L94">            &quot;-----1234\r\n&quot; +</span>
+            &quot;Content-Disposition: form-data; name=\&quot;file\&quot;; filename=\&quot;foo.tab\&quot;\r\n&quot; +
+            &quot;Content-Type: text/whatever\r\n&quot; +
+            &quot;\r\n&quot; +
+            &quot;This is the content of the file\n&quot; +
+            &quot;\r\n&quot; +
+            &quot;-----1234--\r\n&quot;;
+
+<span class="fc" id="L102">        ServletFileUpload upload = new ServletFileUpload(new DiskFileItemFactory());</span>
+<span class="fc" id="L103">        upload.setFileSizeMax(-1);</span>
+<span class="fc" id="L104">        HttpServletRequest req = new MockHttpServletRequest(</span>
+<span class="fc" id="L105">                request.getBytes(&quot;US-ASCII&quot;), Constants.CONTENT_TYPE);</span>
+<span class="fc" id="L106">        List&lt;FileItem&gt; fileItems = upload.parseRequest(req);</span>
+<span class="fc" id="L107">        assertEquals(1, fileItems.size());</span>
+<span class="fc" id="L108">        FileItem item = fileItems.get(0);</span>
+<span class="fc" id="L109">        assertEquals(&quot;This is the content of the file\n&quot;, new String(item.get()));</span>
+
+<span class="fc" id="L111">        upload = new ServletFileUpload(new DiskFileItemFactory());</span>
+<span class="fc" id="L112">        upload.setFileSizeMax(40);</span>
+<span class="fc" id="L113">        req = new MockHttpServletRequest(request.getBytes(&quot;US-ASCII&quot;), Constants.CONTENT_TYPE);</span>
+<span class="fc" id="L114">        fileItems = upload.parseRequest(req);</span>
+<span class="fc" id="L115">        assertEquals(1, fileItems.size());</span>
+<span class="fc" id="L116">        item = fileItems.get(0);</span>
+<span class="fc" id="L117">        assertEquals(&quot;This is the content of the file\n&quot;, new String(item.get()));</span>
+
+<span class="fc" id="L119">        upload = new ServletFileUpload(new DiskFileItemFactory());</span>
+<span class="fc" id="L120">        upload.setFileSizeMax(30);</span>
+<span class="fc" id="L121">        req = new MockHttpServletRequest(request.getBytes(&quot;US-ASCII&quot;), Constants.CONTENT_TYPE);</span>
+        try {
+<span class="nc" id="L123">            upload.parseRequest(req);</span>
+<span class="nc" id="L124">            fail(&quot;Expected exception.&quot;);</span>
+<span class="pc" id="L125">        } catch (FileUploadBase.FileSizeLimitExceededException e) {</span>
+<span class="fc" id="L126">            assertEquals(30, e.getPermittedSize());</span>
+        }
+<span class="fc" id="L128">    }</span>
+
+    /** Checks, whether a faked Content-Length header is detected.
+     */
+    @Test
+    public void testFileSizeLimitWithFakedContentLength()
+            throws IOException, FileUploadException {
+<span class="fc" id="L135">        final String request =</span>
+<span class="fc" id="L136">            &quot;-----1234\r\n&quot; +</span>
+            &quot;Content-Disposition: form-data; name=\&quot;file\&quot;; filename=\&quot;foo.tab\&quot;\r\n&quot; +
+            &quot;Content-Type: text/whatever\r\n&quot; +
+            &quot;Content-Length: 10\r\n&quot; +
+            &quot;\r\n&quot; +
+            &quot;This is the content of the file\n&quot; +
+            &quot;\r\n&quot; +
+            &quot;-----1234--\r\n&quot;;
+
+<span class="fc" id="L145">        ServletFileUpload upload = new ServletFileUpload(new DiskFileItemFactory());</span>
+<span class="fc" id="L146">        upload.setFileSizeMax(-1);</span>
+<span class="fc" id="L147">        HttpServletRequest req = new MockHttpServletRequest(</span>
+<span class="fc" id="L148">                request.getBytes(&quot;US-ASCII&quot;), Constants.CONTENT_TYPE);</span>
+<span class="fc" id="L149">        List&lt;FileItem&gt; fileItems = upload.parseRequest(req);</span>
+<span class="fc" id="L150">        assertEquals(1, fileItems.size());</span>
+<span class="fc" id="L151">        FileItem item = fileItems.get(0);</span>
+<span class="fc" id="L152">        assertEquals(&quot;This is the content of the file\n&quot;, new String(item.get()));</span>
+
+<span class="fc" id="L154">        upload = new ServletFileUpload(new DiskFileItemFactory());</span>
+<span class="fc" id="L155">        upload.setFileSizeMax(40);</span>
+<span class="fc" id="L156">        req = new MockHttpServletRequest(request.getBytes(&quot;US-ASCII&quot;), Constants.CONTENT_TYPE);</span>
+<span class="fc" id="L157">        fileItems = upload.parseRequest(req);</span>
+<span class="fc" id="L158">        assertEquals(1, fileItems.size());</span>
+<span class="fc" id="L159">        item = fileItems.get(0);</span>
+<span class="fc" id="L160">        assertEquals(&quot;This is the content of the file\n&quot;, new String(item.get()));</span>
+
+        // provided Content-Length is larger than the FileSizeMax -&gt; handled by ctor
+<span class="fc" id="L163">        upload = new ServletFileUpload(new DiskFileItemFactory());</span>
+<span class="fc" id="L164">        upload.setFileSizeMax(5);</span>
+<span class="fc" id="L165">        req = new MockHttpServletRequest(request.getBytes(&quot;US-ASCII&quot;), Constants.CONTENT_TYPE);</span>
+        try {
+<span class="nc" id="L167">            upload.parseRequest(req);</span>
+<span class="nc" id="L168">            fail(&quot;Expected exception.&quot;);</span>
+<span class="pc" id="L169">        } catch (FileUploadBase.FileSizeLimitExceededException e) {</span>
+<span class="fc" id="L170">            assertEquals(5, e.getPermittedSize());</span>
+        }
+
+        // provided Content-Length is wrong, actual content is larger -&gt; handled by LimitedInputStream
+<span class="fc" id="L174">        upload = new ServletFileUpload(new DiskFileItemFactory());</span>
+<span class="fc" id="L175">        upload.setFileSizeMax(15);</span>
+<span class="fc" id="L176">        req = new MockHttpServletRequest(request.getBytes(&quot;US-ASCII&quot;), Constants.CONTENT_TYPE);</span>
+        try {
+<span class="nc" id="L178">            upload.parseRequest(req);</span>
+<span class="nc" id="L179">            fail(&quot;Expected exception.&quot;);</span>
+<span class="pc" id="L180">        } catch (FileUploadBase.FileSizeLimitExceededException e) {</span>
+<span class="fc" id="L181">            assertEquals(15, e.getPermittedSize());</span>
+        }
+<span class="fc" id="L183">    }</span>
+
+    /** Checks, whether the maxSize works.
+     */
+    @Test
+    public void testMaxSizeLimit()
+            throws IOException, FileUploadException {
+<span class="fc" id="L190">        final String request =</span>
+<span class="fc" id="L191">            &quot;-----1234\r\n&quot; +</span>
+            &quot;Content-Disposition: form-data; name=\&quot;file1\&quot;; filename=\&quot;foo1.tab\&quot;\r\n&quot; +
+            &quot;Content-Type: text/whatever\r\n&quot; +
+            &quot;Content-Length: 10\r\n&quot; +
+            &quot;\r\n&quot; +
+            &quot;This is the content of the file\n&quot; +
+            &quot;\r\n&quot; +
+            &quot;-----1234\r\n&quot; +
+            &quot;Content-Disposition: form-data; name=\&quot;file2\&quot;; filename=\&quot;foo2.tab\&quot;\r\n&quot; +
+            &quot;Content-Type: text/whatever\r\n&quot; +
+            &quot;\r\n&quot; +
+            &quot;This is the content of the file\n&quot; +
+            &quot;\r\n&quot; +
+            &quot;-----1234--\r\n&quot;;
+
+<span class="fc" id="L206">        ServletFileUpload upload = new ServletFileUpload(new DiskFileItemFactory());</span>
+<span class="fc" id="L207">        upload.setFileSizeMax(-1);</span>
+<span class="fc" id="L208">        upload.setSizeMax(200);</span>
+
+<span class="fc" id="L210">        MockHttpServletRequest req = new MockHttpServletRequest(</span>
+<span class="fc" id="L211">                request.getBytes(&quot;US-ASCII&quot;), Constants.CONTENT_TYPE);</span>
+        try {
+<span class="nc" id="L213">            upload.parseRequest(req);</span>
+<span class="nc" id="L214">            fail(&quot;Expected exception.&quot;);</span>
+<span class="pc" id="L215">        } catch (FileUploadBase.SizeLimitExceededException e) {</span>
+<span class="fc" id="L216">            assertEquals(200, e.getPermittedSize());</span>
+        }
+<span class="fc" id="L218">    }</span>
+
+    @Test
+    public void testMaxSizeLimitUnknownContentLength()
+            throws IOException, FileUploadException {
+<span class="fc" id="L223">        final String request =</span>
+<span class="fc" id="L224">            &quot;-----1234\r\n&quot; +</span>
+            &quot;Content-Disposition: form-data; name=\&quot;file1\&quot;; filename=\&quot;foo1.tab\&quot;\r\n&quot; +
+            &quot;Content-Type: text/whatever\r\n&quot; +
+            &quot;Content-Length: 10\r\n&quot; +
+            &quot;\r\n&quot; +
+            &quot;This is the content of the file\n&quot; +
+            &quot;\r\n&quot; +
+            &quot;-----1234\r\n&quot; +
+            &quot;Content-Disposition: form-data; name=\&quot;file2\&quot;; filename=\&quot;foo2.tab\&quot;\r\n&quot; +
+            &quot;Content-Type: text/whatever\r\n&quot; +
+            &quot;\r\n&quot; +
+            &quot;This is the content of the file\n&quot; +
+            &quot;\r\n&quot; +
+            &quot;-----1234--\r\n&quot;;
+
+<span class="fc" id="L239">        ServletFileUpload upload = new ServletFileUpload(new DiskFileItemFactory());</span>
+<span class="fc" id="L240">        upload.setFileSizeMax(-1);</span>
+<span class="fc" id="L241">        upload.setSizeMax(300);</span>
+
+        // the first item should be within the max size limit
+        // set the read limit to 10 to simulate a &quot;real&quot; stream
+        // otherwise the buffer would be immediately filled
+
+<span class="fc" id="L247">        MockHttpServletRequest req = new MockHttpServletRequest(</span>
+<span class="fc" id="L248">                request.getBytes(&quot;US-ASCII&quot;), Constants.CONTENT_TYPE);</span>
+<span class="fc" id="L249">        req.setContentLength(-1);</span>
+<span class="fc" id="L250">        req.setReadLimit(10);</span>
+
+<span class="fc" id="L252">        FileItemIterator it = upload.getItemIterator(req);</span>
+<span class="fc" id="L253">        assertTrue(it.hasNext());</span>
+
+<span class="fc" id="L255">        FileItemStream item = it.next();</span>
+<span class="fc" id="L256">        assertFalse(item.isFormField());</span>
+<span class="fc" id="L257">        assertEquals(&quot;file1&quot;, item.getFieldName());</span>
+<span class="fc" id="L258">        assertEquals(&quot;foo1.tab&quot;, item.getName());</span>
+
+        {
+<span class="fc" id="L261">            InputStream stream = item.openStream();</span>
+<span class="fc" id="L262">            ByteArrayOutputStream baos = new ByteArrayOutputStream();</span>
+<span class="fc" id="L263">            Streams.copy(stream, baos, true);</span>
+        }
+
+        // the second item is over the size max, thus we expect an error
+        try {
+            // the header is still within size max -&gt; this shall still succeed
+<span class="fc" id="L269">            assertTrue(it.hasNext());</span>
+<span class="pc" id="L270">        } catch (SizeException e) {</span>
+<span class="nc" id="L271">            fail();</span>
+        }
+
+<span class="fc" id="L274">        item = it.next();</span>
+
+        try {
+<span class="fc" id="L277">            InputStream stream = item.openStream();</span>
+<span class="fc" id="L278">            ByteArrayOutputStream baos = new ByteArrayOutputStream();</span>
+<span class="nc" id="L279">            Streams.copy(stream, baos, true);</span>
+<span class="nc" id="L280">            fail();</span>
+<span class="pc" id="L281">        } catch (FileUploadIOException e) {</span>
+            // expected
+        }
+<span class="fc" id="L284">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.3.201901230119</span>commons-fileupload-commons-fileupload-1.4 (18-Apr-2019 3:46:35 AM)</div></body></html>

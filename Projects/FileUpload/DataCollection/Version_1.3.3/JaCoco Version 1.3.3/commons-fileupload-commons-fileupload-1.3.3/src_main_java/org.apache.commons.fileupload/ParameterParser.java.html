@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ParameterParser.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-fileupload-commons-fileupload-1.3.3 (18-Apr-2019 2:10:31 AM)</a> &gt; <a href="../../index.html" class="el_group">commons-fileupload-commons-fileupload-1.3.3</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.fileupload</a> &gt; <span class="el_source">ParameterParser.java</span></div><h1>ParameterParser.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.fileupload;
+
+import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+
+import org.apache.commons.fileupload.util.mime.MimeUtility;
+
+/**
+ * A simple parser intended to parse sequences of name/value pairs.
+ *
+ * Parameter values are expected to be enclosed in quotes if they
+ * contain unsafe characters, such as '=' characters or separators.
+ * Parameter values are optional and can be omitted.
+ *
+ * &lt;p&gt;
+ *  &lt;code&gt;param1 = value; param2 = &quot;anything goes; really&quot;; param3&lt;/code&gt;
+ * &lt;/p&gt;
+ *
+ * @version $Id$
+ */
+public class ParameterParser {
+
+    /**
+     * String to be parsed.
+     */
+<span class="fc" id="L44">    private char[] chars = null;</span>
+
+    /**
+     * Current position in the string.
+     */
+<span class="fc" id="L49">    private int pos = 0;</span>
+
+    /**
+     * Maximum position in the string.
+     */
+<span class="fc" id="L54">    private int len = 0;</span>
+
+    /**
+     * Start of a token.
+     */
+<span class="fc" id="L59">    private int i1 = 0;</span>
+
+    /**
+     * End of a token.
+     */
+<span class="fc" id="L64">    private int i2 = 0;</span>
+
+    /**
+     * Whether names stored in the map should be converted to lower case.
+     */
+<span class="fc" id="L69">    private boolean lowerCaseNames = false;</span>
+
+    /**
+     * Default ParameterParser constructor.
+     */
+    public ParameterParser() {
+<span class="fc" id="L75">        super();</span>
+<span class="fc" id="L76">    }</span>
+
+    /**
+     * Are there any characters left to parse?
+     *
+     * @return &lt;tt&gt;true&lt;/tt&gt; if there are unparsed characters,
+     *         &lt;tt&gt;false&lt;/tt&gt; otherwise.
+     */
+    private boolean hasChar() {
+<span class="fc bfc" id="L85" title="All 2 branches covered.">        return this.pos &lt; this.len;</span>
+    }
+
+    /**
+     * A helper method to process the parsed token. This method removes
+     * leading and trailing blanks as well as enclosing quotation marks,
+     * when necessary.
+     *
+     * @param quoted &lt;tt&gt;true&lt;/tt&gt; if quotation marks are expected,
+     *               &lt;tt&gt;false&lt;/tt&gt; otherwise.
+     * @return the token
+     */
+    private String getToken(boolean quoted) {
+        // Trim leading white spaces
+<span class="fc bfc" id="L99" title="All 4 branches covered.">        while ((i1 &lt; i2) &amp;&amp; (Character.isWhitespace(chars[i1]))) {</span>
+<span class="fc" id="L100">            i1++;</span>
+        }
+        // Trim trailing white spaces
+<span class="fc bfc" id="L103" title="All 4 branches covered.">        while ((i2 &gt; i1) &amp;&amp; (Character.isWhitespace(chars[i2 - 1]))) {</span>
+<span class="fc" id="L104">            i2--;</span>
+        }
+        // Strip away quotation marks if necessary
+<span class="fc bfc" id="L107" title="All 2 branches covered.">        if (quoted</span>
+<span class="fc bfc" id="L108" title="All 2 branches covered.">            &amp;&amp; ((i2 - i1) &gt;= 2)</span>
+<span class="fc bfc" id="L109" title="All 2 branches covered.">            &amp;&amp; (chars[i1] == '&quot;')</span>
+<span class="fc bfc" id="L110" title="All 2 branches covered.">            &amp;&amp; (chars[i2 - 1] == '&quot;')) {</span>
+<span class="fc" id="L111">            i1++;</span>
+<span class="fc" id="L112">            i2--;</span>
+        }
+<span class="fc" id="L114">        String result = null;</span>
+<span class="fc bfc" id="L115" title="All 2 branches covered.">        if (i2 &gt; i1) {</span>
+<span class="fc" id="L116">            result = new String(chars, i1, i2 - i1);</span>
+        }
+<span class="fc" id="L118">        return result;</span>
+    }
+
+    /**
+     * Tests if the given character is present in the array of characters.
+     *
+     * @param ch the character to test for presense in the array of characters
+     * @param charray the array of characters to test against
+     *
+     * @return &lt;tt&gt;true&lt;/tt&gt; if the character is present in the array of
+     *   characters, &lt;tt&gt;false&lt;/tt&gt; otherwise.
+     */
+    private boolean isOneOf(char ch, final char[] charray) {
+<span class="fc" id="L131">        boolean result = false;</span>
+<span class="fc bfc" id="L132" title="All 2 branches covered.">        for (char element : charray) {</span>
+<span class="fc bfc" id="L133" title="All 2 branches covered.">            if (ch == element) {</span>
+<span class="fc" id="L134">                result = true;</span>
+<span class="fc" id="L135">                break;</span>
+            }
+        }
+<span class="fc" id="L138">        return result;</span>
+    }
+
+    /**
+     * Parses out a token until any of the given terminators
+     * is encountered.
+     *
+     * @param terminators the array of terminating characters. Any of these
+     * characters when encountered signify the end of the token
+     *
+     * @return the token
+     */
+    private String parseToken(final char[] terminators) {
+        char ch;
+<span class="fc" id="L152">        i1 = pos;</span>
+<span class="fc" id="L153">        i2 = pos;</span>
+<span class="fc bfc" id="L154" title="All 2 branches covered.">        while (hasChar()) {</span>
+<span class="fc" id="L155">            ch = chars[pos];</span>
+<span class="fc bfc" id="L156" title="All 2 branches covered.">            if (isOneOf(ch, terminators)) {</span>
+<span class="fc" id="L157">                break;</span>
+            }
+<span class="fc" id="L159">            i2++;</span>
+<span class="fc" id="L160">            pos++;</span>
+        }
+<span class="fc" id="L162">        return getToken(false);</span>
+    }
+
+    /**
+     * Parses out a token until any of the given terminators
+     * is encountered outside the quotation marks.
+     *
+     * @param terminators the array of terminating characters. Any of these
+     * characters when encountered outside the quotation marks signify the end
+     * of the token
+     *
+     * @return the token
+     */
+    private String parseQuotedToken(final char[] terminators) {
+        char ch;
+<span class="fc" id="L177">        i1 = pos;</span>
+<span class="fc" id="L178">        i2 = pos;</span>
+<span class="fc" id="L179">        boolean quoted = false;</span>
+<span class="fc" id="L180">        boolean charEscaped = false;</span>
+<span class="fc bfc" id="L181" title="All 2 branches covered.">        while (hasChar()) {</span>
+<span class="fc" id="L182">            ch = chars[pos];</span>
+<span class="fc bfc" id="L183" title="All 4 branches covered.">            if (!quoted &amp;&amp; isOneOf(ch, terminators)) {</span>
+<span class="fc" id="L184">                break;</span>
+            }
+<span class="fc bfc" id="L186" title="All 4 branches covered.">            if (!charEscaped &amp;&amp; ch == '&quot;') {</span>
+<span class="fc bfc" id="L187" title="All 2 branches covered.">                quoted = !quoted;</span>
+            }
+<span class="fc bfc" id="L189" title="All 4 branches covered.">            charEscaped = (!charEscaped &amp;&amp; ch == '\\');</span>
+<span class="fc" id="L190">            i2++;</span>
+<span class="fc" id="L191">            pos++;</span>
+
+        }
+<span class="fc" id="L194">        return getToken(true);</span>
+    }
+
+    /**
+     * Returns &lt;tt&gt;true&lt;/tt&gt; if parameter names are to be converted to lower
+     * case when name/value pairs are parsed.
+     *
+     * @return &lt;tt&gt;true&lt;/tt&gt; if parameter names are to be
+     * converted to lower case when name/value pairs are parsed.
+     * Otherwise returns &lt;tt&gt;false&lt;/tt&gt;
+     */
+    public boolean isLowerCaseNames() {
+<span class="nc" id="L206">        return this.lowerCaseNames;</span>
+    }
+
+    /**
+     * Sets the flag if parameter names are to be converted to lower case when
+     * name/value pairs are parsed.
+     *
+     * @param b &lt;tt&gt;true&lt;/tt&gt; if parameter names are to be
+     * converted to lower case when name/value pairs are parsed.
+     * &lt;tt&gt;false&lt;/tt&gt; otherwise.
+     */
+    public void setLowerCaseNames(boolean b) {
+<span class="fc" id="L218">        this.lowerCaseNames = b;</span>
+<span class="fc" id="L219">    }</span>
+
+    /**
+     * Extracts a map of name/value pairs from the given string. Names are
+     * expected to be unique. Multiple separators may be specified and
+     * the earliest found in the input string is used.
+     *
+     * @param str the string that contains a sequence of name/value pairs
+     * @param separators the name/value pairs separators
+     *
+     * @return a map of name/value pairs
+     */
+    public Map&lt;String, String&gt; parse(final String str, char[] separators) {
+<span class="pc bpc" id="L232" title="2 of 4 branches missed.">        if (separators == null || separators.length == 0) {</span>
+<span class="nc" id="L233">            return new HashMap&lt;String, String&gt;();</span>
+        }
+<span class="fc" id="L235">        char separator = separators[0];</span>
+<span class="pc bpc" id="L236" title="1 of 2 branches missed.">        if (str != null) {</span>
+<span class="fc" id="L237">            int idx = str.length();</span>
+<span class="fc bfc" id="L238" title="All 2 branches covered.">            for (char separator2 : separators) {</span>
+<span class="fc" id="L239">                int tmp = str.indexOf(separator2);</span>
+<span class="pc bpc" id="L240" title="1 of 4 branches missed.">                if (tmp != -1 &amp;&amp; tmp &lt; idx) {</span>
+<span class="fc" id="L241">                    idx = tmp;</span>
+<span class="fc" id="L242">                    separator = separator2;</span>
+                }
+            }
+        }
+<span class="fc" id="L246">        return parse(str, separator);</span>
+    }
+
+    /**
+     * Extracts a map of name/value pairs from the given string. Names are
+     * expected to be unique.
+     *
+     * @param str the string that contains a sequence of name/value pairs
+     * @param separator the name/value pairs separator
+     *
+     * @return a map of name/value pairs
+     */
+    public Map&lt;String, String&gt; parse(final String str, char separator) {
+<span class="fc bfc" id="L259" title="All 2 branches covered.">        if (str == null) {</span>
+<span class="fc" id="L260">            return new HashMap&lt;String, String&gt;();</span>
+        }
+<span class="fc" id="L262">        return parse(str.toCharArray(), separator);</span>
+    }
+
+    /**
+     * Extracts a map of name/value pairs from the given array of
+     * characters. Names are expected to be unique.
+     *
+     * @param charArray the array of characters that contains a sequence of
+     * name/value pairs
+     * @param separator the name/value pairs separator
+     *
+     * @return a map of name/value pairs
+     */
+    public Map&lt;String, String&gt; parse(final char[] charArray, char separator) {
+<span class="pc bpc" id="L276" title="1 of 2 branches missed.">        if (charArray == null) {</span>
+<span class="nc" id="L277">            return new HashMap&lt;String, String&gt;();</span>
+        }
+<span class="fc" id="L279">        return parse(charArray, 0, charArray.length, separator);</span>
+    }
+
+    /**
+     * Extracts a map of name/value pairs from the given array of
+     * characters. Names are expected to be unique.
+     *
+     * @param charArray the array of characters that contains a sequence of
+     * name/value pairs
+     * @param offset - the initial offset.
+     * @param length - the length.
+     * @param separator the name/value pairs separator
+     *
+     * @return a map of name/value pairs
+     */
+    public Map&lt;String, String&gt; parse(
+        final char[] charArray,
+        int offset,
+        int length,
+        char separator) {
+
+<span class="pc bpc" id="L300" title="1 of 2 branches missed.">        if (charArray == null) {</span>
+<span class="nc" id="L301">            return new HashMap&lt;String, String&gt;();</span>
+        }
+<span class="fc" id="L303">        HashMap&lt;String, String&gt; params = new HashMap&lt;String, String&gt;();</span>
+<span class="fc" id="L304">        this.chars = charArray;</span>
+<span class="fc" id="L305">        this.pos = offset;</span>
+<span class="fc" id="L306">        this.len = length;</span>
+
+<span class="fc" id="L308">        String paramName = null;</span>
+<span class="fc" id="L309">        String paramValue = null;</span>
+<span class="fc bfc" id="L310" title="All 2 branches covered.">        while (hasChar()) {</span>
+<span class="fc" id="L311">            paramName = parseToken(new char[] {</span>
+<span class="fc" id="L312">                    '=', separator });</span>
+<span class="fc" id="L313">            paramValue = null;</span>
+<span class="fc bfc" id="L314" title="All 4 branches covered.">            if (hasChar() &amp;&amp; (charArray[pos] == '=')) {</span>
+<span class="fc" id="L315">                pos++; // skip '='</span>
+<span class="fc" id="L316">                paramValue = parseQuotedToken(new char[] {</span>
+<span class="fc" id="L317">                        separator });</span>
+
+<span class="fc bfc" id="L319" title="All 2 branches covered.">                if (paramValue != null) {</span>
+                    try {
+<span class="fc" id="L321">                        paramValue = MimeUtility.decodeText(paramValue);</span>
+<span class="pc" id="L322">                    } catch (UnsupportedEncodingException e) {</span>
+                        // let's keep the original value in this case
+                    }
+                }
+            }
+<span class="pc bpc" id="L327" title="1 of 4 branches missed.">            if (hasChar() &amp;&amp; (charArray[pos] == separator)) {</span>
+<span class="fc" id="L328">                pos++; // skip separator</span>
+            }
+<span class="pc bpc" id="L330" title="1 of 4 branches missed.">            if ((paramName != null) &amp;&amp; (paramName.length() &gt; 0)) {</span>
+<span class="fc bfc" id="L331" title="All 2 branches covered.">                if (this.lowerCaseNames) {</span>
+<span class="fc" id="L332">                    paramName = paramName.toLowerCase(Locale.ENGLISH);</span>
+                }
+
+<span class="fc" id="L335">                params.put(paramName, paramValue);</span>
+            }
+        }
+<span class="fc" id="L338">        return params;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.3.201901230119</span>commons-fileupload-commons-fileupload-1.3.3 (18-Apr-2019 2:10:31 AM)</div></body></html>

@@ -3,12 +3,12 @@
 
 ## 1) File Structure
 
-
++ Scripts
+    - spearman_and_pearson.py
+    - data_for_script.py
 + Projects
-    - Scripts
-        + spearman_and_pearson.py
-        + data_for_script.py
-    - Project1
+    - OverallDataAnalysis
+    - Project1 e.g. apache-sling
         + Code Change
             - Upload POM.txt
         + Data Analysis
@@ -36,14 +36,15 @@
 
 
 ## 2) Steps to Run Projects/Scripts/spearman_and_pearson.py  
-- Install python 3 or above, pip and pip install pandas, scipy, numpy and matlpotlib libraries.
+- Install python 3 or above, **pip and pip install pandas, scipy, numpy and matlpotlib** libraries.
 - Run python file by opening the terminal and running **python spearman_and_pearson.py**.
 
 ## 3) Team Members
 
-- Jasraj Singh Bedi  40046931
-- Neelisha Fernandes 40053845
-- Sagar Vetal  40071979
-- Simran Sidhu  40011611
-- Himanshu Kolhi 40070839
+- Jasraj Singh Bedi | 40046931 | jasraj3453@gmail.com
+- Himanshu Kohli | 40070839 | atomicboy2012@gmail.com
+- Neelisha Fernandes | 40053845 | nileesha.fernando94@gmail.com
+- Sagar Vetal | 40071979 | vetal.sagar07@gmail.com
+- Simran Sidhu | 40011611 | simrantechm@gmail.com
+ 
 
