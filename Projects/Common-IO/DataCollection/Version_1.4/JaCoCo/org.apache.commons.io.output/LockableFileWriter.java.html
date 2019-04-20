@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LockableFileWriter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Commons IO</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.output</a> &gt; <span class="el_source">LockableFileWriter.java</span></div><h1>LockableFileWriter.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.output;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+
+/**
+ * FileWriter that will create and honor lock files to allow simple
+ * cross thread file lock handling.
+ * &lt;p&gt;
+ * This class provides a simple alternative to &lt;code&gt;FileWriter&lt;/code&gt;
+ * that will use a lock file to prevent duplicate writes.
+ * &lt;p&gt;
+ * By default, the file will be overwritten, but this may be changed to append.
+ * The lock directory may be specified, but defaults to the system property
+ * &lt;code&gt;java.io.tmpdir&lt;/code&gt;.
+ * The encoding may also be specified, and defaults to the platform default.
+ *
+ * @author &lt;a href=&quot;mailto:sanders@apache.org&quot;&gt;Scott Sanders&lt;/a&gt;
+ * @author &lt;a href=&quot;mailto:ms@collab.net&quot;&gt;Michael Salmon&lt;/a&gt;
+ * @author &lt;a href=&quot;mailto:jon@collab.net&quot;&gt;Jon S. Stevens&lt;/a&gt;
+ * @author &lt;a href=&quot;mailto:dlr@finemaltcoding.com&quot;&gt;Daniel Rall&lt;/a&gt;
+ * @author Stephen Colebourne
+ * @author Andy Lehane
+ * @version $Id$
+ */
+public class LockableFileWriter extends Writer {
+    // Cannot extend ProxyWriter, as requires writer to be
+    // known when super() is called
+
+    /** The extension for the lock file. */
+    private static final String LCK = &quot;.lck&quot;;
+
+    /** The writer to decorate. */
+    private final Writer out;
+    /** The lock file. */
+    private final File lockFile;
+
+    /**
+     * Constructs a LockableFileWriter.
+     * If the file exists, it is overwritten.
+     *
+     * @param fileName  the file to write to, not null
+     * @throws NullPointerException if the file is null
+     * @throws IOException in case of an I/O error
+     */
+    public LockableFileWriter(String fileName) throws IOException {
+<span class="nc" id="L71">        this(fileName, false, null);</span>
+<span class="nc" id="L72">    }</span>
+
+    /**
+     * Constructs a LockableFileWriter.
+     *
+     * @param fileName  file to write to, not null
+     * @param append  true if content should be appended, false to overwrite
+     * @throws NullPointerException if the file is null
+     * @throws IOException in case of an I/O error
+     */
+    public LockableFileWriter(String fileName, boolean append) throws IOException {
+<span class="nc" id="L83">        this(fileName, append, null);</span>
+<span class="nc" id="L84">    }</span>
+
+    /**
+     * Constructs a LockableFileWriter.
+     *
+     * @param fileName  the file to write to, not null
+     * @param append  true if content should be appended, false to overwrite
+     * @param lockDir  the directory in which the lock file should be held
+     * @throws NullPointerException if the file is null
+     * @throws IOException in case of an I/O error
+     */
+    public LockableFileWriter(String fileName, boolean append, String lockDir) throws IOException {
+<span class="nc" id="L96">        this(new File(fileName), append, lockDir);</span>
+<span class="nc" id="L97">    }</span>
+
+    /**
+     * Constructs a LockableFileWriter.
+     * If the file exists, it is overwritten.
+     *
+     * @param file  the file to write to, not null
+     * @throws NullPointerException if the file is null
+     * @throws IOException in case of an I/O error
+     */
+    public LockableFileWriter(File file) throws IOException {
+<span class="fc" id="L108">        this(file, false, null);</span>
+<span class="fc" id="L109">    }</span>
+
+    /**
+     * Constructs a LockableFileWriter.
+     *
+     * @param file  the file to write to, not null
+     * @param append  true if content should be appended, false to overwrite
+     * @throws NullPointerException if the file is null
+     * @throws IOException in case of an I/O error
+     */
+    public LockableFileWriter(File file, boolean append) throws IOException {
+<span class="nc" id="L120">        this(file, append, null);</span>
+<span class="nc" id="L121">    }</span>
+
+    /**
+     * Constructs a LockableFileWriter.
+     *
+     * @param file  the file to write to, not null
+     * @param append  true if content should be appended, false to overwrite
+     * @param lockDir  the directory in which the lock file should be held
+     * @throws NullPointerException if the file is null
+     * @throws IOException in case of an I/O error
+     */
+    public LockableFileWriter(File file, boolean append, String lockDir) throws IOException {
+<span class="fc" id="L133">        this(file, null, append, lockDir);</span>
+<span class="fc" id="L134">    }</span>
+
+    /**
+     * Constructs a LockableFileWriter with a file encoding.
+     *
+     * @param file  the file to write to, not null
+     * @param encoding  the encoding to use, null means platform default
+     * @throws NullPointerException if the file is null
+     * @throws IOException in case of an I/O error
+     */
+    public LockableFileWriter(File file, String encoding) throws IOException {
+<span class="nc" id="L145">        this(file, encoding, false, null);</span>
+<span class="nc" id="L146">    }</span>
+
+    /**
+     * Constructs a LockableFileWriter with a file encoding.
+     *
+     * @param file  the file to write to, not null
+     * @param encoding  the encoding to use, null means platform default
+     * @param append  true if content should be appended, false to overwrite
+     * @param lockDir  the directory in which the lock file should be held
+     * @throws NullPointerException if the file is null
+     * @throws IOException in case of an I/O error
+     */
+    public LockableFileWriter(File file, String encoding, boolean append,
+            String lockDir) throws IOException {
+<span class="fc" id="L160">        super();</span>
+        // init file to create/append
+<span class="fc" id="L162">        file = file.getAbsoluteFile();</span>
+<span class="pc bpc" id="L163" title="1 of 2 branches missed.">        if (file.getParentFile() != null) {</span>
+<span class="fc" id="L164">            FileUtils.forceMkdir(file.getParentFile());</span>
+        }
+<span class="fc bfc" id="L166" title="All 2 branches covered.">        if (file.isDirectory()) {</span>
+<span class="fc" id="L167">            throw new IOException(&quot;File specified is a directory&quot;);</span>
+        }
+        
+        // init lock file
+<span class="fc bfc" id="L171" title="All 2 branches covered.">        if (lockDir == null) {</span>
+<span class="fc" id="L172">            lockDir = System.getProperty(&quot;java.io.tmpdir&quot;);</span>
+        }
+<span class="fc" id="L174">        File lockDirFile = new File(lockDir);</span>
+<span class="fc" id="L175">        FileUtils.forceMkdir(lockDirFile);</span>
+<span class="fc" id="L176">        testLockDir(lockDirFile);</span>
+<span class="fc" id="L177">        lockFile = new File(lockDirFile, file.getName() + LCK);</span>
+        
+        // check if locked
+<span class="fc" id="L180">        createLock();</span>
+        
+        // init wrapped writer
+<span class="fc" id="L183">        out = initWriter(file, encoding, append);</span>
+<span class="fc" id="L184">    }</span>
+
+    //-----------------------------------------------------------------------
+    /**
+     * Tests that we can write to the lock directory.
+     *
+     * @param lockDir  the File representing the lock directory
+     * @throws IOException if we cannot write to the lock directory
+     * @throws IOException if we cannot find the lock file
+     */
+    private void testLockDir(File lockDir) throws IOException {
+<span class="pc bpc" id="L195" title="1 of 2 branches missed.">        if (!lockDir.exists()) {</span>
+<span class="nc" id="L196">            throw new IOException(</span>
+<span class="nc" id="L197">                    &quot;Could not find lockDir: &quot; + lockDir.getAbsolutePath());</span>
+        }
+<span class="pc bpc" id="L199" title="1 of 2 branches missed.">        if (!lockDir.canWrite()) {</span>
+<span class="nc" id="L200">            throw new IOException(</span>
+<span class="nc" id="L201">                    &quot;Could not write to lockDir: &quot; + lockDir.getAbsolutePath());</span>
+        }
+<span class="fc" id="L203">    }</span>
+
+    /**
+     * Creates the lock file.
+     *
+     * @throws IOException if we cannot create the file
+     */
+    private void createLock() throws IOException {
+<span class="fc bfc" id="L211" title="All 2 branches covered.">        synchronized (LockableFileWriter.class) {</span>
+<span class="fc bfc" id="L212" title="All 2 branches covered.">            if (!lockFile.createNewFile()) {</span>
+<span class="fc" id="L213">                throw new IOException(&quot;Can't write file, lock &quot; +</span>
+<span class="fc" id="L214">                        lockFile.getAbsolutePath() + &quot; exists&quot;);</span>
+            }
+<span class="fc" id="L216">            lockFile.deleteOnExit();</span>
+<span class="fc" id="L217">        }</span>
+<span class="fc" id="L218">    }</span>
+
+    /**
+     * Initialise the wrapped file writer.
+     * Ensure that a cleanup occurs if the writer creation fails.
+     *
+     * @param file  the file to be accessed
+     * @param encoding  the encoding to use
+     * @param append  true to append
+     * @return The initialised writer
+     * @throws IOException if an error occurs
+     */
+    private Writer initWriter(File file, String encoding, boolean append) throws IOException {
+<span class="fc" id="L231">        boolean fileExistedAlready = file.exists();</span>
+<span class="fc" id="L232">        OutputStream stream = null;</span>
+<span class="fc" id="L233">        Writer writer = null;</span>
+        try {
+<span class="fc bfc" id="L235" title="All 2 branches covered.">            if (encoding == null) {</span>
+<span class="fc" id="L236">                writer = new FileWriter(file.getAbsolutePath(), append);</span>
+            } else {
+<span class="fc" id="L238">                stream = new FileOutputStream(file.getAbsolutePath(), append);</span>
+<span class="nc" id="L239">                writer = new OutputStreamWriter(stream, encoding);</span>
+            }
+<span class="fc" id="L241">        } catch (IOException ex) {</span>
+<span class="fc" id="L242">            IOUtils.closeQuietly(writer);</span>
+<span class="fc" id="L243">            IOUtils.closeQuietly(stream);</span>
+<span class="fc" id="L244">            lockFile.delete();</span>
+<span class="pc bpc" id="L245" title="1 of 2 branches missed.">            if (fileExistedAlready == false) {</span>
+<span class="fc" id="L246">                file.delete();</span>
+            }
+<span class="fc" id="L248">            throw ex;</span>
+<span class="nc" id="L249">        } catch (RuntimeException ex) {</span>
+<span class="nc" id="L250">            IOUtils.closeQuietly(writer);</span>
+<span class="nc" id="L251">            IOUtils.closeQuietly(stream);</span>
+<span class="nc" id="L252">            lockFile.delete();</span>
+<span class="nc bnc" id="L253" title="All 2 branches missed.">            if (fileExistedAlready == false) {</span>
+<span class="nc" id="L254">                file.delete();</span>
+            }
+<span class="nc" id="L256">            throw ex;</span>
+<span class="fc" id="L257">        }</span>
+<span class="fc" id="L258">        return writer;</span>
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Closes the file writer.
+     *
+     * @throws IOException if an I/O error occurs
+     */
+    public void close() throws IOException {
+        try {
+<span class="fc" id="L269">            out.close();</span>
+        } finally {
+<span class="pc" id="L271">            lockFile.delete();</span>
+<span class="fc" id="L272">        }</span>
+<span class="fc" id="L273">    }</span>
+
+    //-----------------------------------------------------------------------
+    /**
+     * Write a character.
+     * @param idx the character to write
+     * @throws IOException if an I/O error occurs
+     */
+    public void write(int idx) throws IOException {
+<span class="nc" id="L282">        out.write(idx);</span>
+<span class="nc" id="L283">    }</span>
+
+    /**
+     * Write the characters from an array.
+     * @param chr the characters to write
+     * @throws IOException if an I/O error occurs
+     */
+    public void write(char[] chr) throws IOException {
+<span class="nc" id="L291">        out.write(chr);</span>
+<span class="nc" id="L292">    }</span>
+
+    /**
+     * Write the specified characters from an array.
+     * @param chr the characters to write
+     * @param st The start offset
+     * @param end The number of characters to write
+     * @throws IOException if an I/O error occurs
+     */
+    public void write(char[] chr, int st, int end) throws IOException {
+<span class="nc" id="L302">        out.write(chr, st, end);</span>
+<span class="nc" id="L303">    }</span>
+
+    /**
+     * Write the characters from a string.
+     * @param str the string to write
+     * @throws IOException if an I/O error occurs
+     */
+    public void write(String str) throws IOException {
+<span class="nc" id="L311">        out.write(str);</span>
+<span class="nc" id="L312">    }</span>
+
+    /**
+     * Write the specified characters from a string.
+     * @param str the string to write
+     * @param st The start offset
+     * @param end The number of characters to write
+     * @throws IOException if an I/O error occurs
+     */
+    public void write(String str, int st, int end) throws IOException {
+<span class="nc" id="L322">        out.write(str, st, end);</span>
+<span class="nc" id="L323">    }</span>
+
+    /**
+     * Flush the stream.
+     * @throws IOException if an I/O error occurs
+     */
+    public void flush() throws IOException {
+<span class="nc" id="L330">        out.flush();</span>
+<span class="nc" id="L331">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileUtilsListFilesTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">v1.3.2 (Apr 4, 2019 2:59:17 AM)</a> &gt; <a href="../../index.html" class="el_group">v1.3.2</a> &gt; <a href="../index.html" class="el_bundle">src/test</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io</a> &gt; <span class="el_source">FileUtilsListFilesTestCase.java</span></div><h1>FileUtilsListFilesTestCase.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io;
+
+import java.io.File;
+import java.util.Collection;
+import java.util.Iterator;
+
+import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.io.testtools.FileBasedTestCase;
+
+/**
+ * Test cases for FileUtils.listFiles() methods.
+ */
+public class FileUtilsListFilesTestCase extends FileBasedTestCase {
+
+    public FileUtilsListFilesTestCase(String name) {
+<span class="fc" id="L33">        super(name);</span>
+<span class="fc" id="L34">    }</span>
+    
+    private File getLocalTestDirectory() {
+<span class="fc" id="L37">        return new File(getTestDirectory(), &quot;list-files&quot;);</span>
+    }
+    
+    /**
+     * @see junit.framework.TestCase#setUp()
+     */
+    protected void setUp() throws Exception {
+<span class="fc" id="L44">        File dir = getLocalTestDirectory();</span>
+<span class="pc bpc" id="L45" title="1 of 2 branches missed.">        if (dir.exists()) {</span>
+<span class="nc" id="L46">            FileUtils.deleteDirectory(dir);</span>
+        }
+<span class="fc" id="L48">        dir.mkdirs();</span>
+<span class="fc" id="L49">        File file = new File(dir, &quot;dummy-build.xml&quot;);</span>
+<span class="fc" id="L50">        FileUtils.touch(file);</span>
+<span class="fc" id="L51">        file = new File(dir, &quot;README&quot;);</span>
+<span class="fc" id="L52">        FileUtils.touch(file);</span>
+        
+<span class="fc" id="L54">        dir = new File(dir, &quot;subdir1&quot;);</span>
+<span class="fc" id="L55">        dir.mkdirs();</span>
+<span class="fc" id="L56">        file = new File(dir, &quot;dummy-build.xml&quot;);</span>
+<span class="fc" id="L57">        FileUtils.touch(file);</span>
+<span class="fc" id="L58">        file = new File(dir, &quot;dummy-readme.txt&quot;);</span>
+<span class="fc" id="L59">        FileUtils.touch(file);</span>
+        
+<span class="fc" id="L61">        dir = new File(dir, &quot;subsubdir1&quot;);</span>
+<span class="fc" id="L62">        dir.mkdirs();</span>
+<span class="fc" id="L63">        file = new File(dir, &quot;dummy-file.txt&quot;);</span>
+<span class="fc" id="L64">        FileUtils.touch(file);</span>
+<span class="fc" id="L65">        file = new File(dir, &quot;dummy-index.html&quot;);</span>
+<span class="fc" id="L66">        FileUtils.touch(file);</span>
+        
+<span class="fc" id="L68">        dir = dir.getParentFile();</span>
+<span class="fc" id="L69">        dir = new File(dir, &quot;CVS&quot;);</span>
+<span class="fc" id="L70">        dir.mkdirs();</span>
+<span class="fc" id="L71">        file = new File(dir, &quot;Entries&quot;);</span>
+<span class="fc" id="L72">        FileUtils.touch(file);</span>
+<span class="fc" id="L73">        file = new File(dir, &quot;Repository&quot;);</span>
+<span class="fc" id="L74">        FileUtils.touch(file);</span>
+<span class="fc" id="L75">    }</span>
+
+    /**
+     * @see junit.framework.TestCase#tearDown()
+     */
+    protected void tearDown() throws Exception {
+<span class="fc" id="L81">        File dir = getLocalTestDirectory();</span>
+<span class="fc" id="L82">        FileUtils.deleteDirectory(dir);</span>
+<span class="fc" id="L83">    }</span>
+    
+    private Collection filesToFilenames(Collection files) {
+<span class="fc" id="L86">        Collection filenames = new java.util.ArrayList(files.size());</span>
+<span class="fc" id="L87">        Iterator i = files.iterator();</span>
+<span class="fc bfc" id="L88" title="All 2 branches covered.">        while (i.hasNext()) {</span>
+<span class="fc" id="L89">            filenames.add(((File)i.next()).getName());</span>
+        }
+<span class="fc" id="L91">        return filenames;</span>
+    }
+    
+    public void testListFilesByExtension() throws Exception {
+<span class="fc" id="L95">        String[] extensions = {&quot;xml&quot;, &quot;txt&quot;};</span>
+        
+<span class="fc" id="L97">        Collection files = FileUtils.listFiles(getLocalTestDirectory(), extensions, false);</span>
+<span class="fc" id="L98">        assertEquals(1, files.size());</span>
+<span class="fc" id="L99">        Collection filenames = filesToFilenames(files);</span>
+<span class="fc" id="L100">        assertTrue(filenames.contains(&quot;dummy-build.xml&quot;));</span>
+<span class="fc" id="L101">        assertFalse(filenames.contains(&quot;README&quot;));</span>
+<span class="fc" id="L102">        assertFalse(filenames.contains(&quot;dummy-file.txt&quot;));</span>
+        
+<span class="fc" id="L104">        files = FileUtils.listFiles(getLocalTestDirectory(), extensions, true);</span>
+<span class="fc" id="L105">        filenames = filesToFilenames(files);</span>
+<span class="fc" id="L106">        assertEquals(4, filenames.size());</span>
+<span class="fc" id="L107">        assertTrue(filenames.contains(&quot;dummy-file.txt&quot;));</span>
+<span class="fc" id="L108">        assertFalse(filenames.contains(&quot;dummy-index.html&quot;));</span>
+        
+<span class="fc" id="L110">        files = FileUtils.listFiles(getLocalTestDirectory(), null, false);</span>
+<span class="fc" id="L111">        assertEquals(2, files.size());</span>
+<span class="fc" id="L112">        filenames = filesToFilenames(files);</span>
+<span class="fc" id="L113">        assertTrue(filenames.contains(&quot;dummy-build.xml&quot;));</span>
+<span class="fc" id="L114">        assertTrue(filenames.contains(&quot;README&quot;));</span>
+<span class="fc" id="L115">        assertFalse(filenames.contains(&quot;dummy-file.txt&quot;));</span>
+        
+<span class="fc" id="L117">    }</span>
+
+    public void testListFiles() throws Exception {
+        Collection files;
+        Collection filenames;
+        IOFileFilter fileFilter;
+        IOFileFilter dirFilter;
+        
+        //First, find non-recursively
+<span class="fc" id="L126">        fileFilter = FileFilterUtils.trueFileFilter();</span>
+<span class="fc" id="L127">        files = FileUtils.listFiles(getLocalTestDirectory(), fileFilter, null);</span>
+<span class="fc" id="L128">        filenames = filesToFilenames(files);</span>
+<span class="fc" id="L129">        assertTrue(&quot;'dummy-build.xml' is missing&quot;, filenames.contains(&quot;dummy-build.xml&quot;));</span>
+<span class="fc" id="L130">        assertFalse(&quot;'dummy-index.html' shouldn't be found&quot;, filenames.contains(&quot;dummy-index.html&quot;));</span>
+<span class="fc" id="L131">        assertFalse(&quot;'Entries' shouldn't be found&quot;, filenames.contains(&quot;Entries&quot;));</span>
+        
+        //Second, find recursively
+<span class="fc" id="L134">        fileFilter = FileFilterUtils.trueFileFilter();</span>
+<span class="fc" id="L135">        dirFilter = FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter(&quot;CVS&quot;));</span>
+<span class="fc" id="L136">        files = FileUtils.listFiles(getLocalTestDirectory(), fileFilter, dirFilter);</span>
+<span class="fc" id="L137">        filenames = filesToFilenames(files);</span>
+<span class="fc" id="L138">        assertTrue(&quot;'dummy-build.xml' is missing&quot;, filenames.contains(&quot;dummy-build.xml&quot;));</span>
+<span class="fc" id="L139">        assertTrue(&quot;'dummy-index.html' is missing&quot;, filenames.contains(&quot;dummy-index.html&quot;));</span>
+<span class="fc" id="L140">        assertFalse(&quot;'Entries' shouldn't be found&quot;, filenames.contains(&quot;Entries&quot;));</span>
+        
+        //Do the same as above but now with the filter coming from FileFilterUtils
+<span class="fc" id="L143">        fileFilter = FileFilterUtils.trueFileFilter();</span>
+<span class="fc" id="L144">        dirFilter = FileFilterUtils.makeCVSAware(null);</span>
+<span class="fc" id="L145">        files = FileUtils.listFiles(getLocalTestDirectory(), fileFilter, dirFilter);</span>
+<span class="fc" id="L146">        filenames = filesToFilenames(files);</span>
+<span class="fc" id="L147">        assertTrue(&quot;'dummy-build.xml' is missing&quot;, filenames.contains(&quot;dummy-build.xml&quot;));</span>
+<span class="fc" id="L148">        assertTrue(&quot;'dummy-index.html' is missing&quot;, filenames.contains(&quot;dummy-index.html&quot;));</span>
+<span class="fc" id="L149">        assertFalse(&quot;'Entries' shouldn't be found&quot;, filenames.contains(&quot;Entries&quot;));</span>
+
+        //Again with the CVS filter but now with a non-null parameter
+<span class="fc" id="L152">        fileFilter = FileFilterUtils.trueFileFilter();</span>
+<span class="fc" id="L153">        dirFilter = FileFilterUtils.prefixFileFilter(&quot;sub&quot;);</span>
+<span class="fc" id="L154">        dirFilter = FileFilterUtils.makeCVSAware(dirFilter);</span>
+<span class="fc" id="L155">        files = FileUtils.listFiles(getLocalTestDirectory(), fileFilter, dirFilter);</span>
+<span class="fc" id="L156">        filenames = filesToFilenames(files);</span>
+<span class="fc" id="L157">        assertTrue(&quot;'dummy-build.xml' is missing&quot;, filenames.contains(&quot;dummy-build.xml&quot;));</span>
+<span class="fc" id="L158">        assertTrue(&quot;'dummy-index.html' is missing&quot;, filenames.contains(&quot;dummy-index.html&quot;));</span>
+<span class="fc" id="L159">        assertFalse(&quot;'Entries' shouldn't be found&quot;, filenames.contains(&quot;Entries&quot;));</span>
+
+        try {
+<span class="nc" id="L162">            FileUtils.listFiles(getLocalTestDirectory(), null, null);</span>
+<span class="nc" id="L163">            fail(&quot;Expected error about null parameter&quot;);</span>
+<span class="pc" id="L164">        } catch (Exception e) {</span>
+            //fine
+        }
+<span class="fc" id="L167">    }</span>
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>v1.3.2 (Apr 4, 2019 2:59:17 AM)</div></body></html>

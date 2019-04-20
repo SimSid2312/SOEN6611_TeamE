@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>IOFileFilterAbstractTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">v1.3.2 (Apr 4, 2019 2:59:17 AM)</a> &gt; <a href="../../index.html" class="el_group">v1.3.2</a> &gt; <a href="../index.html" class="el_bundle">src/test</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.filefilter</a> &gt; <span class="el_source">IOFileFilterAbstractTestCase.java</span></div><h1>IOFileFilterAbstractTestCase.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.filefilter;
+
+import java.io.File;
+import junit.framework.TestCase;
+
+public abstract class IOFileFilterAbstractTestCase extends TestCase {
+  
+  /**
+   * Constructs a new instance of
+   * &lt;code&gt;IOFileFilterAbstractTestCase&lt;/code&gt;.
+   */
+  public IOFileFilterAbstractTestCase(final String name) {
+<span class="fc" id="L29">    super(name);</span>
+<span class="fc" id="L30">  }</span>
+  
+  public boolean assertFileFiltering(final int testNumber, final IOFileFilter filter, final File file, final boolean expected)
+  throws Exception {
+<span class="fc" id="L34">    assertTrue(</span>
+<span class="fc" id="L35">    &quot;test &quot; + testNumber + &quot; Filter(File) &quot; + filter.getClass().getName() + &quot; not &quot; + expected + &quot; for &quot; + file,</span>
+<span class="pc bpc" id="L36" title="1 of 2 branches missed.">    (filter.accept(file) == expected));</span>
+<span class="fc" id="L37">    return true; // return is irrelevant</span>
+  }
+
+  public boolean assertFilenameFiltering(final int testNumber, final IOFileFilter filter, final File file, final boolean expected)
+  throws Exception {
+    // Assumes file has parent and is not passed as null
+<span class="fc" id="L43">    assertTrue(</span>
+<span class="fc" id="L44">    &quot;test &quot; + testNumber + &quot; Filter(File, String) &quot; + filter.getClass().getName() + &quot; not &quot; + expected + &quot; for &quot; + file,</span>
+<span class="pc bpc" id="L45" title="1 of 2 branches missed.">    (filter.accept(file.getParentFile(), file.getName()) == expected));</span>
+<span class="fc" id="L46">    return true; // return is irrelevant</span>
+  }
+
+  public void assertFiltering(final int testNumber, final IOFileFilter filter, final File file, final boolean expected)
+  throws Exception {
+    // Note. This only tests the (File, String) version if the parent of
+    //       the File passed in is not null
+<span class="nc" id="L53">    assertTrue(</span>
+<span class="nc" id="L54">    &quot;test &quot; + testNumber + &quot; Filter(File) &quot; + filter.getClass().getName() + &quot; not &quot; + expected + &quot; for &quot; + file,</span>
+<span class="nc bnc" id="L55" title="All 2 branches missed.">    (filter.accept(file) == expected));</span>
+
+<span class="nc bnc" id="L57" title="All 4 branches missed.">    if (file != null &amp;&amp; file.getParentFile() != null) {</span>
+<span class="nc" id="L58">      assertTrue(</span>
+<span class="nc" id="L59">      &quot;test &quot; + testNumber + &quot; Filter(File, String) &quot; + filter.getClass().getName() + &quot; not &quot; + expected + &quot; for &quot; + file,</span>
+<span class="nc bnc" id="L60" title="All 2 branches missed.">      (filter.accept(file.getParentFile(), file.getName()) == expected));</span>
+<span class="nc" id="L61">    } </span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">    else if (file == null) {</span>
+<span class="nc" id="L63">      assertTrue(</span>
+<span class="nc" id="L64">      &quot;test &quot; + testNumber + &quot; Filter(File, String) &quot; + filter.getClass().getName() + &quot; not &quot; + expected + &quot; for null&quot;,</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">      filter.accept(file) == expected);</span>
+    }
+<span class="nc" id="L67">  }</span>
+
+  public void assertTrueFiltersInvoked(final int testNumber, final TesterTrueFileFilter[] filters, final boolean[] invoked) {
+<span class="fc bfc" id="L70" title="All 2 branches covered.">    for(int i = 1; i &lt; filters.length; i++) {</span>
+<span class="fc" id="L71">      assertEquals(&quot;test &quot; + testNumber + &quot; filter &quot; + i + &quot; invoked&quot;, invoked[i-1], filters[i].isInvoked());</span>
+    }
+<span class="fc" id="L73">  }</span>
+  
+  public void assertFalseFiltersInvoked(final int testNumber, final TesterFalseFileFilter[] filters, final boolean[] invoked) {
+<span class="fc bfc" id="L76" title="All 2 branches covered.">    for(int i = 1; i &lt; filters.length; i++) {</span>
+<span class="fc" id="L77">      assertEquals(&quot;test &quot; + testNumber + &quot; filter &quot; + i + &quot; invoked&quot;, invoked[i-1], filters[i].isInvoked());</span>
+    }
+<span class="fc" id="L79">  }</span>
+  
+  public File determineWorkingDirectoryPath(final String key, final String defaultPath) {
+    // Look for a system property to specify the working directory
+<span class="fc" id="L83">    String workingPathName = System.getProperty(key, defaultPath);</span>
+<span class="fc" id="L84">    return new File(workingPathName);</span>
+  }
+
+  public void resetFalseFilters(TesterFalseFileFilter[] filters) {
+<span class="fc bfc" id="L88" title="All 2 branches covered.">    for(int i = 0; i &lt; filters.length; i++) {</span>
+<span class="fc bfc" id="L89" title="All 2 branches covered.">      if(filters[i] != null) {</span>
+<span class="fc" id="L90">        filters[i].reset();</span>
+      }
+    }
+<span class="fc" id="L93">  }</span>
+  
+  public void resetTrueFilters(TesterTrueFileFilter[] filters) {
+<span class="fc bfc" id="L96" title="All 2 branches covered.">    for(int i = 0; i &lt; filters.length; i++) {</span>
+<span class="fc bfc" id="L97" title="All 2 branches covered.">      if(filters[i] != null) {</span>
+<span class="fc" id="L98">        filters[i].reset();</span>
+      }
+    }
+<span class="fc" id="L101">  }</span>
+  
+<span class="fc" id="L103">  class TesterTrueFileFilter extends TrueFileFilter {</span>
+
+    private boolean invoked;
+    
+    public boolean accept(File file) {
+<span class="fc" id="L108">      setInvoked(true);</span>
+<span class="fc" id="L109">      return super.accept(file);</span>
+    }
+    
+    public boolean accept(File file, String str) {
+<span class="fc" id="L113">      setInvoked(true);</span>
+<span class="fc" id="L114">      return super.accept(file, str);</span>
+    }
+    
+    public boolean isInvoked() {
+<span class="fc" id="L118">      return this.invoked;</span>
+    }
+
+    public void setInvoked(boolean invoked) {
+<span class="fc" id="L122">      this.invoked = invoked;</span>
+<span class="fc" id="L123">    }</span>
+    
+    public void reset() {
+<span class="fc" id="L126">      setInvoked(false);</span>
+<span class="fc" id="L127">    }</span>
+  }
+  
+<span class="fc" id="L130">  class TesterFalseFileFilter extends FalseFileFilter {</span>
+    
+    private boolean invoked;
+    
+    public boolean accept(File file) {
+<span class="fc" id="L135">      setInvoked(true);</span>
+<span class="fc" id="L136">      return super.accept(file);</span>
+    }
+    
+    public boolean accept(File file, String str) {
+<span class="fc" id="L140">      setInvoked(true);</span>
+<span class="fc" id="L141">      return super.accept(file, str);</span>
+    }
+    
+    public boolean isInvoked() {
+<span class="fc" id="L145">      return this.invoked;</span>
+    }
+
+    public void setInvoked(boolean invoked) {
+<span class="fc" id="L149">      this.invoked = invoked;</span>
+<span class="fc" id="L150">    }</span>
+    
+    public void reset() {
+<span class="fc" id="L153">      setInvoked(false);</span>
+<span class="fc" id="L154">    }</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>v1.3.2 (Apr 4, 2019 2:59:17 AM)</div></body></html>

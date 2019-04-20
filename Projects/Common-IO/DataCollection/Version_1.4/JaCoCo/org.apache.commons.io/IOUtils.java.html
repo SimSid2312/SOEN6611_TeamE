@@ -1,0 +1,1275 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>IOUtils.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Commons IO</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io</a> &gt; <span class="el_source">IOUtils.java</span></div><h1>IOUtils.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.CharArrayWriter;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+
+import org.apache.commons.io.output.ByteArrayOutputStream;
+
+/**
+ * General IO stream manipulation utilities.
+ * &lt;p&gt;
+ * This class provides static utility methods for input/output operations.
+ * &lt;ul&gt;
+ * &lt;li&gt;closeQuietly - these methods close a stream ignoring nulls and exceptions
+ * &lt;li&gt;toXxx/read - these methods read data from a stream
+ * &lt;li&gt;write - these methods write data to a stream
+ * &lt;li&gt;copy - these methods copy all the data from one stream to another
+ * &lt;li&gt;contentEquals - these methods compare the content of two streams
+ * &lt;/ul&gt;
+ * &lt;p&gt;
+ * The byte-to-char methods and char-to-byte methods involve a conversion step.
+ * Two methods are provided in each case, one that uses the platform default
+ * encoding and the other which allows you to specify an encoding. You are
+ * encouraged to always specify an encoding because relying on the platform
+ * default can lead to unexpected results, for example when moving from
+ * development to production.
+ * &lt;p&gt;
+ * All the methods in this class that read a stream are buffered internally.
+ * This means that there is no cause to use a &lt;code&gt;BufferedInputStream&lt;/code&gt;
+ * or &lt;code&gt;BufferedReader&lt;/code&gt;. The default buffer size of 4K has been shown
+ * to be efficient in tests.
+ * &lt;p&gt;
+ * Wherever possible, the methods in this class do &lt;em&gt;not&lt;/em&gt; flush or close
+ * the stream. This is to avoid making non-portable assumptions about the
+ * streams' origin and further use. Thus the caller is still responsible for
+ * closing streams after use.
+ * &lt;p&gt;
+ * Origin of code: Excalibur.
+ *
+ * @author Peter Donald
+ * @author Jeff Turner
+ * @author Matthew Hawthorne
+ * @author Stephen Colebourne
+ * @author Gareth Davis
+ * @author Ian Springer
+ * @author Niall Pemberton
+ * @author Sandy McArthur
+ * @version $Id$
+ */
+public class IOUtils {
+    // NOTE: This class is focussed on InputStream, OutputStream, Reader and
+    // Writer. Each method should take at least one of these as a parameter,
+    // or return one of them.
+
+    /**
+     * The Unix directory separator character.
+     */
+    public static final char DIR_SEPARATOR_UNIX = '/';
+    /**
+     * The Windows directory separator character.
+     */
+    public static final char DIR_SEPARATOR_WINDOWS = '\\';
+    /**
+     * The system directory separator character.
+     */
+<span class="fc" id="L97">    public static final char DIR_SEPARATOR = File.separatorChar;</span>
+    /**
+     * The Unix line separator string.
+     */
+    public static final String LINE_SEPARATOR_UNIX = &quot;\n&quot;;
+    /**
+     * The Windows line separator string.
+     */
+    public static final String LINE_SEPARATOR_WINDOWS = &quot;\r\n&quot;;
+    /**
+     * The system line separator string.
+     */
+    public static final String LINE_SEPARATOR;
+    static {
+        // avoid security issues
+<span class="fc" id="L112">        StringWriter buf = new StringWriter(4);</span>
+<span class="fc" id="L113">        PrintWriter out = new PrintWriter(buf);</span>
+<span class="fc" id="L114">        out.println();</span>
+<span class="fc" id="L115">        LINE_SEPARATOR = buf.toString();</span>
+<span class="fc" id="L116">    }</span>
+
+    /**
+     * The default buffer size to use.
+     */
+    private static final int DEFAULT_BUFFER_SIZE = 1024 * 4;
+
+    /**
+     * Instances should NOT be constructed in standard programming.
+     */
+    public IOUtils() {
+<span class="nc" id="L127">        super();</span>
+<span class="nc" id="L128">    }</span>
+
+    //-----------------------------------------------------------------------
+    /**
+     * Unconditionally close an &lt;code&gt;Reader&lt;/code&gt;.
+     * &lt;p&gt;
+     * Equivalent to {@link Reader#close()}, except any exceptions will be ignored.
+     * This is typically used in finally blocks.
+     *
+     * @param input  the Reader to close, may be null or already closed
+     */
+    public static void closeQuietly(Reader input) {
+        try {
+<span class="pc bpc" id="L141" title="1 of 2 branches missed.">            if (input != null) {</span>
+<span class="fc" id="L142">                input.close();</span>
+            }
+<span class="nc" id="L144">        } catch (IOException ioe) {</span>
+            // ignore
+<span class="fc" id="L146">        }</span>
+<span class="fc" id="L147">    }</span>
+
+    /**
+     * Unconditionally close a &lt;code&gt;Writer&lt;/code&gt;.
+     * &lt;p&gt;
+     * Equivalent to {@link Writer#close()}, except any exceptions will be ignored.
+     * This is typically used in finally blocks.
+     *
+     * @param output  the Writer to close, may be null or already closed
+     */
+    public static void closeQuietly(Writer output) {
+        try {
+<span class="fc bfc" id="L159" title="All 2 branches covered.">            if (output != null) {</span>
+<span class="fc" id="L160">                output.close();</span>
+            }
+<span class="nc" id="L162">        } catch (IOException ioe) {</span>
+            // ignore
+<span class="fc" id="L164">        }</span>
+<span class="fc" id="L165">    }</span>
+
+    /**
+     * Unconditionally close an &lt;code&gt;InputStream&lt;/code&gt;.
+     * &lt;p&gt;
+     * Equivalent to {@link InputStream#close()}, except any exceptions will be ignored.
+     * This is typically used in finally blocks.
+     *
+     * @param input  the InputStream to close, may be null or already closed
+     */
+    public static void closeQuietly(InputStream input) {
+        try {
+<span class="fc bfc" id="L177" title="All 2 branches covered.">            if (input != null) {</span>
+<span class="fc" id="L178">                input.close();</span>
+            }
+<span class="nc" id="L180">        } catch (IOException ioe) {</span>
+            // ignore
+<span class="fc" id="L182">        }</span>
+<span class="fc" id="L183">    }</span>
+
+    /**
+     * Unconditionally close an &lt;code&gt;OutputStream&lt;/code&gt;.
+     * &lt;p&gt;
+     * Equivalent to {@link OutputStream#close()}, except any exceptions will be ignored.
+     * This is typically used in finally blocks.
+     *
+     * @param output  the OutputStream to close, may be null or already closed
+     */
+    public static void closeQuietly(OutputStream output) {
+        try {
+<span class="fc bfc" id="L195" title="All 2 branches covered.">            if (output != null) {</span>
+<span class="fc" id="L196">                output.close();</span>
+            }
+<span class="nc" id="L198">        } catch (IOException ioe) {</span>
+            // ignore
+<span class="fc" id="L200">        }</span>
+<span class="fc" id="L201">    }</span>
+
+    // read toByteArray
+    //-----------------------------------------------------------------------
+    /**
+     * Get the contents of an &lt;code&gt;InputStream&lt;/code&gt; as a &lt;code&gt;byte[]&lt;/code&gt;.
+     * &lt;p&gt;
+     * This method buffers the input internally, so there is no need to use a
+     * &lt;code&gt;BufferedInputStream&lt;/code&gt;.
+     * 
+     * @param input  the &lt;code&gt;InputStream&lt;/code&gt; to read from
+     * @return the requested byte array
+     * @throws NullPointerException if the input is null
+     * @throws IOException if an I/O error occurs
+     */
+    public static byte[] toByteArray(InputStream input) throws IOException {
+<span class="fc" id="L217">        ByteArrayOutputStream output = new ByteArrayOutputStream();</span>
+<span class="fc" id="L218">        copy(input, output);</span>
+<span class="fc" id="L219">        return output.toByteArray();</span>
+    }
+
+    /**
+     * Get the contents of a &lt;code&gt;Reader&lt;/code&gt; as a &lt;code&gt;byte[]&lt;/code&gt;
+     * using the default character encoding of the platform.
+     * &lt;p&gt;
+     * This method buffers the input internally, so there is no need to use a
+     * &lt;code&gt;BufferedReader&lt;/code&gt;.
+     * 
+     * @param input  the &lt;code&gt;Reader&lt;/code&gt; to read from
+     * @return the requested byte array
+     * @throws NullPointerException if the input is null
+     * @throws IOException if an I/O error occurs
+     */
+    public static byte[] toByteArray(Reader input) throws IOException {
+<span class="nc" id="L235">        ByteArrayOutputStream output = new ByteArrayOutputStream();</span>
+<span class="nc" id="L236">        copy(input, output);</span>
+<span class="nc" id="L237">        return output.toByteArray();</span>
+    }
+
+    /**
+     * Get the contents of a &lt;code&gt;Reader&lt;/code&gt; as a &lt;code&gt;byte[]&lt;/code&gt;
+     * using the specified character encoding.
+     * &lt;p&gt;
+     * Character encoding names can be found at
+     * &lt;a href=&quot;http://www.iana.org/assignments/character-sets&quot;&gt;IANA&lt;/a&gt;.
+     * &lt;p&gt;
+     * This method buffers the input internally, so there is no need to use a
+     * &lt;code&gt;BufferedReader&lt;/code&gt;.
+     * 
+     * @param input  the &lt;code&gt;Reader&lt;/code&gt; to read from
+     * @param encoding  the encoding to use, null means platform default
+     * @return the requested byte array
+     * @throws NullPointerException if the input is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.1
+     */
+    public static byte[] toByteArray(Reader input, String encoding)
+            throws IOException {
+<span class="nc" id="L259">        ByteArrayOutputStream output = new ByteArrayOutputStream();</span>
+<span class="nc" id="L260">        copy(input, output, encoding);</span>
+<span class="nc" id="L261">        return output.toByteArray();</span>
+    }
+
+    /**
+     * Get the contents of a &lt;code&gt;String&lt;/code&gt; as a &lt;code&gt;byte[]&lt;/code&gt;
+     * using the default character encoding of the platform.
+     * &lt;p&gt;
+     * This is the same as {@link String#getBytes()}.
+     * 
+     * @param input  the &lt;code&gt;String&lt;/code&gt; to convert
+     * @return the requested byte array
+     * @throws NullPointerException if the input is null
+     * @throws IOException if an I/O error occurs (never occurs)
+     * @deprecated Use {@link String#getBytes()}
+     */
+    public static byte[] toByteArray(String input) throws IOException {
+<span class="fc" id="L277">        return input.getBytes();</span>
+    }
+
+    // read char[]
+    //-----------------------------------------------------------------------
+    /**
+     * Get the contents of an &lt;code&gt;InputStream&lt;/code&gt; as a character array
+     * using the default character encoding of the platform.
+     * &lt;p&gt;
+     * This method buffers the input internally, so there is no need to use a
+     * &lt;code&gt;BufferedInputStream&lt;/code&gt;.
+     * 
+     * @param is  the &lt;code&gt;InputStream&lt;/code&gt; to read from
+     * @return the requested character array
+     * @throws NullPointerException if the input is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.1
+     */
+    public static char[] toCharArray(InputStream is) throws IOException {
+<span class="fc" id="L296">        CharArrayWriter output = new CharArrayWriter();</span>
+<span class="fc" id="L297">        copy(is, output);</span>
+<span class="fc" id="L298">        return output.toCharArray();</span>
+    }
+
+    /**
+     * Get the contents of an &lt;code&gt;InputStream&lt;/code&gt; as a character array
+     * using the specified character encoding.
+     * &lt;p&gt;
+     * Character encoding names can be found at
+     * &lt;a href=&quot;http://www.iana.org/assignments/character-sets&quot;&gt;IANA&lt;/a&gt;.
+     * &lt;p&gt;
+     * This method buffers the input internally, so there is no need to use a
+     * &lt;code&gt;BufferedInputStream&lt;/code&gt;.
+     * 
+     * @param is  the &lt;code&gt;InputStream&lt;/code&gt; to read from
+     * @param encoding  the encoding to use, null means platform default
+     * @return the requested character array
+     * @throws NullPointerException if the input is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.1
+     */
+    public static char[] toCharArray(InputStream is, String encoding)
+            throws IOException {
+<span class="fc" id="L320">        CharArrayWriter output = new CharArrayWriter();</span>
+<span class="fc" id="L321">        copy(is, output, encoding);</span>
+<span class="fc" id="L322">        return output.toCharArray();</span>
+    }
+
+    /**
+     * Get the contents of a &lt;code&gt;Reader&lt;/code&gt; as a character array.
+     * &lt;p&gt;
+     * This method buffers the input internally, so there is no need to use a
+     * &lt;code&gt;BufferedReader&lt;/code&gt;.
+     * 
+     * @param input  the &lt;code&gt;Reader&lt;/code&gt; to read from
+     * @return the requested character array
+     * @throws NullPointerException if the input is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.1
+     */
+    public static char[] toCharArray(Reader input) throws IOException {
+<span class="fc" id="L338">        CharArrayWriter sw = new CharArrayWriter();</span>
+<span class="fc" id="L339">        copy(input, sw);</span>
+<span class="fc" id="L340">        return sw.toCharArray();</span>
+    }
+
+    // read toString
+    //-----------------------------------------------------------------------
+    /**
+     * Get the contents of an &lt;code&gt;InputStream&lt;/code&gt; as a String
+     * using the default character encoding of the platform.
+     * &lt;p&gt;
+     * This method buffers the input internally, so there is no need to use a
+     * &lt;code&gt;BufferedInputStream&lt;/code&gt;.
+     * 
+     * @param input  the &lt;code&gt;InputStream&lt;/code&gt; to read from
+     * @return the requested String
+     * @throws NullPointerException if the input is null
+     * @throws IOException if an I/O error occurs
+     */
+    public static String toString(InputStream input) throws IOException {
+<span class="fc" id="L358">        StringWriter sw = new StringWriter();</span>
+<span class="fc" id="L359">        copy(input, sw);</span>
+<span class="fc" id="L360">        return sw.toString();</span>
+    }
+
+    /**
+     * Get the contents of an &lt;code&gt;InputStream&lt;/code&gt; as a String
+     * using the specified character encoding.
+     * &lt;p&gt;
+     * Character encoding names can be found at
+     * &lt;a href=&quot;http://www.iana.org/assignments/character-sets&quot;&gt;IANA&lt;/a&gt;.
+     * &lt;p&gt;
+     * This method buffers the input internally, so there is no need to use a
+     * &lt;code&gt;BufferedInputStream&lt;/code&gt;.
+     * 
+     * @param input  the &lt;code&gt;InputStream&lt;/code&gt; to read from
+     * @param encoding  the encoding to use, null means platform default
+     * @return the requested String
+     * @throws NullPointerException if the input is null
+     * @throws IOException if an I/O error occurs
+     */
+    public static String toString(InputStream input, String encoding)
+            throws IOException {
+<span class="fc" id="L381">        StringWriter sw = new StringWriter();</span>
+<span class="fc" id="L382">        copy(input, sw, encoding);</span>
+<span class="fc" id="L383">        return sw.toString();</span>
+    }
+
+    /**
+     * Get the contents of a &lt;code&gt;Reader&lt;/code&gt; as a String.
+     * &lt;p&gt;
+     * This method buffers the input internally, so there is no need to use a
+     * &lt;code&gt;BufferedReader&lt;/code&gt;.
+     * 
+     * @param input  the &lt;code&gt;Reader&lt;/code&gt; to read from
+     * @return the requested String
+     * @throws NullPointerException if the input is null
+     * @throws IOException if an I/O error occurs
+     */
+    public static String toString(Reader input) throws IOException {
+<span class="fc" id="L398">        StringWriter sw = new StringWriter();</span>
+<span class="fc" id="L399">        copy(input, sw);</span>
+<span class="fc" id="L400">        return sw.toString();</span>
+    }
+
+    /**
+     * Get the contents of a &lt;code&gt;byte[]&lt;/code&gt; as a String
+     * using the default character encoding of the platform.
+     * 
+     * @param input the byte array to read from
+     * @return the requested String
+     * @throws NullPointerException if the input is null
+     * @throws IOException if an I/O error occurs (never occurs)
+     * @deprecated Use {@link String#String(byte[])}
+     */
+    public static String toString(byte[] input) throws IOException {
+<span class="fc" id="L414">        return new String(input);</span>
+    }
+
+    /**
+     * Get the contents of a &lt;code&gt;byte[]&lt;/code&gt; as a String
+     * using the specified character encoding.
+     * &lt;p&gt;
+     * Character encoding names can be found at
+     * &lt;a href=&quot;http://www.iana.org/assignments/character-sets&quot;&gt;IANA&lt;/a&gt;.
+     * 
+     * @param input the byte array to read from
+     * @param encoding  the encoding to use, null means platform default
+     * @return the requested String
+     * @throws NullPointerException if the input is null
+     * @throws IOException if an I/O error occurs (never occurs)
+     * @deprecated Use {@link String#String(byte[],String)}
+     */
+    public static String toString(byte[] input, String encoding)
+            throws IOException {
+<span class="nc bnc" id="L433" title="All 2 branches missed.">        if (encoding == null) {</span>
+<span class="nc" id="L434">            return new String(input);</span>
+        } else {
+<span class="nc" id="L436">            return new String(input, encoding);</span>
+        }
+    }
+
+    // readLines
+    //-----------------------------------------------------------------------
+    /**
+     * Get the contents of an &lt;code&gt;InputStream&lt;/code&gt; as a list of Strings,
+     * one entry per line, using the default character encoding of the platform.
+     * &lt;p&gt;
+     * This method buffers the input internally, so there is no need to use a
+     * &lt;code&gt;BufferedInputStream&lt;/code&gt;.
+     *
+     * @param input  the &lt;code&gt;InputStream&lt;/code&gt; to read from, not null
+     * @return the list of Strings, never null
+     * @throws NullPointerException if the input is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.1
+     */
+    public static List readLines(InputStream input) throws IOException {
+<span class="fc" id="L456">        InputStreamReader reader = new InputStreamReader(input);</span>
+<span class="fc" id="L457">        return readLines(reader);</span>
+    }
+
+    /**
+     * Get the contents of an &lt;code&gt;InputStream&lt;/code&gt; as a list of Strings,
+     * one entry per line, using the specified character encoding.
+     * &lt;p&gt;
+     * Character encoding names can be found at
+     * &lt;a href=&quot;http://www.iana.org/assignments/character-sets&quot;&gt;IANA&lt;/a&gt;.
+     * &lt;p&gt;
+     * This method buffers the input internally, so there is no need to use a
+     * &lt;code&gt;BufferedInputStream&lt;/code&gt;.
+     *
+     * @param input  the &lt;code&gt;InputStream&lt;/code&gt; to read from, not null
+     * @param encoding  the encoding to use, null means platform default
+     * @return the list of Strings, never null
+     * @throws NullPointerException if the input is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.1
+     */
+    public static List readLines(InputStream input, String encoding) throws IOException {
+<span class="pc bpc" id="L478" title="1 of 2 branches missed.">        if (encoding == null) {</span>
+<span class="nc" id="L479">            return readLines(input);</span>
+        } else {
+<span class="fc" id="L481">            InputStreamReader reader = new InputStreamReader(input, encoding);</span>
+<span class="fc" id="L482">            return readLines(reader);</span>
+        }
+    }
+
+    /**
+     * Get the contents of a &lt;code&gt;Reader&lt;/code&gt; as a list of Strings,
+     * one entry per line.
+     * &lt;p&gt;
+     * This method buffers the input internally, so there is no need to use a
+     * &lt;code&gt;BufferedReader&lt;/code&gt;.
+     *
+     * @param input  the &lt;code&gt;Reader&lt;/code&gt; to read from, not null
+     * @return the list of Strings, never null
+     * @throws NullPointerException if the input is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.1
+     */
+    public static List readLines(Reader input) throws IOException {
+<span class="fc" id="L500">        BufferedReader reader = new BufferedReader(input);</span>
+<span class="fc" id="L501">        List list = new ArrayList();</span>
+<span class="fc" id="L502">        String line = reader.readLine();</span>
+<span class="fc bfc" id="L503" title="All 2 branches covered.">        while (line != null) {</span>
+<span class="fc" id="L504">            list.add(line);</span>
+<span class="fc" id="L505">            line = reader.readLine();</span>
+        }
+<span class="fc" id="L507">        return list;</span>
+    }
+
+    // lineIterator
+    //-----------------------------------------------------------------------
+    /**
+     * Return an Iterator for the lines in a &lt;code&gt;Reader&lt;/code&gt;.
+     * &lt;p&gt;
+     * &lt;code&gt;LineIterator&lt;/code&gt; holds a reference to the open
+     * &lt;code&gt;Reader&lt;/code&gt; specified here. When you have finished with the
+     * iterator you should close the reader to free internal resources.
+     * This can be done by closing the reader directly, or by calling
+     * {@link LineIterator#close()} or {@link LineIterator#closeQuietly(LineIterator)}.
+     * &lt;p&gt;
+     * The recommended usage pattern is:
+     * &lt;pre&gt;
+     * try {
+     *   LineIterator it = IOUtils.lineIterator(reader);
+     *   while (it.hasNext()) {
+     *     String line = it.nextLine();
+     *     /// do something with line
+     *   }
+     * } finally {
+     *   IOUtils.closeQuietly(reader);
+     * }
+     * &lt;/pre&gt;
+     *
+     * @param reader  the &lt;code&gt;Reader&lt;/code&gt; to read from, not null
+     * @return an Iterator of the lines in the reader, never null
+     * @throws IllegalArgumentException if the reader is null
+     * @since Commons IO 1.2
+     */
+    public static LineIterator lineIterator(Reader reader) {
+<span class="nc" id="L540">        return new LineIterator(reader);</span>
+    }
+
+    /**
+     * Return an Iterator for the lines in an &lt;code&gt;InputStream&lt;/code&gt;, using
+     * the character encoding specified (or default encoding if null).
+     * &lt;p&gt;
+     * &lt;code&gt;LineIterator&lt;/code&gt; holds a reference to the open
+     * &lt;code&gt;InputStream&lt;/code&gt; specified here. When you have finished with
+     * the iterator you should close the stream to free internal resources.
+     * This can be done by closing the stream directly, or by calling
+     * {@link LineIterator#close()} or {@link LineIterator#closeQuietly(LineIterator)}.
+     * &lt;p&gt;
+     * The recommended usage pattern is:
+     * &lt;pre&gt;
+     * try {
+     *   LineIterator it = IOUtils.lineIterator(stream, &quot;UTF-8&quot;);
+     *   while (it.hasNext()) {
+     *     String line = it.nextLine();
+     *     /// do something with line
+     *   }
+     * } finally {
+     *   IOUtils.closeQuietly(stream);
+     * }
+     * &lt;/pre&gt;
+     *
+     * @param input  the &lt;code&gt;InputStream&lt;/code&gt; to read from, not null
+     * @param encoding  the encoding to use, null means platform default
+     * @return an Iterator of the lines in the reader, never null
+     * @throws IllegalArgumentException if the input is null
+     * @throws IOException if an I/O error occurs, such as if the encoding is invalid
+     * @since Commons IO 1.2
+     */
+    public static LineIterator lineIterator(InputStream input, String encoding) 
+                     throws IOException {
+<span class="fc" id="L575">        Reader reader = null;</span>
+<span class="fc bfc" id="L576" title="All 2 branches covered.">        if (encoding == null) {</span>
+<span class="fc" id="L577">            reader = new InputStreamReader(input);</span>
+        } else {
+<span class="fc" id="L579">            reader = new InputStreamReader(input, encoding);</span>
+        }
+<span class="fc" id="L581">        return new LineIterator(reader);</span>
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Convert the specified string to an input stream, encoded as bytes
+     * using the default character encoding of the platform.
+     *
+     * @param input the string to convert
+     * @return an input stream
+     * @since Commons IO 1.1
+     */
+    public static InputStream toInputStream(String input) {
+<span class="fc" id="L594">        byte[] bytes = input.getBytes();</span>
+<span class="fc" id="L595">        return new ByteArrayInputStream(bytes);</span>
+    }
+
+    /**
+     * Convert the specified string to an input stream, encoded as bytes
+     * using the specified character encoding.
+     * &lt;p&gt;
+     * Character encoding names can be found at
+     * &lt;a href=&quot;http://www.iana.org/assignments/character-sets&quot;&gt;IANA&lt;/a&gt;.
+     *
+     * @param input the string to convert
+     * @param encoding the encoding to use, null means platform default
+     * @throws IOException if the encoding is invalid
+     * @return an input stream
+     * @since Commons IO 1.1
+     */
+    public static InputStream toInputStream(String input, String encoding) throws IOException {
+<span class="fc bfc" id="L612" title="All 2 branches covered.">        byte[] bytes = encoding != null ? input.getBytes(encoding) : input.getBytes();</span>
+<span class="fc" id="L613">        return new ByteArrayInputStream(bytes);</span>
+    }
+
+    // write byte[]
+    //-----------------------------------------------------------------------
+    /**
+     * Writes bytes from a &lt;code&gt;byte[]&lt;/code&gt; to an &lt;code&gt;OutputStream&lt;/code&gt;.
+     * 
+     * @param data  the byte array to write, do not modify during output,
+     * null ignored
+     * @param output  the &lt;code&gt;OutputStream&lt;/code&gt; to write to
+     * @throws NullPointerException if output is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.1
+     */
+    public static void write(byte[] data, OutputStream output)
+            throws IOException {
+<span class="fc bfc" id="L630" title="All 2 branches covered.">        if (data != null) {</span>
+<span class="fc" id="L631">            output.write(data);</span>
+        }
+<span class="fc" id="L633">    }</span>
+
+    /**
+     * Writes bytes from a &lt;code&gt;byte[]&lt;/code&gt; to chars on a &lt;code&gt;Writer&lt;/code&gt;
+     * using the default character encoding of the platform.
+     * &lt;p&gt;
+     * This method uses {@link String#String(byte[])}.
+     * 
+     * @param data  the byte array to write, do not modify during output,
+     * null ignored
+     * @param output  the &lt;code&gt;Writer&lt;/code&gt; to write to
+     * @throws NullPointerException if output is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.1
+     */
+    public static void write(byte[] data, Writer output) throws IOException {
+<span class="fc bfc" id="L649" title="All 2 branches covered.">        if (data != null) {</span>
+<span class="fc" id="L650">            output.write(new String(data));</span>
+        }
+<span class="fc" id="L652">    }</span>
+
+    /**
+     * Writes bytes from a &lt;code&gt;byte[]&lt;/code&gt; to chars on a &lt;code&gt;Writer&lt;/code&gt;
+     * using the specified character encoding.
+     * &lt;p&gt;
+     * Character encoding names can be found at
+     * &lt;a href=&quot;http://www.iana.org/assignments/character-sets&quot;&gt;IANA&lt;/a&gt;.
+     * &lt;p&gt;
+     * This method uses {@link String#String(byte[], String)}.
+     * 
+     * @param data  the byte array to write, do not modify during output,
+     * null ignored
+     * @param output  the &lt;code&gt;Writer&lt;/code&gt; to write to
+     * @param encoding  the encoding to use, null means platform default
+     * @throws NullPointerException if output is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.1
+     */
+    public static void write(byte[] data, Writer output, String encoding)
+            throws IOException {
+<span class="fc bfc" id="L673" title="All 2 branches covered.">        if (data != null) {</span>
+<span class="fc bfc" id="L674" title="All 2 branches covered.">            if (encoding == null) {</span>
+<span class="fc" id="L675">                write(data, output);</span>
+            } else {
+<span class="fc" id="L677">                output.write(new String(data, encoding));</span>
+            }
+        }
+<span class="fc" id="L680">    }</span>
+
+    // write char[]
+    //-----------------------------------------------------------------------
+    /**
+     * Writes chars from a &lt;code&gt;char[]&lt;/code&gt; to a &lt;code&gt;Writer&lt;/code&gt;
+     * using the default character encoding of the platform.
+     * 
+     * @param data  the char array to write, do not modify during output,
+     * null ignored
+     * @param output  the &lt;code&gt;Writer&lt;/code&gt; to write to
+     * @throws NullPointerException if output is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.1
+     */
+    public static void write(char[] data, Writer output) throws IOException {
+<span class="fc bfc" id="L696" title="All 2 branches covered.">        if (data != null) {</span>
+<span class="fc" id="L697">            output.write(data);</span>
+        }
+<span class="fc" id="L699">    }</span>
+
+    /**
+     * Writes chars from a &lt;code&gt;char[]&lt;/code&gt; to bytes on an
+     * &lt;code&gt;OutputStream&lt;/code&gt;.
+     * &lt;p&gt;
+     * This method uses {@link String#String(char[])} and
+     * {@link String#getBytes()}.
+     * 
+     * @param data  the char array to write, do not modify during output,
+     * null ignored
+     * @param output  the &lt;code&gt;OutputStream&lt;/code&gt; to write to
+     * @throws NullPointerException if output is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.1
+     */
+    public static void write(char[] data, OutputStream output)
+            throws IOException {
+<span class="fc bfc" id="L717" title="All 2 branches covered.">        if (data != null) {</span>
+<span class="fc" id="L718">            output.write(new String(data).getBytes());</span>
+        }
+<span class="fc" id="L720">    }</span>
+
+    /**
+     * Writes chars from a &lt;code&gt;char[]&lt;/code&gt; to bytes on an
+     * &lt;code&gt;OutputStream&lt;/code&gt; using the specified character encoding.
+     * &lt;p&gt;
+     * Character encoding names can be found at
+     * &lt;a href=&quot;http://www.iana.org/assignments/character-sets&quot;&gt;IANA&lt;/a&gt;.
+     * &lt;p&gt;
+     * This method uses {@link String#String(char[])} and
+     * {@link String#getBytes(String)}.
+     * 
+     * @param data  the char array to write, do not modify during output,
+     * null ignored
+     * @param output  the &lt;code&gt;OutputStream&lt;/code&gt; to write to
+     * @param encoding  the encoding to use, null means platform default
+     * @throws NullPointerException if output is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.1
+     */
+    public static void write(char[] data, OutputStream output, String encoding)
+            throws IOException {
+<span class="pc bpc" id="L742" title="1 of 2 branches missed.">        if (data != null) {</span>
+<span class="fc bfc" id="L743" title="All 2 branches covered.">            if (encoding == null) {</span>
+<span class="fc" id="L744">                write(data, output);</span>
+            } else {
+<span class="fc" id="L746">                output.write(new String(data).getBytes(encoding));</span>
+            }
+        }
+<span class="fc" id="L749">    }</span>
+
+    // write String
+    //-----------------------------------------------------------------------
+    /**
+     * Writes chars from a &lt;code&gt;String&lt;/code&gt; to a &lt;code&gt;Writer&lt;/code&gt;.
+     * 
+     * @param data  the &lt;code&gt;String&lt;/code&gt; to write, null ignored
+     * @param output  the &lt;code&gt;Writer&lt;/code&gt; to write to
+     * @throws NullPointerException if output is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.1
+     */
+    public static void write(String data, Writer output) throws IOException {
+<span class="fc bfc" id="L763" title="All 2 branches covered.">        if (data != null) {</span>
+<span class="fc" id="L764">            output.write(data);</span>
+        }
+<span class="fc" id="L766">    }</span>
+
+    /**
+     * Writes chars from a &lt;code&gt;String&lt;/code&gt; to bytes on an
+     * &lt;code&gt;OutputStream&lt;/code&gt; using the default character encoding of the
+     * platform.
+     * &lt;p&gt;
+     * This method uses {@link String#getBytes()}.
+     * 
+     * @param data  the &lt;code&gt;String&lt;/code&gt; to write, null ignored
+     * @param output  the &lt;code&gt;OutputStream&lt;/code&gt; to write to
+     * @throws NullPointerException if output is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.1
+     */
+    public static void write(String data, OutputStream output)
+            throws IOException {
+<span class="fc bfc" id="L783" title="All 2 branches covered.">        if (data != null) {</span>
+<span class="fc" id="L784">            output.write(data.getBytes());</span>
+        }
+<span class="fc" id="L786">    }</span>
+
+    /**
+     * Writes chars from a &lt;code&gt;String&lt;/code&gt; to bytes on an
+     * &lt;code&gt;OutputStream&lt;/code&gt; using the specified character encoding.
+     * &lt;p&gt;
+     * Character encoding names can be found at
+     * &lt;a href=&quot;http://www.iana.org/assignments/character-sets&quot;&gt;IANA&lt;/a&gt;.
+     * &lt;p&gt;
+     * This method uses {@link String#getBytes(String)}.
+     * 
+     * @param data  the &lt;code&gt;String&lt;/code&gt; to write, null ignored
+     * @param output  the &lt;code&gt;OutputStream&lt;/code&gt; to write to
+     * @param encoding  the encoding to use, null means platform default
+     * @throws NullPointerException if output is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.1
+     */
+    public static void write(String data, OutputStream output, String encoding)
+            throws IOException {
+<span class="pc bpc" id="L806" title="1 of 2 branches missed.">        if (data != null) {</span>
+<span class="fc bfc" id="L807" title="All 2 branches covered.">            if (encoding == null) {</span>
+<span class="fc" id="L808">                write(data, output);</span>
+            } else {
+<span class="fc" id="L810">                output.write(data.getBytes(encoding));</span>
+            }
+        }
+<span class="fc" id="L813">    }</span>
+
+    // write StringBuffer
+    //-----------------------------------------------------------------------
+    /**
+     * Writes chars from a &lt;code&gt;StringBuffer&lt;/code&gt; to a &lt;code&gt;Writer&lt;/code&gt;.
+     * 
+     * @param data  the &lt;code&gt;StringBuffer&lt;/code&gt; to write, null ignored
+     * @param output  the &lt;code&gt;Writer&lt;/code&gt; to write to
+     * @throws NullPointerException if output is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.1
+     */
+    public static void write(StringBuffer data, Writer output)
+            throws IOException {
+<span class="nc bnc" id="L828" title="All 2 branches missed.">        if (data != null) {</span>
+<span class="nc" id="L829">            output.write(data.toString());</span>
+        }
+<span class="nc" id="L831">    }</span>
+
+    /**
+     * Writes chars from a &lt;code&gt;StringBuffer&lt;/code&gt; to bytes on an
+     * &lt;code&gt;OutputStream&lt;/code&gt; using the default character encoding of the
+     * platform.
+     * &lt;p&gt;
+     * This method uses {@link String#getBytes()}.
+     * 
+     * @param data  the &lt;code&gt;StringBuffer&lt;/code&gt; to write, null ignored
+     * @param output  the &lt;code&gt;OutputStream&lt;/code&gt; to write to
+     * @throws NullPointerException if output is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.1
+     */
+    public static void write(StringBuffer data, OutputStream output)
+            throws IOException {
+<span class="nc bnc" id="L848" title="All 2 branches missed.">        if (data != null) {</span>
+<span class="nc" id="L849">            output.write(data.toString().getBytes());</span>
+        }
+<span class="nc" id="L851">    }</span>
+
+    /**
+     * Writes chars from a &lt;code&gt;StringBuffer&lt;/code&gt; to bytes on an
+     * &lt;code&gt;OutputStream&lt;/code&gt; using the specified character encoding.
+     * &lt;p&gt;
+     * Character encoding names can be found at
+     * &lt;a href=&quot;http://www.iana.org/assignments/character-sets&quot;&gt;IANA&lt;/a&gt;.
+     * &lt;p&gt;
+     * This method uses {@link String#getBytes(String)}.
+     * 
+     * @param data  the &lt;code&gt;StringBuffer&lt;/code&gt; to write, null ignored
+     * @param output  the &lt;code&gt;OutputStream&lt;/code&gt; to write to
+     * @param encoding  the encoding to use, null means platform default
+     * @throws NullPointerException if output is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.1
+     */
+    public static void write(StringBuffer data, OutputStream output,
+            String encoding) throws IOException {
+<span class="nc bnc" id="L871" title="All 2 branches missed.">        if (data != null) {</span>
+<span class="nc bnc" id="L872" title="All 2 branches missed.">            if (encoding == null) {</span>
+<span class="nc" id="L873">                write(data, output);</span>
+            } else {
+<span class="nc" id="L875">                output.write(data.toString().getBytes(encoding));</span>
+            }
+        }
+<span class="nc" id="L878">    }</span>
+
+    // writeLines
+    //-----------------------------------------------------------------------
+    /**
+     * Writes the &lt;code&gt;toString()&lt;/code&gt; value of each item in a collection to
+     * an &lt;code&gt;OutputStream&lt;/code&gt; line by line, using the default character
+     * encoding of the platform and the specified line ending.
+     *
+     * @param lines  the lines to write, null entries produce blank lines
+     * @param lineEnding  the line separator to use, null is system default
+     * @param output  the &lt;code&gt;OutputStream&lt;/code&gt; to write to, not null, not closed
+     * @throws NullPointerException if the output is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.1
+     */
+    public static void writeLines(Collection lines, String lineEnding,
+            OutputStream output) throws IOException {
+<span class="fc bfc" id="L896" title="All 2 branches covered.">        if (lines == null) {</span>
+<span class="fc" id="L897">            return;</span>
+        }
+<span class="fc bfc" id="L899" title="All 2 branches covered.">        if (lineEnding == null) {</span>
+<span class="fc" id="L900">            lineEnding = LINE_SEPARATOR;</span>
+        }
+<span class="fc bfc" id="L902" title="All 2 branches covered.">        for (Iterator it = lines.iterator(); it.hasNext(); ) {</span>
+<span class="fc" id="L903">            Object line = it.next();</span>
+<span class="fc bfc" id="L904" title="All 2 branches covered.">            if (line != null) {</span>
+<span class="fc" id="L905">                output.write(line.toString().getBytes());</span>
+            }
+<span class="fc" id="L907">            output.write(lineEnding.getBytes());</span>
+<span class="fc" id="L908">        }</span>
+<span class="fc" id="L909">    }</span>
+
+    /**
+     * Writes the &lt;code&gt;toString()&lt;/code&gt; value of each item in a collection to
+     * an &lt;code&gt;OutputStream&lt;/code&gt; line by line, using the specified character
+     * encoding and the specified line ending.
+     * &lt;p&gt;
+     * Character encoding names can be found at
+     * &lt;a href=&quot;http://www.iana.org/assignments/character-sets&quot;&gt;IANA&lt;/a&gt;.
+     *
+     * @param lines  the lines to write, null entries produce blank lines
+     * @param lineEnding  the line separator to use, null is system default
+     * @param output  the &lt;code&gt;OutputStream&lt;/code&gt; to write to, not null, not closed
+     * @param encoding  the encoding to use, null means platform default
+     * @throws NullPointerException if the output is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.1
+     */
+    public static void writeLines(Collection lines, String lineEnding,
+            OutputStream output, String encoding) throws IOException {
+<span class="fc bfc" id="L929" title="All 2 branches covered.">        if (encoding == null) {</span>
+<span class="fc" id="L930">            writeLines(lines, lineEnding, output);</span>
+        } else {
+<span class="fc bfc" id="L932" title="All 2 branches covered.">            if (lines == null) {</span>
+<span class="fc" id="L933">                return;</span>
+            }
+<span class="fc bfc" id="L935" title="All 2 branches covered.">            if (lineEnding == null) {</span>
+<span class="fc" id="L936">                lineEnding = LINE_SEPARATOR;</span>
+            }
+<span class="fc bfc" id="L938" title="All 2 branches covered.">            for (Iterator it = lines.iterator(); it.hasNext(); ) {</span>
+<span class="fc" id="L939">                Object line = it.next();</span>
+<span class="fc bfc" id="L940" title="All 2 branches covered.">                if (line != null) {</span>
+<span class="fc" id="L941">                    output.write(line.toString().getBytes(encoding));</span>
+                }
+<span class="fc" id="L943">                output.write(lineEnding.getBytes(encoding));</span>
+<span class="fc" id="L944">            }</span>
+        }
+<span class="fc" id="L946">    }</span>
+
+    /**
+     * Writes the &lt;code&gt;toString()&lt;/code&gt; value of each item in a collection to
+     * a &lt;code&gt;Writer&lt;/code&gt; line by line, using the specified line ending.
+     *
+     * @param lines  the lines to write, null entries produce blank lines
+     * @param lineEnding  the line separator to use, null is system default
+     * @param writer  the &lt;code&gt;Writer&lt;/code&gt; to write to, not null, not closed
+     * @throws NullPointerException if the input is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.1
+     */
+    public static void writeLines(Collection lines, String lineEnding,
+            Writer writer) throws IOException {
+<span class="fc bfc" id="L961" title="All 2 branches covered.">        if (lines == null) {</span>
+<span class="fc" id="L962">            return;</span>
+        }
+<span class="fc bfc" id="L964" title="All 2 branches covered.">        if (lineEnding == null) {</span>
+<span class="fc" id="L965">            lineEnding = LINE_SEPARATOR;</span>
+        }
+<span class="fc bfc" id="L967" title="All 2 branches covered.">        for (Iterator it = lines.iterator(); it.hasNext(); ) {</span>
+<span class="fc" id="L968">            Object line = it.next();</span>
+<span class="fc bfc" id="L969" title="All 2 branches covered.">            if (line != null) {</span>
+<span class="fc" id="L970">                writer.write(line.toString());</span>
+            }
+<span class="fc" id="L972">            writer.write(lineEnding);</span>
+<span class="fc" id="L973">        }</span>
+<span class="fc" id="L974">    }</span>
+
+    // copy from InputStream
+    //-----------------------------------------------------------------------
+    /**
+     * Copy bytes from an &lt;code&gt;InputStream&lt;/code&gt; to an
+     * &lt;code&gt;OutputStream&lt;/code&gt;.
+     * &lt;p&gt;
+     * This method buffers the input internally, so there is no need to use a
+     * &lt;code&gt;BufferedInputStream&lt;/code&gt;.
+     * &lt;p&gt;
+     * Large streams (over 2GB) will return a bytes copied value of
+     * &lt;code&gt;-1&lt;/code&gt; after the copy has completed since the correct
+     * number of bytes cannot be returned as an int. For large streams
+     * use the &lt;code&gt;copyLarge(InputStream, OutputStream)&lt;/code&gt; method.
+     * 
+     * @param input  the &lt;code&gt;InputStream&lt;/code&gt; to read from
+     * @param output  the &lt;code&gt;OutputStream&lt;/code&gt; to write to
+     * @return the number of bytes copied
+     * @throws NullPointerException if the input or output is null
+     * @throws IOException if an I/O error occurs
+     * @throws ArithmeticException if the byte count is too large
+     * @since Commons IO 1.1
+     */
+    public static int copy(InputStream input, OutputStream output) throws IOException {
+<span class="fc" id="L999">        long count = copyLarge(input, output);</span>
+<span class="fc bfc" id="L1000" title="All 2 branches covered.">        if (count &gt; Integer.MAX_VALUE) {</span>
+<span class="fc" id="L1001">            return -1;</span>
+        }
+<span class="fc" id="L1003">        return (int) count;</span>
+    }
+
+    /**
+     * Copy bytes from a large (over 2GB) &lt;code&gt;InputStream&lt;/code&gt; to an
+     * &lt;code&gt;OutputStream&lt;/code&gt;.
+     * &lt;p&gt;
+     * This method buffers the input internally, so there is no need to use a
+     * &lt;code&gt;BufferedInputStream&lt;/code&gt;.
+     * 
+     * @param input  the &lt;code&gt;InputStream&lt;/code&gt; to read from
+     * @param output  the &lt;code&gt;OutputStream&lt;/code&gt; to write to
+     * @return the number of bytes copied
+     * @throws NullPointerException if the input or output is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.3
+     */
+    public static long copyLarge(InputStream input, OutputStream output)
+            throws IOException {
+<span class="fc" id="L1022">        byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];</span>
+<span class="fc" id="L1023">        long count = 0;</span>
+<span class="fc" id="L1024">        int n = 0;</span>
+<span class="fc bfc" id="L1025" title="All 2 branches covered.">        while (-1 != (n = input.read(buffer))) {</span>
+<span class="fc" id="L1026">            output.write(buffer, 0, n);</span>
+<span class="fc" id="L1027">            count += n;</span>
+        }
+<span class="fc" id="L1029">        return count;</span>
+    }
+
+    /**
+     * Copy bytes from an &lt;code&gt;InputStream&lt;/code&gt; to chars on a
+     * &lt;code&gt;Writer&lt;/code&gt; using the default character encoding of the platform.
+     * &lt;p&gt;
+     * This method buffers the input internally, so there is no need to use a
+     * &lt;code&gt;BufferedInputStream&lt;/code&gt;.
+     * &lt;p&gt;
+     * This method uses {@link InputStreamReader}.
+     *
+     * @param input  the &lt;code&gt;InputStream&lt;/code&gt; to read from
+     * @param output  the &lt;code&gt;Writer&lt;/code&gt; to write to
+     * @throws NullPointerException if the input or output is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.1
+     */
+    public static void copy(InputStream input, Writer output)
+            throws IOException {
+<span class="fc" id="L1049">        InputStreamReader in = new InputStreamReader(input);</span>
+<span class="fc" id="L1050">        copy(in, output);</span>
+<span class="fc" id="L1051">    }</span>
+
+    /**
+     * Copy bytes from an &lt;code&gt;InputStream&lt;/code&gt; to chars on a
+     * &lt;code&gt;Writer&lt;/code&gt; using the specified character encoding.
+     * &lt;p&gt;
+     * This method buffers the input internally, so there is no need to use a
+     * &lt;code&gt;BufferedInputStream&lt;/code&gt;.
+     * &lt;p&gt;
+     * Character encoding names can be found at
+     * &lt;a href=&quot;http://www.iana.org/assignments/character-sets&quot;&gt;IANA&lt;/a&gt;.
+     * &lt;p&gt;
+     * This method uses {@link InputStreamReader}.
+     *
+     * @param input  the &lt;code&gt;InputStream&lt;/code&gt; to read from
+     * @param output  the &lt;code&gt;Writer&lt;/code&gt; to write to
+     * @param encoding  the encoding to use, null means platform default
+     * @throws NullPointerException if the input or output is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.1
+     */
+    public static void copy(InputStream input, Writer output, String encoding)
+            throws IOException {
+<span class="fc bfc" id="L1074" title="All 2 branches covered.">        if (encoding == null) {</span>
+<span class="fc" id="L1075">            copy(input, output);</span>
+        } else {
+<span class="fc" id="L1077">            InputStreamReader in = new InputStreamReader(input, encoding);</span>
+<span class="fc" id="L1078">            copy(in, output);</span>
+        }
+<span class="fc" id="L1080">    }</span>
+
+    // copy from Reader
+    //-----------------------------------------------------------------------
+    /**
+     * Copy chars from a &lt;code&gt;Reader&lt;/code&gt; to a &lt;code&gt;Writer&lt;/code&gt;.
+     * &lt;p&gt;
+     * This method buffers the input internally, so there is no need to use a
+     * &lt;code&gt;BufferedReader&lt;/code&gt;.
+     * &lt;p&gt;
+     * Large streams (over 2GB) will return a chars copied value of
+     * &lt;code&gt;-1&lt;/code&gt; after the copy has completed since the correct
+     * number of chars cannot be returned as an int. For large streams
+     * use the &lt;code&gt;copyLarge(Reader, Writer)&lt;/code&gt; method.
+     *
+     * @param input  the &lt;code&gt;Reader&lt;/code&gt; to read from
+     * @param output  the &lt;code&gt;Writer&lt;/code&gt; to write to
+     * @return the number of characters copied
+     * @throws NullPointerException if the input or output is null
+     * @throws IOException if an I/O error occurs
+     * @throws ArithmeticException if the character count is too large
+     * @since Commons IO 1.1
+     */
+    public static int copy(Reader input, Writer output) throws IOException {
+<span class="fc" id="L1104">        long count = copyLarge(input, output);</span>
+<span class="fc bfc" id="L1105" title="All 2 branches covered.">        if (count &gt; Integer.MAX_VALUE) {</span>
+<span class="fc" id="L1106">            return -1;</span>
+        }
+<span class="fc" id="L1108">        return (int) count;</span>
+    }
+
+    /**
+     * Copy chars from a large (over 2GB) &lt;code&gt;Reader&lt;/code&gt; to a &lt;code&gt;Writer&lt;/code&gt;.
+     * &lt;p&gt;
+     * This method buffers the input internally, so there is no need to use a
+     * &lt;code&gt;BufferedReader&lt;/code&gt;.
+     *
+     * @param input  the &lt;code&gt;Reader&lt;/code&gt; to read from
+     * @param output  the &lt;code&gt;Writer&lt;/code&gt; to write to
+     * @return the number of characters copied
+     * @throws NullPointerException if the input or output is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.3
+     */
+    public static long copyLarge(Reader input, Writer output) throws IOException {
+<span class="fc" id="L1125">        char[] buffer = new char[DEFAULT_BUFFER_SIZE];</span>
+<span class="fc" id="L1126">        long count = 0;</span>
+<span class="fc" id="L1127">        int n = 0;</span>
+<span class="fc bfc" id="L1128" title="All 2 branches covered.">        while (-1 != (n = input.read(buffer))) {</span>
+<span class="fc" id="L1129">            output.write(buffer, 0, n);</span>
+<span class="fc" id="L1130">            count += n;</span>
+        }
+<span class="fc" id="L1132">        return count;</span>
+    }
+
+    /**
+     * Copy chars from a &lt;code&gt;Reader&lt;/code&gt; to bytes on an
+     * &lt;code&gt;OutputStream&lt;/code&gt; using the default character encoding of the
+     * platform, and calling flush.
+     * &lt;p&gt;
+     * This method buffers the input internally, so there is no need to use a
+     * &lt;code&gt;BufferedReader&lt;/code&gt;.
+     * &lt;p&gt;
+     * Due to the implementation of OutputStreamWriter, this method performs a
+     * flush.
+     * &lt;p&gt;
+     * This method uses {@link OutputStreamWriter}.
+     *
+     * @param input  the &lt;code&gt;Reader&lt;/code&gt; to read from
+     * @param output  the &lt;code&gt;OutputStream&lt;/code&gt; to write to
+     * @throws NullPointerException if the input or output is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.1
+     */
+    public static void copy(Reader input, OutputStream output)
+            throws IOException {
+<span class="fc" id="L1156">        OutputStreamWriter out = new OutputStreamWriter(output);</span>
+<span class="fc" id="L1157">        copy(input, out);</span>
+        // XXX Unless anyone is planning on rewriting OutputStreamWriter, we
+        // have to flush here.
+<span class="fc" id="L1160">        out.flush();</span>
+<span class="fc" id="L1161">    }</span>
+
+    /**
+     * Copy chars from a &lt;code&gt;Reader&lt;/code&gt; to bytes on an
+     * &lt;code&gt;OutputStream&lt;/code&gt; using the specified character encoding, and
+     * calling flush.
+     * &lt;p&gt;
+     * This method buffers the input internally, so there is no need to use a
+     * &lt;code&gt;BufferedReader&lt;/code&gt;.
+     * &lt;p&gt;
+     * Character encoding names can be found at
+     * &lt;a href=&quot;http://www.iana.org/assignments/character-sets&quot;&gt;IANA&lt;/a&gt;.
+     * &lt;p&gt;
+     * Due to the implementation of OutputStreamWriter, this method performs a
+     * flush.
+     * &lt;p&gt;
+     * This method uses {@link OutputStreamWriter}.
+     *
+     * @param input  the &lt;code&gt;Reader&lt;/code&gt; to read from
+     * @param output  the &lt;code&gt;OutputStream&lt;/code&gt; to write to
+     * @param encoding  the encoding to use, null means platform default
+     * @throws NullPointerException if the input or output is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.1
+     */
+    public static void copy(Reader input, OutputStream output, String encoding)
+            throws IOException {
+<span class="fc bfc" id="L1188" title="All 2 branches covered.">        if (encoding == null) {</span>
+<span class="fc" id="L1189">            copy(input, output);</span>
+        } else {
+<span class="fc" id="L1191">            OutputStreamWriter out = new OutputStreamWriter(output, encoding);</span>
+<span class="fc" id="L1192">            copy(input, out);</span>
+            // XXX Unless anyone is planning on rewriting OutputStreamWriter,
+            // we have to flush here.
+<span class="fc" id="L1195">            out.flush();</span>
+        }
+<span class="fc" id="L1197">    }</span>
+
+    // content equals
+    //-----------------------------------------------------------------------
+    /**
+     * Compare the contents of two Streams to determine if they are equal or
+     * not.
+     * &lt;p&gt;
+     * This method buffers the input internally using
+     * &lt;code&gt;BufferedInputStream&lt;/code&gt; if they are not already buffered.
+     *
+     * @param input1  the first stream
+     * @param input2  the second stream
+     * @return true if the content of the streams are equal or they both don't
+     * exist, false otherwise
+     * @throws NullPointerException if either input is null
+     * @throws IOException if an I/O error occurs
+     */
+    public static boolean contentEquals(InputStream input1, InputStream input2)
+            throws IOException {
+<span class="pc bpc" id="L1217" title="1 of 2 branches missed.">        if (!(input1 instanceof BufferedInputStream)) {</span>
+<span class="fc" id="L1218">            input1 = new BufferedInputStream(input1);</span>
+        }
+<span class="pc bpc" id="L1220" title="1 of 2 branches missed.">        if (!(input2 instanceof BufferedInputStream)) {</span>
+<span class="fc" id="L1221">            input2 = new BufferedInputStream(input2);</span>
+        }
+
+<span class="fc" id="L1224">        int ch = input1.read();</span>
+<span class="fc bfc" id="L1225" title="All 2 branches covered.">        while (-1 != ch) {</span>
+<span class="fc" id="L1226">            int ch2 = input2.read();</span>
+<span class="pc bpc" id="L1227" title="1 of 2 branches missed.">            if (ch != ch2) {</span>
+<span class="nc" id="L1228">                return false;</span>
+            }
+<span class="fc" id="L1230">            ch = input1.read();</span>
+<span class="fc" id="L1231">        }</span>
+
+<span class="fc" id="L1233">        int ch2 = input2.read();</span>
+<span class="pc bpc" id="L1234" title="1 of 2 branches missed.">        return (ch2 == -1);</span>
+    }
+
+    /**
+     * Compare the contents of two Readers to determine if they are equal or
+     * not.
+     * &lt;p&gt;
+     * This method buffers the input internally using
+     * &lt;code&gt;BufferedReader&lt;/code&gt; if they are not already buffered.
+     *
+     * @param input1  the first reader
+     * @param input2  the second reader
+     * @return true if the content of the readers are equal or they both don't
+     * exist, false otherwise
+     * @throws NullPointerException if either input is null
+     * @throws IOException if an I/O error occurs
+     * @since Commons IO 1.1
+     */
+    public static boolean contentEquals(Reader input1, Reader input2)
+            throws IOException {
+<span class="nc bnc" id="L1254" title="All 2 branches missed.">        if (!(input1 instanceof BufferedReader)) {</span>
+<span class="nc" id="L1255">            input1 = new BufferedReader(input1);</span>
+        }
+<span class="nc bnc" id="L1257" title="All 2 branches missed.">        if (!(input2 instanceof BufferedReader)) {</span>
+<span class="nc" id="L1258">            input2 = new BufferedReader(input2);</span>
+        }
+
+<span class="nc" id="L1261">        int ch = input1.read();</span>
+<span class="nc bnc" id="L1262" title="All 2 branches missed.">        while (-1 != ch) {</span>
+<span class="nc" id="L1263">            int ch2 = input2.read();</span>
+<span class="nc bnc" id="L1264" title="All 2 branches missed.">            if (ch != ch2) {</span>
+<span class="nc" id="L1265">                return false;</span>
+            }
+<span class="nc" id="L1267">            ch = input1.read();</span>
+<span class="nc" id="L1268">        }</span>
+
+<span class="nc" id="L1270">        int ch2 = input2.read();</span>
+<span class="nc bnc" id="L1271" title="All 2 branches missed.">        return (ch2 == -1);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>LockableFileWriterTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">v1.3.2 (Apr 4, 2019 2:59:17 AM)</a> &gt; <a href="../../index.html" class="el_group">v1.3.2</a> &gt; <a href="../index.html" class="el_bundle">src/test</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.output</a> &gt; <span class="el_source">LockableFileWriterTest.java</span></div><h1>LockableFileWriterTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.output;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.Writer;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.testtools.FileBasedTestCase;
+
+/**
+ * Tests that files really lock, although no writing is done as 
+ * the locking is tested only on construction. 
+ *
+ * @version $Revision$ $Date$
+ */
+public class LockableFileWriterTest extends FileBasedTestCase {
+
+    private File file;
+    private File lockDir;
+    private File lockFile;
+    private File altLockDir;
+    private File altLockFile;
+
+    public LockableFileWriterTest(String name) {
+<span class="fc" id="L41">        super(name);</span>
+<span class="fc" id="L42">    }</span>
+
+    public void setUp() {
+<span class="fc" id="L45">        file = new File(getTestDirectory(), &quot;testlockfile&quot;);</span>
+<span class="fc" id="L46">        lockDir = new File(System.getProperty(&quot;java.io.tmpdir&quot;));</span>
+<span class="fc" id="L47">        lockFile = new File(lockDir, file.getName() + &quot;.lck&quot;);</span>
+<span class="fc" id="L48">        altLockDir = getTestDirectory();</span>
+<span class="fc" id="L49">        altLockFile = new File(altLockDir, file.getName() + &quot;.lck&quot;);</span>
+<span class="fc" id="L50">    }</span>
+
+    public void tearDown() {
+<span class="fc" id="L53">        file.delete();</span>
+<span class="fc" id="L54">        lockFile.delete();</span>
+<span class="fc" id="L55">        altLockFile.delete();</span>
+<span class="fc" id="L56">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testFileLocked() throws IOException {
+<span class="fc" id="L60">        LockableFileWriter lfw1 = null;</span>
+<span class="fc" id="L61">        LockableFileWriter lfw2 = null;</span>
+<span class="fc" id="L62">        LockableFileWriter lfw3 = null;</span>
+        try {
+            // open a valid locakable writer
+<span class="fc" id="L65">            lfw1 = new LockableFileWriter(file);</span>
+<span class="fc" id="L66">            assertEquals(true, file.exists());</span>
+<span class="fc" id="L67">            assertEquals(true, lockFile.exists());</span>
+            
+            // try to open a second writer
+            try {
+<span class="nc" id="L71">                lfw2 = new LockableFileWriter(file);</span>
+<span class="nc" id="L72">                fail(&quot;Somehow able to open a locked file. &quot;);</span>
+<span class="pc" id="L73">            } catch(IOException ioe) {</span>
+<span class="fc" id="L74">                String msg = ioe.getMessage();</span>
+<span class="fc" id="L75">                assertTrue( &quot;Exception message does not start correctly. &quot;, </span>
+<span class="fc" id="L76">                            msg.startsWith(&quot;Can't write file, lock &quot;) );</span>
+<span class="fc" id="L77">                assertEquals(true, file.exists());</span>
+<span class="fc" id="L78">                assertEquals(true, lockFile.exists());</span>
+            }
+            
+            // try to open a third writer
+            try {
+<span class="nc" id="L83">                lfw3 = new LockableFileWriter(file);</span>
+<span class="nc" id="L84">                fail(&quot;Somehow able to open a locked file. &quot;);</span>
+<span class="pc" id="L85">            } catch(IOException ioe) {</span>
+<span class="fc" id="L86">                String msg = ioe.getMessage();</span>
+<span class="fc" id="L87">                assertTrue( &quot;Exception message does not start correctly. &quot;, </span>
+<span class="fc" id="L88">                            msg.startsWith(&quot;Can't write file, lock &quot;) );</span>
+<span class="fc" id="L89">                assertEquals(true, file.exists());</span>
+<span class="fc" id="L90">                assertEquals(true, lockFile.exists());</span>
+            }
+            
+<span class="fc" id="L93">        } finally {</span>
+<span class="fc" id="L94">            IOUtils.closeQuietly(lfw1);</span>
+<span class="fc" id="L95">            IOUtils.closeQuietly(lfw2);</span>
+<span class="fc" id="L96">            IOUtils.closeQuietly(lfw3);</span>
+        }
+<span class="fc" id="L98">        assertEquals(true, file.exists());</span>
+<span class="fc" id="L99">        assertEquals(false, lockFile.exists());</span>
+<span class="fc" id="L100">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testAlternateLockDir() throws IOException {
+<span class="fc" id="L104">        LockableFileWriter lfw1 = null;</span>
+<span class="fc" id="L105">        LockableFileWriter lfw2 = null;</span>
+        try {
+            // open a valid locakable writer
+<span class="fc" id="L108">            lfw1 = new LockableFileWriter(file, true, altLockDir.getAbsolutePath());</span>
+<span class="fc" id="L109">            assertEquals(true, file.exists());</span>
+<span class="fc" id="L110">            assertEquals(true, altLockFile.exists());</span>
+            
+            // try to open a second writer
+            try {
+<span class="nc" id="L114">                lfw2 = new LockableFileWriter(file, true, altLockDir.getAbsolutePath());</span>
+<span class="nc" id="L115">                fail(&quot;Somehow able to open a locked file. &quot;);</span>
+<span class="pc" id="L116">            } catch(IOException ioe) {</span>
+<span class="fc" id="L117">                String msg = ioe.getMessage();</span>
+<span class="fc" id="L118">                assertTrue( &quot;Exception message does not start correctly. &quot;, </span>
+<span class="fc" id="L119">                            msg.startsWith(&quot;Can't write file, lock &quot;) );</span>
+<span class="fc" id="L120">                assertEquals(true, file.exists());</span>
+<span class="fc" id="L121">                assertEquals(true, altLockFile.exists());</span>
+            }
+            
+<span class="fc" id="L124">        } finally {</span>
+<span class="fc" id="L125">            IOUtils.closeQuietly(lfw1);</span>
+<span class="fc" id="L126">            IOUtils.closeQuietly(lfw2);</span>
+        }
+<span class="fc" id="L128">        assertEquals(true, file.exists());</span>
+<span class="fc" id="L129">        assertEquals(false, altLockFile.exists());</span>
+<span class="fc" id="L130">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testFileNotLocked() throws IOException {
+        // open a valid locakable writer
+<span class="fc" id="L135">        LockableFileWriter lfw1 = null;</span>
+        try {
+<span class="fc" id="L137">            lfw1 = new LockableFileWriter(file);</span>
+<span class="fc" id="L138">            assertEquals(true, file.exists());</span>
+<span class="fc" id="L139">            assertEquals(true, lockFile.exists());</span>
+<span class="fc" id="L140">        } finally {</span>
+<span class="fc" id="L141">            IOUtils.closeQuietly(lfw1);</span>
+        }
+<span class="fc" id="L143">        assertEquals(true, file.exists());</span>
+<span class="fc" id="L144">        assertEquals(false, lockFile.exists());</span>
+        
+        // open a second valid writer on the same file
+<span class="fc" id="L147">        LockableFileWriter lfw2 = null;</span>
+        try {
+<span class="fc" id="L149">            lfw2 = new LockableFileWriter(file);</span>
+<span class="fc" id="L150">            assertEquals(true, file.exists());</span>
+<span class="fc" id="L151">            assertEquals(true, lockFile.exists());</span>
+<span class="fc" id="L152">        } finally {</span>
+<span class="fc" id="L153">            IOUtils.closeQuietly(lfw2);</span>
+        }
+<span class="fc" id="L155">        assertEquals(true, file.exists());</span>
+<span class="fc" id="L156">        assertEquals(false, lockFile.exists());</span>
+<span class="fc" id="L157">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testConstructor_File_encoding_badEncoding() throws IOException {
+<span class="fc" id="L161">        Writer writer = null;</span>
+        try {
+<span class="nc" id="L163">            writer = new LockableFileWriter(file, &quot;BAD-ENCODE&quot;);</span>
+<span class="nc" id="L164">            fail();</span>
+<span class="pc" id="L165">        } catch (IOException ex) {</span>
+            // expected
+<span class="fc" id="L167">            assertEquals(false, file.exists());</span>
+<span class="fc" id="L168">            assertEquals(false, lockFile.exists());</span>
+        } finally {
+<span class="fc" id="L170">            IOUtils.closeQuietly(writer);</span>
+        }
+<span class="fc" id="L172">        assertEquals(false, file.exists());</span>
+<span class="fc" id="L173">        assertEquals(false, lockFile.exists());</span>
+<span class="fc" id="L174">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testConstructor_File_directory() throws IOException {
+<span class="fc" id="L178">        Writer writer = null;</span>
+        try {
+<span class="nc" id="L180">            writer = new LockableFileWriter(getTestDirectory());</span>
+<span class="nc" id="L181">            fail();</span>
+<span class="pc" id="L182">        } catch (IOException ex) {</span>
+            // expected
+<span class="fc" id="L184">            assertEquals(false, file.exists());</span>
+<span class="fc" id="L185">            assertEquals(false, lockFile.exists());</span>
+        } finally {
+<span class="fc" id="L187">            IOUtils.closeQuietly(writer);</span>
+        }
+<span class="fc" id="L189">        assertEquals(false, file.exists());</span>
+<span class="fc" id="L190">        assertEquals(false, lockFile.exists());</span>
+<span class="fc" id="L191">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testConstructor_File_nullFile() throws IOException {
+<span class="fc" id="L195">        Writer writer = null;</span>
+        try {
+<span class="nc" id="L197">            writer = new LockableFileWriter((File) null);</span>
+<span class="nc" id="L198">            fail();</span>
+<span class="pc" id="L199">        } catch (NullPointerException ex) {</span>
+            // expected
+<span class="fc" id="L201">            assertEquals(false, file.exists());</span>
+<span class="fc" id="L202">            assertEquals(false, lockFile.exists());</span>
+        } finally {
+<span class="fc" id="L204">            IOUtils.closeQuietly(writer);</span>
+        }
+<span class="fc" id="L206">        assertEquals(false, file.exists());</span>
+<span class="fc" id="L207">        assertEquals(false, lockFile.exists());</span>
+<span class="fc" id="L208">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testConstructor_fileName_nullFile() throws IOException {
+<span class="fc" id="L212">        Writer writer = null;</span>
+        try {
+<span class="nc" id="L214">            writer = new LockableFileWriter((String) null);</span>
+<span class="nc" id="L215">            fail();</span>
+<span class="pc" id="L216">        } catch (NullPointerException ex) {</span>
+            // expected
+<span class="fc" id="L218">            assertEquals(false, file.exists());</span>
+<span class="fc" id="L219">            assertEquals(false, lockFile.exists());</span>
+        } finally {
+<span class="fc" id="L221">            IOUtils.closeQuietly(writer);</span>
+        }
+<span class="fc" id="L223">        assertEquals(false, file.exists());</span>
+<span class="fc" id="L224">        assertEquals(false, lockFile.exists());</span>
+<span class="fc" id="L225">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>v1.3.2 (Apr 4, 2019 2:59:17 AM)</div></body></html>

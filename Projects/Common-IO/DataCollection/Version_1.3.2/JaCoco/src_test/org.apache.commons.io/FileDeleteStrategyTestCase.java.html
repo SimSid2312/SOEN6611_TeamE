@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileDeleteStrategyTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">v1.3.2 (Apr 4, 2019 2:59:17 AM)</a> &gt; <a href="../../index.html" class="el_group">v1.3.2</a> &gt; <a href="../index.html" class="el_bundle">src/test</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io</a> &gt; <span class="el_source">FileDeleteStrategyTestCase.java</span></div><h1>FileDeleteStrategyTestCase.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io;
+
+import java.io.File;
+import java.io.IOException;
+
+import junit.framework.Test;
+import junit.framework.TestSuite;
+
+import org.apache.commons.io.testtools.FileBasedTestCase;
+
+/**
+ * Test for FileDeleteStrategy.
+ *
+ * @version $Id: DirectoryWalkerTestCase.java 438218 2006-08-29 21:15:11 +0000 (Tue, 29 Aug 2006) scolebourne $
+ * @see FileDeleteStrategy
+ */
+public class FileDeleteStrategyTestCase extends FileBasedTestCase {
+
+    public static Test suite() {
+<span class="pc bpc" id="L36" title="1 of 2 branches missed.">        return new TestSuite(FileDeleteStrategyTestCase.class);</span>
+    }
+
+    public FileDeleteStrategyTestCase(String name) {
+<span class="fc" id="L40">        super(name);</span>
+<span class="fc" id="L41">    }</span>
+
+    protected void setUp() throws Exception {
+<span class="fc" id="L44">        super.setUp();</span>
+<span class="fc" id="L45">    }</span>
+
+    protected void tearDown() throws Exception {
+<span class="fc" id="L48">        super.tearDown();</span>
+<span class="fc" id="L49">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testDeleteNormal() throws Exception {
+<span class="fc" id="L53">        File baseDir = getTestDirectory();</span>
+<span class="fc" id="L54">        File subDir = new File(baseDir, &quot;test&quot;);</span>
+<span class="fc" id="L55">        assertEquals(true, subDir.mkdir());</span>
+<span class="fc" id="L56">        File subFile = new File(subDir, &quot;a.txt&quot;);</span>
+<span class="fc" id="L57">        createFile(subFile, 16);</span>
+        
+<span class="fc" id="L59">        assertEquals(true, subDir.exists());</span>
+<span class="fc" id="L60">        assertEquals(true, subFile.exists());</span>
+        // delete dir
+        try {
+<span class="nc" id="L63">            FileDeleteStrategy.NORMAL.delete(subDir);</span>
+<span class="nc" id="L64">            fail();</span>
+<span class="pc" id="L65">        } catch (IOException ex) {</span>
+            // expected
+        }
+<span class="fc" id="L68">        assertEquals(true, subDir.exists());</span>
+<span class="fc" id="L69">        assertEquals(true, subFile.exists());</span>
+        // delete file
+<span class="fc" id="L71">        FileDeleteStrategy.NORMAL.delete(subFile);</span>
+<span class="fc" id="L72">        assertEquals(true, subDir.exists());</span>
+<span class="fc" id="L73">        assertEquals(false, subFile.exists());</span>
+        // delete dir
+<span class="fc" id="L75">        FileDeleteStrategy.NORMAL.delete(subDir);</span>
+<span class="fc" id="L76">        assertEquals(false, subDir.exists());</span>
+        // delete dir
+<span class="fc" id="L78">        FileDeleteStrategy.NORMAL.delete(subDir);  // no error</span>
+<span class="fc" id="L79">        assertEquals(false, subDir.exists());</span>
+<span class="fc" id="L80">    }</span>
+
+    public void testDeleteQuietlyNormal() throws Exception {
+<span class="fc" id="L83">        File baseDir = getTestDirectory();</span>
+<span class="fc" id="L84">        File subDir = new File(baseDir, &quot;test&quot;);</span>
+<span class="fc" id="L85">        assertEquals(true, subDir.mkdir());</span>
+<span class="fc" id="L86">        File subFile = new File(subDir, &quot;a.txt&quot;);</span>
+<span class="fc" id="L87">        createFile(subFile, 16);</span>
+        
+<span class="fc" id="L89">        assertEquals(true, subDir.exists());</span>
+<span class="fc" id="L90">        assertEquals(true, subFile.exists());</span>
+        // delete dir
+<span class="fc" id="L92">        assertEquals(false, FileDeleteStrategy.NORMAL.deleteQuietly(subDir));</span>
+<span class="fc" id="L93">        assertEquals(true, subDir.exists());</span>
+<span class="fc" id="L94">        assertEquals(true, subFile.exists());</span>
+        // delete file
+<span class="fc" id="L96">        assertEquals(true, FileDeleteStrategy.NORMAL.deleteQuietly(subFile));</span>
+<span class="fc" id="L97">        assertEquals(true, subDir.exists());</span>
+<span class="fc" id="L98">        assertEquals(false, subFile.exists());</span>
+        // delete dir
+<span class="fc" id="L100">        assertEquals(true, FileDeleteStrategy.NORMAL.deleteQuietly(subDir));</span>
+<span class="fc" id="L101">        assertEquals(false, subDir.exists());</span>
+        // delete dir
+<span class="fc" id="L103">        assertEquals(true, FileDeleteStrategy.NORMAL.deleteQuietly(subDir));  // no error</span>
+<span class="fc" id="L104">        assertEquals(false, subDir.exists());</span>
+<span class="fc" id="L105">    }</span>
+
+    public void testDeleteForce() throws Exception {
+<span class="fc" id="L108">        File baseDir = getTestDirectory();</span>
+<span class="fc" id="L109">        File subDir = new File(baseDir, &quot;test&quot;);</span>
+<span class="fc" id="L110">        assertEquals(true, subDir.mkdir());</span>
+<span class="fc" id="L111">        File subFile = new File(subDir, &quot;a.txt&quot;);</span>
+<span class="fc" id="L112">        createFile(subFile, 16);</span>
+        
+<span class="fc" id="L114">        assertEquals(true, subDir.exists());</span>
+<span class="fc" id="L115">        assertEquals(true, subFile.exists());</span>
+        // delete dir
+<span class="fc" id="L117">        FileDeleteStrategy.FORCE.delete(subDir);</span>
+<span class="fc" id="L118">        assertEquals(false, subDir.exists());</span>
+<span class="fc" id="L119">        assertEquals(false, subFile.exists());</span>
+        // delete dir
+<span class="fc" id="L121">        FileDeleteStrategy.FORCE.delete(subDir);  // no error</span>
+<span class="fc" id="L122">        assertEquals(false, subDir.exists());</span>
+<span class="fc" id="L123">    }</span>
+
+    public void testDeleteNull() throws Exception {
+        try {
+<span class="nc" id="L127">            FileDeleteStrategy.NORMAL.delete((File) null);</span>
+<span class="nc" id="L128">            fail();</span>
+<span class="pc" id="L129">        } catch (NullPointerException ex) {</span>
+            // expected
+        }
+<span class="fc" id="L132">        assertEquals(true, FileDeleteStrategy.NORMAL.deleteQuietly((File) null));</span>
+<span class="fc" id="L133">    }</span>
+
+    public void testToString() {
+<span class="fc" id="L136">        assertEquals(&quot;FileDeleteStrategy[Normal]&quot;, FileDeleteStrategy.NORMAL.toString());</span>
+<span class="fc" id="L137">        assertEquals(&quot;FileDeleteStrategy[Force]&quot;, FileDeleteStrategy.FORCE.toString());</span>
+<span class="fc" id="L138">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>v1.3.2 (Apr 4, 2019 2:59:17 AM)</div></body></html>

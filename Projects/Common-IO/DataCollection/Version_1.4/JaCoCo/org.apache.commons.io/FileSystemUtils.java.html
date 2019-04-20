@@ -1,0 +1,458 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FileSystemUtils.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Commons IO</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io</a> &gt; <span class="el_source">FileSystemUtils.java</span></div><h1>FileSystemUtils.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.StringTokenizer;
+
+/**
+ * General File System utilities.
+ * &lt;p&gt;
+ * This class provides static utility methods for general file system
+ * functions not provided via the JDK {@link java.io.File File} class.
+ * &lt;p&gt;
+ * The current functions provided are:
+ * &lt;ul&gt;
+ * &lt;li&gt;Get the free space on a drive
+ * &lt;/ul&gt;
+ *
+ * @author Frank W. Zammetti
+ * @author Stephen Colebourne
+ * @author Thomas Ledoux
+ * @author James Urie
+ * @author Magnus Grimsell
+ * @author Thomas Ledoux
+ * @version $Id$
+ * @since Commons IO 1.1
+ */
+public class FileSystemUtils {
+
+    /** Singleton instance, used mainly for testing. */
+<span class="fc" id="L52">    private static final FileSystemUtils INSTANCE = new FileSystemUtils();</span>
+
+    /** Operating system state flag for error. */
+    private static final int INIT_PROBLEM = -1;
+    /** Operating system state flag for neither Unix nor Windows. */
+    private static final int OTHER = 0;
+    /** Operating system state flag for Windows. */
+    private static final int WINDOWS = 1;
+    /** Operating system state flag for Unix. */
+    private static final int UNIX = 2;
+    /** Operating system state flag for Posix flavour Unix. */
+    private static final int POSIX_UNIX = 3;
+
+    /** The operating system flag. */
+    private static final int OS;
+    static {
+<span class="fc" id="L68">        int os = OTHER;</span>
+        try {
+<span class="fc" id="L70">            String osName = System.getProperty(&quot;os.name&quot;);</span>
+<span class="pc bpc" id="L71" title="1 of 2 branches missed.">            if (osName == null) {</span>
+<span class="nc" id="L72">                throw new IOException(&quot;os.name not found&quot;);</span>
+            }
+<span class="fc" id="L74">            osName = osName.toLowerCase();</span>
+            // match
+<span class="pc bpc" id="L76" title="1 of 2 branches missed.">            if (osName.indexOf(&quot;windows&quot;) != -1) {</span>
+<span class="nc" id="L77">                os = WINDOWS;</span>
+<span class="pc bpc" id="L78" title="1 of 2 branches missed.">            } else if (osName.indexOf(&quot;linux&quot;) != -1 ||</span>
+<span class="pc bpc" id="L79" title="1 of 2 branches missed.">                osName.indexOf(&quot;sun os&quot;) != -1 ||</span>
+<span class="pc bpc" id="L80" title="1 of 2 branches missed.">                osName.indexOf(&quot;sunos&quot;) != -1 ||</span>
+<span class="pc bpc" id="L81" title="1 of 2 branches missed.">                osName.indexOf(&quot;solaris&quot;) != -1 ||</span>
+<span class="pc bpc" id="L82" title="1 of 2 branches missed.">                osName.indexOf(&quot;mpe/ix&quot;) != -1 ||</span>
+<span class="pc bpc" id="L83" title="1 of 2 branches missed.">                osName.indexOf(&quot;freebsd&quot;) != -1 ||</span>
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">                osName.indexOf(&quot;irix&quot;) != -1 ||</span>
+<span class="pc bpc" id="L85" title="1 of 2 branches missed.">                osName.indexOf(&quot;digital unix&quot;) != -1 ||</span>
+<span class="pc bpc" id="L86" title="1 of 2 branches missed.">                osName.indexOf(&quot;unix&quot;) != -1 ||</span>
+<span class="pc bpc" id="L87" title="1 of 2 branches missed.">                osName.indexOf(&quot;mac os x&quot;) != -1) {</span>
+<span class="fc" id="L88">                os = UNIX;</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">            } else if (osName.indexOf(&quot;hp-ux&quot;) != -1 ||</span>
+<span class="nc bnc" id="L90" title="All 2 branches missed.">                osName.indexOf(&quot;aix&quot;) != -1) {</span>
+<span class="nc" id="L91">                os = POSIX_UNIX;</span>
+            } else {
+<span class="nc" id="L93">                os = OTHER;</span>
+            }
+
+<span class="nc" id="L96">        } catch (Exception ex) {</span>
+<span class="nc" id="L97">            os = INIT_PROBLEM;</span>
+<span class="fc" id="L98">        }</span>
+<span class="fc" id="L99">        OS = os;</span>
+<span class="fc" id="L100">    }</span>
+
+    /**
+     * Instances should NOT be constructed in standard programming.
+     */
+    public FileSystemUtils() {
+<span class="fc" id="L106">        super();</span>
+<span class="fc" id="L107">    }</span>
+
+    //-----------------------------------------------------------------------
+    /**
+     * Returns the free space on a drive or volume by invoking
+     * the command line.
+     * This method does not normalize the result, and typically returns
+     * bytes on Windows, 512 byte units on OS X and kilobytes on Unix.
+     * As this is not very useful, this method is deprecated in favour
+     * of {@link #freeSpaceKb(String)} which returns a result in kilobytes.
+     * &lt;p&gt;
+     * Note that some OS's are NOT currently supported, including OS/390,
+     * OpenVMS and and SunOS 5. (SunOS is supported by &lt;code&gt;freeSpaceKb&lt;/code&gt;.)
+     * &lt;pre&gt;
+     * FileSystemUtils.freeSpace(&quot;C:&quot;);       // Windows
+     * FileSystemUtils.freeSpace(&quot;/volume&quot;);  // *nix
+     * &lt;/pre&gt;
+     * The free space is calculated via the command line.
+     * It uses 'dir /-c' on Windows and 'df' on *nix.
+     *
+     * @param path  the path to get free space for, not null, not empty on Unix
+     * @return the amount of free drive space on the drive or volume
+     * @throws IllegalArgumentException if the path is invalid
+     * @throws IllegalStateException if an error occurred in initialisation
+     * @throws IOException if an error occurs when finding the free space
+     * @since Commons IO 1.1, enhanced OS support in 1.2 and 1.3
+     * @deprecated Use freeSpaceKb(String)
+     *  Deprecated from 1.3, may be removed in 2.0
+     */
+    public static long freeSpace(String path) throws IOException {
+<span class="fc" id="L137">        return INSTANCE.freeSpaceOS(path, OS, false);</span>
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Returns the free space on a drive or volume in kilobytes by invoking
+     * the command line.
+     * &lt;pre&gt;
+     * FileSystemUtils.freeSpaceKb(&quot;C:&quot;);       // Windows
+     * FileSystemUtils.freeSpaceKb(&quot;/volume&quot;);  // *nix
+     * &lt;/pre&gt;
+     * The free space is calculated via the command line.
+     * It uses 'dir /-c' on Windows, 'df -kP' on AIX/HP-UX and 'df -k' on other Unix.
+     * &lt;p&gt;
+     * In order to work, you must be running Windows, or have a implementation of
+     * Unix df that supports GNU format when passed -k (or -kP). If you are going
+     * to rely on this code, please check that it works on your OS by running
+     * some simple tests to compare the command line with the output from this class.
+     * If your operating system isn't supported, please raise a JIRA call detailing
+     * the exact result from df -k and as much other detail as possible, thanks.
+     *
+     * @param path  the path to get free space for, not null, not empty on Unix
+     * @return the amount of free drive space on the drive or volume in kilobytes
+     * @throws IllegalArgumentException if the path is invalid
+     * @throws IllegalStateException if an error occurred in initialisation
+     * @throws IOException if an error occurs when finding the free space
+     * @since Commons IO 1.2, enhanced OS support in 1.3
+     */
+    public static long freeSpaceKb(String path) throws IOException {
+<span class="fc" id="L166">        return INSTANCE.freeSpaceOS(path, OS, true);</span>
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Returns the free space on a drive or volume in a cross-platform manner.
+     * Note that some OS's are NOT currently supported, including OS/390.
+     * &lt;pre&gt;
+     * FileSystemUtils.freeSpace(&quot;C:&quot;);  // Windows
+     * FileSystemUtils.freeSpace(&quot;/volume&quot;);  // *nix
+     * &lt;/pre&gt;
+     * The free space is calculated via the command line.
+     * It uses 'dir /-c' on Windows and 'df' on *nix.
+     *
+     * @param path  the path to get free space for, not null, not empty on Unix
+     * @param os  the operating system code
+     * @param kb  whether to normalize to kilobytes
+     * @return the amount of free drive space on the drive or volume
+     * @throws IllegalArgumentException if the path is invalid
+     * @throws IllegalStateException if an error occurred in initialisation
+     * @throws IOException if an error occurs when finding the free space
+     */
+    long freeSpaceOS(String path, int os, boolean kb) throws IOException {
+<span class="fc bfc" id="L189" title="All 2 branches covered.">        if (path == null) {</span>
+<span class="fc" id="L190">            throw new IllegalArgumentException(&quot;Path must not be empty&quot;);</span>
+        }
+<span class="pc bpc" id="L192" title="1 of 5 branches missed.">        switch (os) {</span>
+            case WINDOWS:
+<span class="fc bfc" id="L194" title="All 2 branches covered.">                return (kb ? freeSpaceWindows(path) / 1024 : freeSpaceWindows(path));</span>
+            case UNIX:
+<span class="fc" id="L196">                return freeSpaceUnix(path, kb, false);</span>
+            case POSIX_UNIX:
+<span class="nc" id="L198">                return freeSpaceUnix(path, kb, true);</span>
+            case OTHER:
+<span class="fc" id="L200">                throw new IllegalStateException(&quot;Unsupported operating system&quot;);</span>
+            default:
+<span class="fc" id="L202">                throw new IllegalStateException(</span>
+                  &quot;Exception caught when determining operating system&quot;);
+        }
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Find free space on the Windows platform using the 'dir' command.
+     *
+     * @param path  the path to get free space for, including the colon
+     * @return the amount of free drive space on the drive
+     * @throws IOException if an error occurs
+     */
+    long freeSpaceWindows(String path) throws IOException {
+<span class="fc" id="L216">        path = FilenameUtils.normalize(path);</span>
+<span class="pc bpc" id="L217" title="1 of 4 branches missed.">        if (path.length() &gt; 2 &amp;&amp; path.charAt(1) == ':') {</span>
+<span class="fc" id="L218">            path = path.substring(0, 2);  // seems to make it work</span>
+        }
+        
+        // build and run the 'dir' command
+<span class="fc" id="L222">        String[] cmdAttribs = new String[] {&quot;cmd.exe&quot;, &quot;/C&quot;, &quot;dir /-c &quot; + path};</span>
+        
+        // read in the output of the command to an ArrayList
+<span class="fc" id="L225">        List lines = performCommand(cmdAttribs, Integer.MAX_VALUE);</span>
+        
+        // now iterate over the lines we just read and find the LAST
+        // non-empty line (the free space bytes should be in the last element
+        // of the ArrayList anyway, but this will ensure it works even if it's
+        // not, still assuming it is on the last non-blank line)
+<span class="fc bfc" id="L231" title="All 2 branches covered.">        for (int i = lines.size() - 1; i &gt;= 0; i--) {</span>
+<span class="fc" id="L232">            String line = (String) lines.get(i);</span>
+<span class="fc bfc" id="L233" title="All 2 branches covered.">            if (line.length() &gt; 0) {</span>
+<span class="fc" id="L234">                return parseDir(line, path);</span>
+            }
+        }
+        // all lines are blank
+<span class="fc" id="L238">        throw new IOException(</span>
+                &quot;Command line 'dir /-c' did not return any info &quot; +
+                &quot;for path '&quot; + path + &quot;'&quot;);
+    }
+
+    /**
+     * Parses the Windows dir response last line
+     *
+     * @param line  the line to parse
+     * @param path  the path that was sent
+     * @return the number of bytes
+     * @throws IOException if an error occurs
+     */
+    long parseDir(String line, String path) throws IOException {
+        // read from the end of the line to find the last numeric
+        // character on the line, then continue until we find the first
+        // non-numeric character, and everything between that and the last
+        // numeric character inclusive is our free space bytes count
+<span class="fc" id="L256">        int bytesStart = 0;</span>
+<span class="fc" id="L257">        int bytesEnd = 0;</span>
+<span class="fc" id="L258">        int j = line.length() - 1;</span>
+<span class="fc bfc" id="L259" title="All 2 branches covered.">        innerLoop1: while (j &gt;= 0) {</span>
+<span class="fc" id="L260">            char c = line.charAt(j);</span>
+<span class="fc bfc" id="L261" title="All 2 branches covered.">            if (Character.isDigit(c)) {</span>
+              // found the last numeric character, this is the end of
+              // the free space bytes count
+<span class="fc" id="L264">              bytesEnd = j + 1;</span>
+<span class="fc" id="L265">              break innerLoop1;</span>
+            }
+<span class="fc" id="L267">            j--;</span>
+<span class="fc" id="L268">        }</span>
+<span class="fc bfc" id="L269" title="All 2 branches covered.">        innerLoop2: while (j &gt;= 0) {</span>
+<span class="fc" id="L270">            char c = line.charAt(j);</span>
+<span class="pc bpc" id="L271" title="1 of 6 branches missed.">            if (!Character.isDigit(c) &amp;&amp; c != ',' &amp;&amp; c != '.') {</span>
+              // found the next non-numeric character, this is the
+              // beginning of the free space bytes count
+<span class="fc" id="L274">              bytesStart = j + 1;</span>
+<span class="fc" id="L275">              break innerLoop2;</span>
+            }
+<span class="fc" id="L277">            j--;</span>
+<span class="fc" id="L278">        }</span>
+<span class="fc bfc" id="L279" title="All 2 branches covered.">        if (j &lt; 0) {</span>
+<span class="fc" id="L280">            throw new IOException(</span>
+                    &quot;Command line 'dir /-c' did not return valid info &quot; +
+                    &quot;for path '&quot; + path + &quot;'&quot;);
+        }
+        
+        // remove commas and dots in the bytes count
+<span class="fc" id="L286">        StringBuffer buf = new StringBuffer(line.substring(bytesStart, bytesEnd));</span>
+<span class="fc bfc" id="L287" title="All 2 branches covered.">        for (int k = 0; k &lt; buf.length(); k++) {</span>
+<span class="pc bpc" id="L288" title="1 of 4 branches missed.">            if (buf.charAt(k) == ',' || buf.charAt(k) == '.') {</span>
+<span class="fc" id="L289">                buf.deleteCharAt(k--);</span>
+            }
+        }
+<span class="fc" id="L292">        return parseBytes(buf.toString(), path);</span>
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Find free space on the *nix platform using the 'df' command.
+     *
+     * @param path  the path to get free space for
+     * @param kb  whether to normalize to kilobytes
+     * @param posix  whether to use the posix standard format flag
+     * @return the amount of free drive space on the volume
+     * @throws IOException if an error occurs
+     */
+    long freeSpaceUnix(String path, boolean kb, boolean posix) throws IOException {
+<span class="fc bfc" id="L306" title="All 2 branches covered.">        if (path.length() == 0) {</span>
+<span class="fc" id="L307">            throw new IllegalArgumentException(&quot;Path must not be empty&quot;);</span>
+        }
+<span class="fc" id="L309">        path = FilenameUtils.normalize(path);</span>
+
+        // build and run the 'dir' command
+<span class="fc" id="L312">        String flags = &quot;-&quot;;</span>
+<span class="fc bfc" id="L313" title="All 2 branches covered.">        if (kb) {</span>
+<span class="fc" id="L314">            flags += &quot;k&quot;;</span>
+        }
+<span class="fc bfc" id="L316" title="All 2 branches covered.">        if (posix) {</span>
+<span class="fc" id="L317">            flags += &quot;P&quot;;</span>
+        }
+<span class="fc" id="L319">        String[] cmdAttribs = </span>
+<span class="fc bfc" id="L320" title="All 2 branches covered.">            (flags.length() &gt; 1 ? new String[] {&quot;df&quot;, flags, path} : new String[] {&quot;df&quot;, path});</span>
+        
+        // perform the command, asking for up to 3 lines (header, interesting, overflow)
+<span class="fc" id="L323">        List lines = performCommand(cmdAttribs, 3);</span>
+<span class="pc bpc" id="L324" title="1 of 2 branches missed.">        if (lines.size() &lt; 2) {</span>
+            // unknown problem, throw exception
+<span class="nc" id="L326">            throw new IOException(</span>
+                    &quot;Command line 'df' did not return info as expected &quot; +
+                    &quot;for path '&quot; + path + &quot;'- response was &quot; + lines);
+        }
+<span class="fc" id="L330">        String line2 = (String) lines.get(1); // the line we're interested in</span>
+        
+        // Now, we tokenize the string. The fourth element is what we want.
+<span class="fc" id="L333">        StringTokenizer tok = new StringTokenizer(line2, &quot; &quot;);</span>
+<span class="fc bfc" id="L334" title="All 2 branches covered.">        if (tok.countTokens() &lt; 4) {</span>
+            // could be long Filesystem, thus data on third line
+<span class="fc bfc" id="L336" title="All 4 branches covered.">            if (tok.countTokens() == 1 &amp;&amp; lines.size() &gt;= 3) {</span>
+<span class="fc" id="L337">                String line3 = (String) lines.get(2); // the line may be interested in</span>
+<span class="fc" id="L338">                tok = new StringTokenizer(line3, &quot; &quot;);</span>
+<span class="fc" id="L339">            } else {</span>
+<span class="fc" id="L340">                throw new IOException(</span>
+                        &quot;Command line 'df' did not return data as expected &quot; +
+                        &quot;for path '&quot; + path + &quot;'- check path is valid&quot;);
+            }
+        } else {
+<span class="fc" id="L345">            tok.nextToken(); // Ignore Filesystem</span>
+        }
+<span class="fc" id="L347">        tok.nextToken(); // Ignore 1K-blocks</span>
+<span class="fc" id="L348">        tok.nextToken(); // Ignore Used</span>
+<span class="fc" id="L349">        String freeSpace = tok.nextToken();</span>
+<span class="fc" id="L350">        return parseBytes(freeSpace, path);</span>
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Parses the bytes from a string.
+     * 
+     * @param freeSpace  the free space string
+     * @param path  the path
+     * @return the number of bytes
+     * @throws IOException if an error occurs
+     */
+    long parseBytes(String freeSpace, String path) throws IOException {
+        try {
+<span class="fc" id="L364">            long bytes = Long.parseLong(freeSpace);</span>
+<span class="fc bfc" id="L365" title="All 2 branches covered.">            if (bytes &lt; 0) {</span>
+<span class="fc" id="L366">                throw new IOException(</span>
+                        &quot;Command line 'df' did not find free space in response &quot; +
+                        &quot;for path '&quot; + path + &quot;'- check path is valid&quot;);
+            }
+<span class="fc" id="L370">            return bytes;</span>
+            
+<span class="fc" id="L372">        } catch (NumberFormatException ex) {</span>
+<span class="fc" id="L373">            throw new IOException(</span>
+                    &quot;Command line 'df' did not return numeric data as expected &quot; +
+                    &quot;for path '&quot; + path + &quot;'- check path is valid&quot;);
+        }
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Performs the os command.
+     *
+     * @param cmdAttribs  the command line parameters
+     * @param max The maximum limit for the lines returned
+     * @return the parsed data
+     * @throws IOException if an error occurs
+     */
+    List performCommand(String[] cmdAttribs, int max) throws IOException {
+        // this method does what it can to avoid the 'Too many open files' error
+        // based on trial and error and these links:
+        // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4784692
+        // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4801027
+        // http://forum.java.sun.com/thread.jspa?threadID=533029&amp;messageID=2572018
+        // however, its still not perfect as the JDK support is so poor
+        // (see commond-exec or ant for a better multi-threaded multi-os solution)
+        
+<span class="fc" id="L397">        List lines = new ArrayList(20);</span>
+<span class="fc" id="L398">        Process proc = null;</span>
+<span class="fc" id="L399">        InputStream in = null;</span>
+<span class="fc" id="L400">        OutputStream out = null;</span>
+<span class="fc" id="L401">        InputStream err = null;</span>
+<span class="fc" id="L402">        BufferedReader inr = null;</span>
+        try {
+<span class="fc" id="L404">            proc = openProcess(cmdAttribs);</span>
+<span class="fc" id="L405">            in = proc.getInputStream();</span>
+<span class="fc" id="L406">            out = proc.getOutputStream();</span>
+<span class="fc" id="L407">            err = proc.getErrorStream();</span>
+<span class="fc" id="L408">            inr = new BufferedReader(new InputStreamReader(in));</span>
+<span class="fc" id="L409">            String line = inr.readLine();</span>
+<span class="pc bpc" id="L410" title="1 of 4 branches missed.">            while (line != null &amp;&amp; lines.size() &lt; max) {</span>
+<span class="fc" id="L411">                line = line.toLowerCase().trim();</span>
+<span class="fc" id="L412">                lines.add(line);</span>
+<span class="fc" id="L413">                line = inr.readLine();</span>
+            }
+            
+<span class="fc" id="L416">            proc.waitFor();</span>
+<span class="fc bfc" id="L417" title="All 2 branches covered.">            if (proc.exitValue() != 0) {</span>
+                // os command problem, throw exception
+<span class="fc" id="L419">                throw new IOException(</span>
+<span class="fc" id="L420">                        &quot;Command line returned OS error code '&quot; + proc.exitValue() +</span>
+<span class="fc" id="L421">                        &quot;' for command &quot; + Arrays.asList(cmdAttribs));</span>
+            }
+<span class="fc bfc" id="L423" title="All 2 branches covered.">            if (lines.size() == 0) {</span>
+                // unknown problem, throw exception
+<span class="fc" id="L425">                throw new IOException(</span>
+                        &quot;Command line did not return any info &quot; +
+<span class="fc" id="L427">                        &quot;for command &quot; + Arrays.asList(cmdAttribs));</span>
+            }
+<span class="fc" id="L429">            return lines;</span>
+            
+<span class="nc" id="L431">        } catch (InterruptedException ex) {</span>
+<span class="nc" id="L432">            throw new IOException(</span>
+<span class="nc" id="L433">                    &quot;Command line threw an InterruptedException '&quot; + ex.getMessage() +</span>
+<span class="nc" id="L434">                    &quot;' for command &quot; + Arrays.asList(cmdAttribs));</span>
+        } finally {
+<span class="fc" id="L436">            IOUtils.closeQuietly(in);</span>
+<span class="fc" id="L437">            IOUtils.closeQuietly(out);</span>
+<span class="fc" id="L438">            IOUtils.closeQuietly(err);</span>
+<span class="fc" id="L439">            IOUtils.closeQuietly(inr);</span>
+<span class="pc bpc" id="L440" title="2 of 4 branches missed.">            if (proc != null) {</span>
+<span class="fc" id="L441">                proc.destroy();</span>
+            }
+        }
+    }
+
+    /**
+     * Opens the process to the operating system.
+     *
+     * @param cmdAttribs  the command line parameters
+     * @return the process
+     * @throws IOException if an error occurs
+     */
+    Process openProcess(String[] cmdAttribs) throws IOException {
+<span class="fc" id="L454">        return Runtime.getRuntime().exec(cmdAttribs);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.9.201702052155</span></div></body></html>

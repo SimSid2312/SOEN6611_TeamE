@@ -1,0 +1,904 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FilenameUtilsTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">v1.3.2 (Apr 4, 2019 2:59:17 AM)</a> &gt; <a href="../../index.html" class="el_group">v1.3.2</a> &gt; <a href="../index.html" class="el_bundle">src/test</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io</a> &gt; <span class="el_source">FilenameUtilsTestCase.java</span></div><h1>FilenameUtilsTestCase.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+
+import junit.framework.Test;
+import junit.framework.TestSuite;
+import junit.textui.TestRunner;
+
+import org.apache.commons.io.testtools.FileBasedTestCase;
+
+/**
+ * This is used to test FilenameUtils for correctness.
+ *
+ * @author Peter Donald
+ * @author Matthew Hawthorne
+ * @author Martin Cooper
+ * @version $Id$
+ * @see FilenameUtils
+ */
+public class FilenameUtilsTestCase extends FileBasedTestCase {
+    
+<span class="fc" id="L42">    private static final String SEP = &quot;&quot; + File.separatorChar;</span>
+<span class="pc bpc" id="L43" title="1 of 2 branches missed.">    private static final boolean WINDOWS = (File.separatorChar == '\\');</span>
+
+    private File testFile1;
+    private File testFile2;
+
+    private static int testFile1Size;
+<span class="fc" id="L49">    private static int testFile2Size;</span>
+
+    public static void main(String[] args) {
+<span class="nc" id="L52">        TestRunner.run(suite());</span>
+<span class="nc" id="L53">    }</span>
+
+    public static Test suite() {
+<span class="pc bpc" id="L56" title="1 of 2 branches missed.">        return new TestSuite(FilenameUtilsTestCase.class);</span>
+    }
+
+    public FilenameUtilsTestCase(String name) throws IOException {
+<span class="fc" id="L60">        super(name);</span>
+
+<span class="fc" id="L62">        testFile1 = new File(getTestDirectory(), &quot;file1-test.txt&quot;);</span>
+<span class="fc" id="L63">        testFile2 = new File(getTestDirectory(), &quot;file1a-test.txt&quot;);</span>
+
+<span class="fc" id="L65">        testFile1Size = (int)testFile1.length();</span>
+<span class="fc" id="L66">        testFile2Size = (int)testFile2.length();</span>
+<span class="fc" id="L67">    }</span>
+
+    /** @see junit.framework.TestCase#setUp() */
+    protected void setUp() throws Exception {
+<span class="fc" id="L71">        getTestDirectory().mkdirs();</span>
+<span class="fc" id="L72">        createFile(testFile1, testFile1Size);</span>
+<span class="fc" id="L73">        createFile(testFile2, testFile2Size);</span>
+<span class="fc" id="L74">        FileUtils.deleteDirectory(getTestDirectory());</span>
+<span class="fc" id="L75">        getTestDirectory().mkdirs();</span>
+<span class="fc" id="L76">        createFile(testFile1, testFile1Size);</span>
+<span class="fc" id="L77">        createFile(testFile2, testFile2Size);</span>
+<span class="fc" id="L78">    }</span>
+
+    /** @see junit.framework.TestCase#tearDown() */
+    protected void tearDown() throws Exception {
+<span class="fc" id="L82">        FileUtils.deleteDirectory(getTestDirectory());</span>
+<span class="fc" id="L83">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testNormalize() throws Exception {
+<span class="fc" id="L87">        assertEquals(null, FilenameUtils.normalize(null));</span>
+<span class="fc" id="L88">        assertEquals(null, FilenameUtils.normalize(&quot;:&quot;));</span>
+<span class="fc" id="L89">        assertEquals(null, FilenameUtils.normalize(&quot;1:\\a\\b\\c.txt&quot;));</span>
+<span class="fc" id="L90">        assertEquals(null, FilenameUtils.normalize(&quot;1:&quot;));</span>
+<span class="fc" id="L91">        assertEquals(null, FilenameUtils.normalize(&quot;1:a&quot;));</span>
+<span class="fc" id="L92">        assertEquals(null, FilenameUtils.normalize(&quot;\\\\\\a\\b\\c.txt&quot;));</span>
+<span class="fc" id="L93">        assertEquals(null, FilenameUtils.normalize(&quot;\\\\a&quot;));</span>
+        
+<span class="fc" id="L95">        assertEquals(&quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;c.txt&quot;, FilenameUtils.normalize(&quot;a\\b/c.txt&quot;));</span>
+<span class="fc" id="L96">        assertEquals(&quot;&quot; + SEP + &quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;c.txt&quot;, FilenameUtils.normalize(&quot;\\a\\b/c.txt&quot;));</span>
+<span class="fc" id="L97">        assertEquals(&quot;C:&quot; + SEP + &quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;c.txt&quot;, FilenameUtils.normalize(&quot;C:\\a\\b/c.txt&quot;));</span>
+<span class="fc" id="L98">        assertEquals(&quot;&quot; + SEP + &quot;&quot; + SEP + &quot;server&quot; + SEP + &quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;c.txt&quot;, FilenameUtils.normalize(&quot;\\\\server\\a\\b/c.txt&quot;));</span>
+<span class="fc" id="L99">        assertEquals(&quot;~&quot; + SEP + &quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;c.txt&quot;, FilenameUtils.normalize(&quot;~\\a\\b/c.txt&quot;));</span>
+<span class="fc" id="L100">        assertEquals(&quot;~user&quot; + SEP + &quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;c.txt&quot;, FilenameUtils.normalize(&quot;~user\\a\\b/c.txt&quot;));</span>
+        
+<span class="fc" id="L102">        assertEquals(&quot;a&quot; + SEP + &quot;c&quot;, FilenameUtils.normalize(&quot;a/b/../c&quot;));</span>
+<span class="fc" id="L103">        assertEquals(&quot;c&quot;, FilenameUtils.normalize(&quot;a/b/../../c&quot;));</span>
+<span class="fc" id="L104">        assertEquals(&quot;c&quot; + SEP, FilenameUtils.normalize(&quot;a/b/../../c/&quot;));</span>
+<span class="fc" id="L105">        assertEquals(null, FilenameUtils.normalize(&quot;a/b/../../../c&quot;));</span>
+<span class="fc" id="L106">        assertEquals(&quot;a&quot; + SEP, FilenameUtils.normalize(&quot;a/b/..&quot;));</span>
+<span class="fc" id="L107">        assertEquals(&quot;a&quot; + SEP, FilenameUtils.normalize(&quot;a/b/../&quot;));</span>
+<span class="fc" id="L108">        assertEquals(&quot;&quot;, FilenameUtils.normalize(&quot;a/b/../..&quot;));</span>
+<span class="fc" id="L109">        assertEquals(&quot;&quot;, FilenameUtils.normalize(&quot;a/b/../../&quot;));</span>
+<span class="fc" id="L110">        assertEquals(null, FilenameUtils.normalize(&quot;a/b/../../..&quot;));</span>
+<span class="fc" id="L111">        assertEquals(&quot;a&quot; + SEP + &quot;d&quot;, FilenameUtils.normalize(&quot;a/b/../c/../d&quot;));</span>
+<span class="fc" id="L112">        assertEquals(&quot;a&quot; + SEP + &quot;d&quot; + SEP, FilenameUtils.normalize(&quot;a/b/../c/../d/&quot;));</span>
+<span class="fc" id="L113">        assertEquals(&quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;d&quot;, FilenameUtils.normalize(&quot;a/b//d&quot;));</span>
+<span class="fc" id="L114">        assertEquals(&quot;a&quot; + SEP + &quot;b&quot; + SEP, FilenameUtils.normalize(&quot;a/b/././.&quot;));</span>
+<span class="fc" id="L115">        assertEquals(&quot;a&quot; + SEP + &quot;b&quot; + SEP, FilenameUtils.normalize(&quot;a/b/./././&quot;));</span>
+<span class="fc" id="L116">        assertEquals(&quot;a&quot; + SEP, FilenameUtils.normalize(&quot;./a/&quot;));</span>
+<span class="fc" id="L117">        assertEquals(&quot;a&quot;, FilenameUtils.normalize(&quot;./a&quot;));</span>
+<span class="fc" id="L118">        assertEquals(&quot;&quot;, FilenameUtils.normalize(&quot;./&quot;));</span>
+<span class="fc" id="L119">        assertEquals(&quot;&quot;, FilenameUtils.normalize(&quot;.&quot;));</span>
+<span class="fc" id="L120">        assertEquals(null, FilenameUtils.normalize(&quot;../a&quot;));</span>
+<span class="fc" id="L121">        assertEquals(null, FilenameUtils.normalize(&quot;..&quot;));</span>
+<span class="fc" id="L122">        assertEquals(&quot;&quot;, FilenameUtils.normalize(&quot;&quot;));</span>
+        
+<span class="fc" id="L124">        assertEquals(SEP + &quot;a&quot;, FilenameUtils.normalize(&quot;/a&quot;));</span>
+<span class="fc" id="L125">        assertEquals(SEP + &quot;a&quot; + SEP, FilenameUtils.normalize(&quot;/a/&quot;));</span>
+<span class="fc" id="L126">        assertEquals(SEP + &quot;a&quot; + SEP + &quot;c&quot;, FilenameUtils.normalize(&quot;/a/b/../c&quot;));</span>
+<span class="fc" id="L127">        assertEquals(SEP + &quot;c&quot;, FilenameUtils.normalize(&quot;/a/b/../../c&quot;));</span>
+<span class="fc" id="L128">        assertEquals(null, FilenameUtils.normalize(&quot;/a/b/../../../c&quot;));</span>
+<span class="fc" id="L129">        assertEquals(SEP + &quot;a&quot; + SEP, FilenameUtils.normalize(&quot;/a/b/..&quot;));</span>
+<span class="fc" id="L130">        assertEquals(SEP + &quot;&quot;, FilenameUtils.normalize(&quot;/a/b/../..&quot;));</span>
+<span class="fc" id="L131">        assertEquals(null, FilenameUtils.normalize(&quot;/a/b/../../..&quot;));</span>
+<span class="fc" id="L132">        assertEquals(SEP + &quot;a&quot; + SEP + &quot;d&quot;, FilenameUtils.normalize(&quot;/a/b/../c/../d&quot;));</span>
+<span class="fc" id="L133">        assertEquals(SEP + &quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;d&quot;, FilenameUtils.normalize(&quot;/a/b//d&quot;));</span>
+<span class="fc" id="L134">        assertEquals(SEP + &quot;a&quot; + SEP + &quot;b&quot; + SEP, FilenameUtils.normalize(&quot;/a/b/././.&quot;));</span>
+<span class="fc" id="L135">        assertEquals(SEP + &quot;a&quot;, FilenameUtils.normalize(&quot;/./a&quot;));</span>
+<span class="fc" id="L136">        assertEquals(SEP + &quot;&quot;, FilenameUtils.normalize(&quot;/./&quot;));</span>
+<span class="fc" id="L137">        assertEquals(SEP + &quot;&quot;, FilenameUtils.normalize(&quot;/.&quot;));</span>
+<span class="fc" id="L138">        assertEquals(null, FilenameUtils.normalize(&quot;/../a&quot;));</span>
+<span class="fc" id="L139">        assertEquals(null, FilenameUtils.normalize(&quot;/..&quot;));</span>
+<span class="fc" id="L140">        assertEquals(SEP + &quot;&quot;, FilenameUtils.normalize(&quot;/&quot;));</span>
+        
+<span class="fc" id="L142">        assertEquals(&quot;~&quot; + SEP + &quot;a&quot;, FilenameUtils.normalize(&quot;~/a&quot;));</span>
+<span class="fc" id="L143">        assertEquals(&quot;~&quot; + SEP + &quot;a&quot; + SEP, FilenameUtils.normalize(&quot;~/a/&quot;));</span>
+<span class="fc" id="L144">        assertEquals(&quot;~&quot; + SEP + &quot;a&quot; + SEP + &quot;c&quot;, FilenameUtils.normalize(&quot;~/a/b/../c&quot;));</span>
+<span class="fc" id="L145">        assertEquals(&quot;~&quot; + SEP + &quot;c&quot;, FilenameUtils.normalize(&quot;~/a/b/../../c&quot;));</span>
+<span class="fc" id="L146">        assertEquals(null, FilenameUtils.normalize(&quot;~/a/b/../../../c&quot;));</span>
+<span class="fc" id="L147">        assertEquals(&quot;~&quot; + SEP + &quot;a&quot; + SEP, FilenameUtils.normalize(&quot;~/a/b/..&quot;));</span>
+<span class="fc" id="L148">        assertEquals(&quot;~&quot; + SEP + &quot;&quot;, FilenameUtils.normalize(&quot;~/a/b/../..&quot;));</span>
+<span class="fc" id="L149">        assertEquals(null, FilenameUtils.normalize(&quot;~/a/b/../../..&quot;));</span>
+<span class="fc" id="L150">        assertEquals(&quot;~&quot; + SEP + &quot;a&quot; + SEP + &quot;d&quot;, FilenameUtils.normalize(&quot;~/a/b/../c/../d&quot;));</span>
+<span class="fc" id="L151">        assertEquals(&quot;~&quot; + SEP + &quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;d&quot;, FilenameUtils.normalize(&quot;~/a/b//d&quot;));</span>
+<span class="fc" id="L152">        assertEquals(&quot;~&quot; + SEP + &quot;a&quot; + SEP + &quot;b&quot; + SEP, FilenameUtils.normalize(&quot;~/a/b/././.&quot;));</span>
+<span class="fc" id="L153">        assertEquals(&quot;~&quot; + SEP + &quot;a&quot;, FilenameUtils.normalize(&quot;~/./a&quot;));</span>
+<span class="fc" id="L154">        assertEquals(&quot;~&quot; + SEP, FilenameUtils.normalize(&quot;~/./&quot;));</span>
+<span class="fc" id="L155">        assertEquals(&quot;~&quot; + SEP, FilenameUtils.normalize(&quot;~/.&quot;));</span>
+<span class="fc" id="L156">        assertEquals(null, FilenameUtils.normalize(&quot;~/../a&quot;));</span>
+<span class="fc" id="L157">        assertEquals(null, FilenameUtils.normalize(&quot;~/..&quot;));</span>
+<span class="fc" id="L158">        assertEquals(&quot;~&quot; + SEP, FilenameUtils.normalize(&quot;~/&quot;));</span>
+<span class="fc" id="L159">        assertEquals(&quot;~&quot; + SEP, FilenameUtils.normalize(&quot;~&quot;));</span>
+        
+<span class="fc" id="L161">        assertEquals(&quot;~user&quot; + SEP + &quot;a&quot;, FilenameUtils.normalize(&quot;~user/a&quot;));</span>
+<span class="fc" id="L162">        assertEquals(&quot;~user&quot; + SEP + &quot;a&quot; + SEP, FilenameUtils.normalize(&quot;~user/a/&quot;));</span>
+<span class="fc" id="L163">        assertEquals(&quot;~user&quot; + SEP + &quot;a&quot; + SEP + &quot;c&quot;, FilenameUtils.normalize(&quot;~user/a/b/../c&quot;));</span>
+<span class="fc" id="L164">        assertEquals(&quot;~user&quot; + SEP + &quot;c&quot;, FilenameUtils.normalize(&quot;~user/a/b/../../c&quot;));</span>
+<span class="fc" id="L165">        assertEquals(null, FilenameUtils.normalize(&quot;~user/a/b/../../../c&quot;));</span>
+<span class="fc" id="L166">        assertEquals(&quot;~user&quot; + SEP + &quot;a&quot; + SEP, FilenameUtils.normalize(&quot;~user/a/b/..&quot;));</span>
+<span class="fc" id="L167">        assertEquals(&quot;~user&quot; + SEP + &quot;&quot;, FilenameUtils.normalize(&quot;~user/a/b/../..&quot;));</span>
+<span class="fc" id="L168">        assertEquals(null, FilenameUtils.normalize(&quot;~user/a/b/../../..&quot;));</span>
+<span class="fc" id="L169">        assertEquals(&quot;~user&quot; + SEP + &quot;a&quot; + SEP + &quot;d&quot;, FilenameUtils.normalize(&quot;~user/a/b/../c/../d&quot;));</span>
+<span class="fc" id="L170">        assertEquals(&quot;~user&quot; + SEP + &quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;d&quot;, FilenameUtils.normalize(&quot;~user/a/b//d&quot;));</span>
+<span class="fc" id="L171">        assertEquals(&quot;~user&quot; + SEP + &quot;a&quot; + SEP + &quot;b&quot; + SEP, FilenameUtils.normalize(&quot;~user/a/b/././.&quot;));</span>
+<span class="fc" id="L172">        assertEquals(&quot;~user&quot; + SEP + &quot;a&quot;, FilenameUtils.normalize(&quot;~user/./a&quot;));</span>
+<span class="fc" id="L173">        assertEquals(&quot;~user&quot; + SEP + &quot;&quot;, FilenameUtils.normalize(&quot;~user/./&quot;));</span>
+<span class="fc" id="L174">        assertEquals(&quot;~user&quot; + SEP + &quot;&quot;, FilenameUtils.normalize(&quot;~user/.&quot;));</span>
+<span class="fc" id="L175">        assertEquals(null, FilenameUtils.normalize(&quot;~user/../a&quot;));</span>
+<span class="fc" id="L176">        assertEquals(null, FilenameUtils.normalize(&quot;~user/..&quot;));</span>
+<span class="fc" id="L177">        assertEquals(&quot;~user&quot; + SEP, FilenameUtils.normalize(&quot;~user/&quot;));</span>
+<span class="fc" id="L178">        assertEquals(&quot;~user&quot; + SEP, FilenameUtils.normalize(&quot;~user&quot;));</span>
+        
+<span class="fc" id="L180">        assertEquals(&quot;C:&quot; + SEP + &quot;a&quot;, FilenameUtils.normalize(&quot;C:/a&quot;));</span>
+<span class="fc" id="L181">        assertEquals(&quot;C:&quot; + SEP + &quot;a&quot; + SEP, FilenameUtils.normalize(&quot;C:/a/&quot;));</span>
+<span class="fc" id="L182">        assertEquals(&quot;C:&quot; + SEP + &quot;a&quot; + SEP + &quot;c&quot;, FilenameUtils.normalize(&quot;C:/a/b/../c&quot;));</span>
+<span class="fc" id="L183">        assertEquals(&quot;C:&quot; + SEP + &quot;c&quot;, FilenameUtils.normalize(&quot;C:/a/b/../../c&quot;));</span>
+<span class="fc" id="L184">        assertEquals(null, FilenameUtils.normalize(&quot;C:/a/b/../../../c&quot;));</span>
+<span class="fc" id="L185">        assertEquals(&quot;C:&quot; + SEP + &quot;a&quot; + SEP, FilenameUtils.normalize(&quot;C:/a/b/..&quot;));</span>
+<span class="fc" id="L186">        assertEquals(&quot;C:&quot; + SEP + &quot;&quot;, FilenameUtils.normalize(&quot;C:/a/b/../..&quot;));</span>
+<span class="fc" id="L187">        assertEquals(null, FilenameUtils.normalize(&quot;C:/a/b/../../..&quot;));</span>
+<span class="fc" id="L188">        assertEquals(&quot;C:&quot; + SEP + &quot;a&quot; + SEP + &quot;d&quot;, FilenameUtils.normalize(&quot;C:/a/b/../c/../d&quot;));</span>
+<span class="fc" id="L189">        assertEquals(&quot;C:&quot; + SEP + &quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;d&quot;, FilenameUtils.normalize(&quot;C:/a/b//d&quot;));</span>
+<span class="fc" id="L190">        assertEquals(&quot;C:&quot; + SEP + &quot;a&quot; + SEP + &quot;b&quot; + SEP, FilenameUtils.normalize(&quot;C:/a/b/././.&quot;));</span>
+<span class="fc" id="L191">        assertEquals(&quot;C:&quot; + SEP + &quot;a&quot;, FilenameUtils.normalize(&quot;C:/./a&quot;));</span>
+<span class="fc" id="L192">        assertEquals(&quot;C:&quot; + SEP + &quot;&quot;, FilenameUtils.normalize(&quot;C:/./&quot;));</span>
+<span class="fc" id="L193">        assertEquals(&quot;C:&quot; + SEP + &quot;&quot;, FilenameUtils.normalize(&quot;C:/.&quot;));</span>
+<span class="fc" id="L194">        assertEquals(null, FilenameUtils.normalize(&quot;C:/../a&quot;));</span>
+<span class="fc" id="L195">        assertEquals(null, FilenameUtils.normalize(&quot;C:/..&quot;));</span>
+<span class="fc" id="L196">        assertEquals(&quot;C:&quot; + SEP + &quot;&quot;, FilenameUtils.normalize(&quot;C:/&quot;));</span>
+        
+<span class="fc" id="L198">        assertEquals(&quot;C:&quot; + &quot;a&quot;, FilenameUtils.normalize(&quot;C:a&quot;));</span>
+<span class="fc" id="L199">        assertEquals(&quot;C:&quot; + &quot;a&quot; + SEP, FilenameUtils.normalize(&quot;C:a/&quot;));</span>
+<span class="fc" id="L200">        assertEquals(&quot;C:&quot; + &quot;a&quot; + SEP + &quot;c&quot;, FilenameUtils.normalize(&quot;C:a/b/../c&quot;));</span>
+<span class="fc" id="L201">        assertEquals(&quot;C:&quot; + &quot;c&quot;, FilenameUtils.normalize(&quot;C:a/b/../../c&quot;));</span>
+<span class="fc" id="L202">        assertEquals(null, FilenameUtils.normalize(&quot;C:a/b/../../../c&quot;));</span>
+<span class="fc" id="L203">        assertEquals(&quot;C:&quot; + &quot;a&quot; + SEP, FilenameUtils.normalize(&quot;C:a/b/..&quot;));</span>
+<span class="fc" id="L204">        assertEquals(&quot;C:&quot; + &quot;&quot;, FilenameUtils.normalize(&quot;C:a/b/../..&quot;));</span>
+<span class="fc" id="L205">        assertEquals(null, FilenameUtils.normalize(&quot;C:a/b/../../..&quot;));</span>
+<span class="fc" id="L206">        assertEquals(&quot;C:&quot; + &quot;a&quot; + SEP + &quot;d&quot;, FilenameUtils.normalize(&quot;C:a/b/../c/../d&quot;));</span>
+<span class="fc" id="L207">        assertEquals(&quot;C:&quot; + &quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;d&quot;, FilenameUtils.normalize(&quot;C:a/b//d&quot;));</span>
+<span class="fc" id="L208">        assertEquals(&quot;C:&quot; + &quot;a&quot; + SEP + &quot;b&quot; + SEP, FilenameUtils.normalize(&quot;C:a/b/././.&quot;));</span>
+<span class="fc" id="L209">        assertEquals(&quot;C:&quot; + &quot;a&quot;, FilenameUtils.normalize(&quot;C:./a&quot;));</span>
+<span class="fc" id="L210">        assertEquals(&quot;C:&quot; + &quot;&quot;, FilenameUtils.normalize(&quot;C:./&quot;));</span>
+<span class="fc" id="L211">        assertEquals(&quot;C:&quot; + &quot;&quot;, FilenameUtils.normalize(&quot;C:.&quot;));</span>
+<span class="fc" id="L212">        assertEquals(null, FilenameUtils.normalize(&quot;C:../a&quot;));</span>
+<span class="fc" id="L213">        assertEquals(null, FilenameUtils.normalize(&quot;C:..&quot;));</span>
+<span class="fc" id="L214">        assertEquals(&quot;C:&quot; + &quot;&quot;, FilenameUtils.normalize(&quot;C:&quot;));</span>
+        
+<span class="fc" id="L216">        assertEquals(SEP + SEP + &quot;server&quot; + SEP + &quot;a&quot;, FilenameUtils.normalize(&quot;//server/a&quot;));</span>
+<span class="fc" id="L217">        assertEquals(SEP + SEP + &quot;server&quot; + SEP + &quot;a&quot; + SEP, FilenameUtils.normalize(&quot;//server/a/&quot;));</span>
+<span class="fc" id="L218">        assertEquals(SEP + SEP + &quot;server&quot; + SEP + &quot;a&quot; + SEP + &quot;c&quot;, FilenameUtils.normalize(&quot;//server/a/b/../c&quot;));</span>
+<span class="fc" id="L219">        assertEquals(SEP + SEP + &quot;server&quot; + SEP + &quot;c&quot;, FilenameUtils.normalize(&quot;//server/a/b/../../c&quot;));</span>
+<span class="fc" id="L220">        assertEquals(null, FilenameUtils.normalize(&quot;//server/a/b/../../../c&quot;));</span>
+<span class="fc" id="L221">        assertEquals(SEP + SEP + &quot;server&quot; + SEP + &quot;a&quot; + SEP, FilenameUtils.normalize(&quot;//server/a/b/..&quot;));</span>
+<span class="fc" id="L222">        assertEquals(SEP + SEP + &quot;server&quot; + SEP + &quot;&quot;, FilenameUtils.normalize(&quot;//server/a/b/../..&quot;));</span>
+<span class="fc" id="L223">        assertEquals(null, FilenameUtils.normalize(&quot;//server/a/b/../../..&quot;));</span>
+<span class="fc" id="L224">        assertEquals(SEP + SEP + &quot;server&quot; + SEP + &quot;a&quot; + SEP + &quot;d&quot;, FilenameUtils.normalize(&quot;//server/a/b/../c/../d&quot;));</span>
+<span class="fc" id="L225">        assertEquals(SEP + SEP + &quot;server&quot; + SEP + &quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;d&quot;, FilenameUtils.normalize(&quot;//server/a/b//d&quot;));</span>
+<span class="fc" id="L226">        assertEquals(SEP + SEP + &quot;server&quot; + SEP + &quot;a&quot; + SEP + &quot;b&quot; + SEP, FilenameUtils.normalize(&quot;//server/a/b/././.&quot;));</span>
+<span class="fc" id="L227">        assertEquals(SEP + SEP + &quot;server&quot; + SEP + &quot;a&quot;, FilenameUtils.normalize(&quot;//server/./a&quot;));</span>
+<span class="fc" id="L228">        assertEquals(SEP + SEP + &quot;server&quot; + SEP + &quot;&quot;, FilenameUtils.normalize(&quot;//server/./&quot;));</span>
+<span class="fc" id="L229">        assertEquals(SEP + SEP + &quot;server&quot; + SEP + &quot;&quot;, FilenameUtils.normalize(&quot;//server/.&quot;));</span>
+<span class="fc" id="L230">        assertEquals(null, FilenameUtils.normalize(&quot;//server/../a&quot;));</span>
+<span class="fc" id="L231">        assertEquals(null, FilenameUtils.normalize(&quot;//server/..&quot;));</span>
+<span class="fc" id="L232">        assertEquals(SEP + SEP + &quot;server&quot; + SEP + &quot;&quot;, FilenameUtils.normalize(&quot;//server/&quot;));</span>
+<span class="fc" id="L233">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testNormalizeNoEndSeparator() throws Exception {
+<span class="fc" id="L237">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(null));</span>
+<span class="fc" id="L238">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;:&quot;));</span>
+<span class="fc" id="L239">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;1:\\a\\b\\c.txt&quot;));</span>
+<span class="fc" id="L240">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;1:&quot;));</span>
+<span class="fc" id="L241">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;1:a&quot;));</span>
+<span class="fc" id="L242">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;\\\\\\a\\b\\c.txt&quot;));</span>
+<span class="fc" id="L243">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;\\\\a&quot;));</span>
+        
+<span class="fc" id="L245">        assertEquals(&quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;c.txt&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;a\\b/c.txt&quot;));</span>
+<span class="fc" id="L246">        assertEquals(&quot;&quot; + SEP + &quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;c.txt&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;\\a\\b/c.txt&quot;));</span>
+<span class="fc" id="L247">        assertEquals(&quot;C:&quot; + SEP + &quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;c.txt&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;C:\\a\\b/c.txt&quot;));</span>
+<span class="fc" id="L248">        assertEquals(&quot;&quot; + SEP + &quot;&quot; + SEP + &quot;server&quot; + SEP + &quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;c.txt&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;\\\\server\\a\\b/c.txt&quot;));</span>
+<span class="fc" id="L249">        assertEquals(&quot;~&quot; + SEP + &quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;c.txt&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;~\\a\\b/c.txt&quot;));</span>
+<span class="fc" id="L250">        assertEquals(&quot;~user&quot; + SEP + &quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;c.txt&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;~user\\a\\b/c.txt&quot;));</span>
+        
+<span class="fc" id="L252">        assertEquals(&quot;a&quot; + SEP + &quot;c&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;a/b/../c&quot;));</span>
+<span class="fc" id="L253">        assertEquals(&quot;c&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;a/b/../../c&quot;));</span>
+<span class="fc" id="L254">        assertEquals(&quot;c&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;a/b/../../c/&quot;));</span>
+<span class="fc" id="L255">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;a/b/../../../c&quot;));</span>
+<span class="fc" id="L256">        assertEquals(&quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;a/b/..&quot;));</span>
+<span class="fc" id="L257">        assertEquals(&quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;a/b/../&quot;));</span>
+<span class="fc" id="L258">        assertEquals(&quot;&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;a/b/../..&quot;));</span>
+<span class="fc" id="L259">        assertEquals(&quot;&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;a/b/../../&quot;));</span>
+<span class="fc" id="L260">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;a/b/../../..&quot;));</span>
+<span class="fc" id="L261">        assertEquals(&quot;a&quot; + SEP + &quot;d&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;a/b/../c/../d&quot;));</span>
+<span class="fc" id="L262">        assertEquals(&quot;a&quot; + SEP + &quot;d&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;a/b/../c/../d/&quot;));</span>
+<span class="fc" id="L263">        assertEquals(&quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;d&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;a/b//d&quot;));</span>
+<span class="fc" id="L264">        assertEquals(&quot;a&quot; + SEP + &quot;b&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;a/b/././.&quot;));</span>
+<span class="fc" id="L265">        assertEquals(&quot;a&quot; + SEP + &quot;b&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;a/b/./././&quot;));</span>
+<span class="fc" id="L266">        assertEquals(&quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;./a/&quot;));</span>
+<span class="fc" id="L267">        assertEquals(&quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;./a&quot;));</span>
+<span class="fc" id="L268">        assertEquals(&quot;&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;./&quot;));</span>
+<span class="fc" id="L269">        assertEquals(&quot;&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;.&quot;));</span>
+<span class="fc" id="L270">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;../a&quot;));</span>
+<span class="fc" id="L271">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;..&quot;));</span>
+<span class="fc" id="L272">        assertEquals(&quot;&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;&quot;));</span>
+        
+<span class="fc" id="L274">        assertEquals(SEP + &quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;/a&quot;));</span>
+<span class="fc" id="L275">        assertEquals(SEP + &quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;/a/&quot;));</span>
+<span class="fc" id="L276">        assertEquals(SEP + &quot;a&quot; + SEP + &quot;c&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;/a/b/../c&quot;));</span>
+<span class="fc" id="L277">        assertEquals(SEP + &quot;c&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;/a/b/../../c&quot;));</span>
+<span class="fc" id="L278">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;/a/b/../../../c&quot;));</span>
+<span class="fc" id="L279">        assertEquals(SEP + &quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;/a/b/..&quot;));</span>
+<span class="fc" id="L280">        assertEquals(SEP + &quot;&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;/a/b/../..&quot;));</span>
+<span class="fc" id="L281">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;/a/b/../../..&quot;));</span>
+<span class="fc" id="L282">        assertEquals(SEP + &quot;a&quot; + SEP + &quot;d&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;/a/b/../c/../d&quot;));</span>
+<span class="fc" id="L283">        assertEquals(SEP + &quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;d&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;/a/b//d&quot;));</span>
+<span class="fc" id="L284">        assertEquals(SEP + &quot;a&quot; + SEP + &quot;b&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;/a/b/././.&quot;));</span>
+<span class="fc" id="L285">        assertEquals(SEP + &quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;/./a&quot;));</span>
+<span class="fc" id="L286">        assertEquals(SEP + &quot;&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;/./&quot;));</span>
+<span class="fc" id="L287">        assertEquals(SEP + &quot;&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;/.&quot;));</span>
+<span class="fc" id="L288">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;/../a&quot;));</span>
+<span class="fc" id="L289">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;/..&quot;));</span>
+<span class="fc" id="L290">        assertEquals(SEP + &quot;&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;/&quot;));</span>
+        
+<span class="fc" id="L292">        assertEquals(&quot;~&quot; + SEP + &quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;~/a&quot;));</span>
+<span class="fc" id="L293">        assertEquals(&quot;~&quot; + SEP + &quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;~/a/&quot;));</span>
+<span class="fc" id="L294">        assertEquals(&quot;~&quot; + SEP + &quot;a&quot; + SEP + &quot;c&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;~/a/b/../c&quot;));</span>
+<span class="fc" id="L295">        assertEquals(&quot;~&quot; + SEP + &quot;c&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;~/a/b/../../c&quot;));</span>
+<span class="fc" id="L296">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;~/a/b/../../../c&quot;));</span>
+<span class="fc" id="L297">        assertEquals(&quot;~&quot; + SEP + &quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;~/a/b/..&quot;));</span>
+<span class="fc" id="L298">        assertEquals(&quot;~&quot; + SEP + &quot;&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;~/a/b/../..&quot;));</span>
+<span class="fc" id="L299">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;~/a/b/../../..&quot;));</span>
+<span class="fc" id="L300">        assertEquals(&quot;~&quot; + SEP + &quot;a&quot; + SEP + &quot;d&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;~/a/b/../c/../d&quot;));</span>
+<span class="fc" id="L301">        assertEquals(&quot;~&quot; + SEP + &quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;d&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;~/a/b//d&quot;));</span>
+<span class="fc" id="L302">        assertEquals(&quot;~&quot; + SEP + &quot;a&quot; + SEP + &quot;b&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;~/a/b/././.&quot;));</span>
+<span class="fc" id="L303">        assertEquals(&quot;~&quot; + SEP + &quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;~/./a&quot;));</span>
+<span class="fc" id="L304">        assertEquals(&quot;~&quot; + SEP, FilenameUtils.normalizeNoEndSeparator(&quot;~/./&quot;));</span>
+<span class="fc" id="L305">        assertEquals(&quot;~&quot; + SEP, FilenameUtils.normalizeNoEndSeparator(&quot;~/.&quot;));</span>
+<span class="fc" id="L306">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;~/../a&quot;));</span>
+<span class="fc" id="L307">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;~/..&quot;));</span>
+<span class="fc" id="L308">        assertEquals(&quot;~&quot; + SEP, FilenameUtils.normalizeNoEndSeparator(&quot;~/&quot;));</span>
+<span class="fc" id="L309">        assertEquals(&quot;~&quot; + SEP, FilenameUtils.normalizeNoEndSeparator(&quot;~&quot;));</span>
+        
+<span class="fc" id="L311">        assertEquals(&quot;~user&quot; + SEP + &quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;~user/a&quot;));</span>
+<span class="fc" id="L312">        assertEquals(&quot;~user&quot; + SEP + &quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;~user/a/&quot;));</span>
+<span class="fc" id="L313">        assertEquals(&quot;~user&quot; + SEP + &quot;a&quot; + SEP + &quot;c&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;~user/a/b/../c&quot;));</span>
+<span class="fc" id="L314">        assertEquals(&quot;~user&quot; + SEP + &quot;c&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;~user/a/b/../../c&quot;));</span>
+<span class="fc" id="L315">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;~user/a/b/../../../c&quot;));</span>
+<span class="fc" id="L316">        assertEquals(&quot;~user&quot; + SEP + &quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;~user/a/b/..&quot;));</span>
+<span class="fc" id="L317">        assertEquals(&quot;~user&quot; + SEP + &quot;&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;~user/a/b/../..&quot;));</span>
+<span class="fc" id="L318">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;~user/a/b/../../..&quot;));</span>
+<span class="fc" id="L319">        assertEquals(&quot;~user&quot; + SEP + &quot;a&quot; + SEP + &quot;d&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;~user/a/b/../c/../d&quot;));</span>
+<span class="fc" id="L320">        assertEquals(&quot;~user&quot; + SEP + &quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;d&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;~user/a/b//d&quot;));</span>
+<span class="fc" id="L321">        assertEquals(&quot;~user&quot; + SEP + &quot;a&quot; + SEP + &quot;b&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;~user/a/b/././.&quot;));</span>
+<span class="fc" id="L322">        assertEquals(&quot;~user&quot; + SEP + &quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;~user/./a&quot;));</span>
+<span class="fc" id="L323">        assertEquals(&quot;~user&quot; + SEP + &quot;&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;~user/./&quot;));</span>
+<span class="fc" id="L324">        assertEquals(&quot;~user&quot; + SEP + &quot;&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;~user/.&quot;));</span>
+<span class="fc" id="L325">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;~user/../a&quot;));</span>
+<span class="fc" id="L326">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;~user/..&quot;));</span>
+<span class="fc" id="L327">        assertEquals(&quot;~user&quot; + SEP, FilenameUtils.normalizeNoEndSeparator(&quot;~user/&quot;));</span>
+<span class="fc" id="L328">        assertEquals(&quot;~user&quot; + SEP, FilenameUtils.normalizeNoEndSeparator(&quot;~user&quot;));</span>
+        
+<span class="fc" id="L330">        assertEquals(&quot;C:&quot; + SEP + &quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;C:/a&quot;));</span>
+<span class="fc" id="L331">        assertEquals(&quot;C:&quot; + SEP + &quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;C:/a/&quot;));</span>
+<span class="fc" id="L332">        assertEquals(&quot;C:&quot; + SEP + &quot;a&quot; + SEP + &quot;c&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;C:/a/b/../c&quot;));</span>
+<span class="fc" id="L333">        assertEquals(&quot;C:&quot; + SEP + &quot;c&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;C:/a/b/../../c&quot;));</span>
+<span class="fc" id="L334">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;C:/a/b/../../../c&quot;));</span>
+<span class="fc" id="L335">        assertEquals(&quot;C:&quot; + SEP + &quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;C:/a/b/..&quot;));</span>
+<span class="fc" id="L336">        assertEquals(&quot;C:&quot; + SEP + &quot;&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;C:/a/b/../..&quot;));</span>
+<span class="fc" id="L337">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;C:/a/b/../../..&quot;));</span>
+<span class="fc" id="L338">        assertEquals(&quot;C:&quot; + SEP + &quot;a&quot; + SEP + &quot;d&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;C:/a/b/../c/../d&quot;));</span>
+<span class="fc" id="L339">        assertEquals(&quot;C:&quot; + SEP + &quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;d&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;C:/a/b//d&quot;));</span>
+<span class="fc" id="L340">        assertEquals(&quot;C:&quot; + SEP + &quot;a&quot; + SEP + &quot;b&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;C:/a/b/././.&quot;));</span>
+<span class="fc" id="L341">        assertEquals(&quot;C:&quot; + SEP + &quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;C:/./a&quot;));</span>
+<span class="fc" id="L342">        assertEquals(&quot;C:&quot; + SEP + &quot;&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;C:/./&quot;));</span>
+<span class="fc" id="L343">        assertEquals(&quot;C:&quot; + SEP + &quot;&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;C:/.&quot;));</span>
+<span class="fc" id="L344">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;C:/../a&quot;));</span>
+<span class="fc" id="L345">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;C:/..&quot;));</span>
+<span class="fc" id="L346">        assertEquals(&quot;C:&quot; + SEP + &quot;&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;C:/&quot;));</span>
+        
+<span class="fc" id="L348">        assertEquals(&quot;C:&quot; + &quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;C:a&quot;));</span>
+<span class="fc" id="L349">        assertEquals(&quot;C:&quot; + &quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;C:a/&quot;));</span>
+<span class="fc" id="L350">        assertEquals(&quot;C:&quot; + &quot;a&quot; + SEP + &quot;c&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;C:a/b/../c&quot;));</span>
+<span class="fc" id="L351">        assertEquals(&quot;C:&quot; + &quot;c&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;C:a/b/../../c&quot;));</span>
+<span class="fc" id="L352">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;C:a/b/../../../c&quot;));</span>
+<span class="fc" id="L353">        assertEquals(&quot;C:&quot; + &quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;C:a/b/..&quot;));</span>
+<span class="fc" id="L354">        assertEquals(&quot;C:&quot; + &quot;&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;C:a/b/../..&quot;));</span>
+<span class="fc" id="L355">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;C:a/b/../../..&quot;));</span>
+<span class="fc" id="L356">        assertEquals(&quot;C:&quot; + &quot;a&quot; + SEP + &quot;d&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;C:a/b/../c/../d&quot;));</span>
+<span class="fc" id="L357">        assertEquals(&quot;C:&quot; + &quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;d&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;C:a/b//d&quot;));</span>
+<span class="fc" id="L358">        assertEquals(&quot;C:&quot; + &quot;a&quot; + SEP + &quot;b&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;C:a/b/././.&quot;));</span>
+<span class="fc" id="L359">        assertEquals(&quot;C:&quot; + &quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;C:./a&quot;));</span>
+<span class="fc" id="L360">        assertEquals(&quot;C:&quot; + &quot;&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;C:./&quot;));</span>
+<span class="fc" id="L361">        assertEquals(&quot;C:&quot; + &quot;&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;C:.&quot;));</span>
+<span class="fc" id="L362">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;C:../a&quot;));</span>
+<span class="fc" id="L363">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;C:..&quot;));</span>
+<span class="fc" id="L364">        assertEquals(&quot;C:&quot; + &quot;&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;C:&quot;));</span>
+        
+<span class="fc" id="L366">        assertEquals(SEP + SEP + &quot;server&quot; + SEP + &quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;//server/a&quot;));</span>
+<span class="fc" id="L367">        assertEquals(SEP + SEP + &quot;server&quot; + SEP + &quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;//server/a/&quot;));</span>
+<span class="fc" id="L368">        assertEquals(SEP + SEP + &quot;server&quot; + SEP + &quot;a&quot; + SEP + &quot;c&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;//server/a/b/../c&quot;));</span>
+<span class="fc" id="L369">        assertEquals(SEP + SEP + &quot;server&quot; + SEP + &quot;c&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;//server/a/b/../../c&quot;));</span>
+<span class="fc" id="L370">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;//server/a/b/../../../c&quot;));</span>
+<span class="fc" id="L371">        assertEquals(SEP + SEP + &quot;server&quot; + SEP + &quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;//server/a/b/..&quot;));</span>
+<span class="fc" id="L372">        assertEquals(SEP + SEP + &quot;server&quot; + SEP + &quot;&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;//server/a/b/../..&quot;));</span>
+<span class="fc" id="L373">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;//server/a/b/../../..&quot;));</span>
+<span class="fc" id="L374">        assertEquals(SEP + SEP + &quot;server&quot; + SEP + &quot;a&quot; + SEP + &quot;d&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;//server/a/b/../c/../d&quot;));</span>
+<span class="fc" id="L375">        assertEquals(SEP + SEP + &quot;server&quot; + SEP + &quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;d&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;//server/a/b//d&quot;));</span>
+<span class="fc" id="L376">        assertEquals(SEP + SEP + &quot;server&quot; + SEP + &quot;a&quot; + SEP + &quot;b&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;//server/a/b/././.&quot;));</span>
+<span class="fc" id="L377">        assertEquals(SEP + SEP + &quot;server&quot; + SEP + &quot;a&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;//server/./a&quot;));</span>
+<span class="fc" id="L378">        assertEquals(SEP + SEP + &quot;server&quot; + SEP + &quot;&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;//server/./&quot;));</span>
+<span class="fc" id="L379">        assertEquals(SEP + SEP + &quot;server&quot; + SEP + &quot;&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;//server/.&quot;));</span>
+<span class="fc" id="L380">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;//server/../a&quot;));</span>
+<span class="fc" id="L381">        assertEquals(null, FilenameUtils.normalizeNoEndSeparator(&quot;//server/..&quot;));</span>
+<span class="fc" id="L382">        assertEquals(SEP + SEP + &quot;server&quot; + SEP + &quot;&quot;, FilenameUtils.normalizeNoEndSeparator(&quot;//server/&quot;));</span>
+<span class="fc" id="L383">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testConcat() {
+<span class="fc" id="L387">        assertEquals(null, FilenameUtils.concat(&quot;&quot;, null));</span>
+<span class="fc" id="L388">        assertEquals(null, FilenameUtils.concat(null, null));</span>
+<span class="fc" id="L389">        assertEquals(null, FilenameUtils.concat(null, &quot;&quot;));</span>
+<span class="fc" id="L390">        assertEquals(null, FilenameUtils.concat(null, &quot;a&quot;));</span>
+<span class="fc" id="L391">        assertEquals(SEP + &quot;a&quot;, FilenameUtils.concat(null, &quot;/a&quot;));</span>
+        
+<span class="fc" id="L393">        assertEquals(null, FilenameUtils.concat(&quot;&quot;, &quot;:&quot;)); // invalid prefix</span>
+<span class="fc" id="L394">        assertEquals(null, FilenameUtils.concat(&quot;:&quot;, &quot;&quot;)); // invalid prefix</span>
+        
+<span class="fc" id="L396">        assertEquals(&quot;f&quot; + SEP, FilenameUtils.concat(&quot;&quot;, &quot;f/&quot;));</span>
+<span class="fc" id="L397">        assertEquals(&quot;f&quot;, FilenameUtils.concat(&quot;&quot;, &quot;f&quot;));</span>
+<span class="fc" id="L398">        assertEquals(&quot;a&quot; + SEP + &quot;f&quot; + SEP, FilenameUtils.concat(&quot;a/&quot;, &quot;f/&quot;));</span>
+<span class="fc" id="L399">        assertEquals(&quot;a&quot; + SEP + &quot;f&quot;, FilenameUtils.concat(&quot;a&quot;, &quot;f&quot;));</span>
+<span class="fc" id="L400">        assertEquals(&quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;f&quot; + SEP, FilenameUtils.concat(&quot;a/b/&quot;, &quot;f/&quot;));</span>
+<span class="fc" id="L401">        assertEquals(&quot;a&quot; + SEP + &quot;b&quot; + SEP + &quot;f&quot;, FilenameUtils.concat(&quot;a/b&quot;, &quot;f&quot;));</span>
+        
+<span class="fc" id="L403">        assertEquals(&quot;a&quot; + SEP + &quot;f&quot; + SEP, FilenameUtils.concat(&quot;a/b/&quot;, &quot;../f/&quot;));</span>
+<span class="fc" id="L404">        assertEquals(&quot;a&quot; + SEP + &quot;f&quot;, FilenameUtils.concat(&quot;a/b&quot;, &quot;../f&quot;));</span>
+<span class="fc" id="L405">        assertEquals(&quot;a&quot; + SEP + &quot;c&quot; + SEP + &quot;g&quot; + SEP, FilenameUtils.concat(&quot;a/b/../c/&quot;, &quot;f/../g/&quot;));</span>
+<span class="fc" id="L406">        assertEquals(&quot;a&quot; + SEP + &quot;c&quot; + SEP + &quot;g&quot;, FilenameUtils.concat(&quot;a/b/../c&quot;, &quot;f/../g&quot;));</span>
+        
+<span class="fc" id="L408">        assertEquals(&quot;a&quot; + SEP + &quot;c.txt&quot; + SEP + &quot;f&quot;, FilenameUtils.concat(&quot;a/c.txt&quot;, &quot;f&quot;));</span>
+        
+<span class="fc" id="L410">        assertEquals(SEP + &quot;f&quot; + SEP, FilenameUtils.concat(&quot;&quot;, &quot;/f/&quot;));</span>
+<span class="fc" id="L411">        assertEquals(SEP + &quot;f&quot;, FilenameUtils.concat(&quot;&quot;, &quot;/f&quot;));</span>
+<span class="fc" id="L412">        assertEquals(SEP + &quot;f&quot; + SEP, FilenameUtils.concat(&quot;a/&quot;, &quot;/f/&quot;));</span>
+<span class="fc" id="L413">        assertEquals(SEP + &quot;f&quot;, FilenameUtils.concat(&quot;a&quot;, &quot;/f&quot;));</span>
+        
+<span class="fc" id="L415">        assertEquals(SEP + &quot;c&quot; + SEP + &quot;d&quot;, FilenameUtils.concat(&quot;a/b/&quot;, &quot;/c/d&quot;));</span>
+<span class="fc" id="L416">        assertEquals(&quot;C:c&quot; + SEP + &quot;d&quot;, FilenameUtils.concat(&quot;a/b/&quot;, &quot;C:c/d&quot;));</span>
+<span class="fc" id="L417">        assertEquals(&quot;C:&quot; + SEP + &quot;c&quot; + SEP + &quot;d&quot;, FilenameUtils.concat(&quot;a/b/&quot;, &quot;C:/c/d&quot;));</span>
+<span class="fc" id="L418">        assertEquals(&quot;~&quot; + SEP + &quot;c&quot; + SEP + &quot;d&quot;, FilenameUtils.concat(&quot;a/b/&quot;, &quot;~/c/d&quot;));</span>
+<span class="fc" id="L419">        assertEquals(&quot;~user&quot; + SEP + &quot;c&quot; + SEP + &quot;d&quot;, FilenameUtils.concat(&quot;a/b/&quot;, &quot;~user/c/d&quot;));</span>
+<span class="fc" id="L420">        assertEquals(&quot;~&quot; + SEP, FilenameUtils.concat(&quot;a/b/&quot;, &quot;~&quot;));</span>
+<span class="fc" id="L421">        assertEquals(&quot;~user&quot; + SEP, FilenameUtils.concat(&quot;a/b/&quot;, &quot;~user&quot;));</span>
+<span class="fc" id="L422">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testSeparatorsToUnix() {
+<span class="fc" id="L426">        assertEquals(null, FilenameUtils.separatorsToUnix(null));</span>
+<span class="fc" id="L427">        assertEquals(&quot;/a/b/c&quot;, FilenameUtils.separatorsToUnix(&quot;/a/b/c&quot;));</span>
+<span class="fc" id="L428">        assertEquals(&quot;/a/b/c.txt&quot;, FilenameUtils.separatorsToUnix(&quot;/a/b/c.txt&quot;));</span>
+<span class="fc" id="L429">        assertEquals(&quot;/a/b/c&quot;, FilenameUtils.separatorsToUnix(&quot;/a/b\\c&quot;));</span>
+<span class="fc" id="L430">        assertEquals(&quot;/a/b/c&quot;, FilenameUtils.separatorsToUnix(&quot;\\a\\b\\c&quot;));</span>
+<span class="fc" id="L431">        assertEquals(&quot;D:/a/b/c&quot;, FilenameUtils.separatorsToUnix(&quot;D:\\a\\b\\c&quot;));</span>
+<span class="fc" id="L432">    }</span>
+
+    public void testSeparatorsToWindows() {
+<span class="fc" id="L435">        assertEquals(null, FilenameUtils.separatorsToWindows(null));</span>
+<span class="fc" id="L436">        assertEquals(&quot;\\a\\b\\c&quot;, FilenameUtils.separatorsToWindows(&quot;\\a\\b\\c&quot;));</span>
+<span class="fc" id="L437">        assertEquals(&quot;\\a\\b\\c.txt&quot;, FilenameUtils.separatorsToWindows(&quot;\\a\\b\\c.txt&quot;));</span>
+<span class="fc" id="L438">        assertEquals(&quot;\\a\\b\\c&quot;, FilenameUtils.separatorsToWindows(&quot;\\a\\b/c&quot;));</span>
+<span class="fc" id="L439">        assertEquals(&quot;\\a\\b\\c&quot;, FilenameUtils.separatorsToWindows(&quot;/a/b/c&quot;));</span>
+<span class="fc" id="L440">        assertEquals(&quot;D:\\a\\b\\c&quot;, FilenameUtils.separatorsToWindows(&quot;D:/a/b/c&quot;));</span>
+<span class="fc" id="L441">    }</span>
+
+    public void testSeparatorsToSystem() {
+<span class="pc bpc" id="L444" title="1 of 2 branches missed.">        if (WINDOWS) {</span>
+<span class="nc" id="L445">            assertEquals(null, FilenameUtils.separatorsToSystem(null));</span>
+<span class="nc" id="L446">            assertEquals(&quot;\\a\\b\\c&quot;, FilenameUtils.separatorsToSystem(&quot;\\a\\b\\c&quot;));</span>
+<span class="nc" id="L447">            assertEquals(&quot;\\a\\b\\c.txt&quot;, FilenameUtils.separatorsToSystem(&quot;\\a\\b\\c.txt&quot;));</span>
+<span class="nc" id="L448">            assertEquals(&quot;\\a\\b\\c&quot;, FilenameUtils.separatorsToSystem(&quot;\\a\\b/c&quot;));</span>
+<span class="nc" id="L449">            assertEquals(&quot;\\a\\b\\c&quot;, FilenameUtils.separatorsToSystem(&quot;/a/b/c&quot;));</span>
+<span class="nc" id="L450">            assertEquals(&quot;D:\\a\\b\\c&quot;, FilenameUtils.separatorsToSystem(&quot;D:/a/b/c&quot;));</span>
+<span class="nc" id="L451">        } else {</span>
+<span class="fc" id="L452">            assertEquals(null, FilenameUtils.separatorsToSystem(null));</span>
+<span class="fc" id="L453">            assertEquals(&quot;/a/b/c&quot;, FilenameUtils.separatorsToSystem(&quot;/a/b/c&quot;));</span>
+<span class="fc" id="L454">            assertEquals(&quot;/a/b/c.txt&quot;, FilenameUtils.separatorsToSystem(&quot;/a/b/c.txt&quot;));</span>
+<span class="fc" id="L455">            assertEquals(&quot;/a/b/c&quot;, FilenameUtils.separatorsToSystem(&quot;/a/b\\c&quot;));</span>
+<span class="fc" id="L456">            assertEquals(&quot;/a/b/c&quot;, FilenameUtils.separatorsToSystem(&quot;\\a\\b\\c&quot;));</span>
+<span class="fc" id="L457">            assertEquals(&quot;D:/a/b/c&quot;, FilenameUtils.separatorsToSystem(&quot;D:\\a\\b\\c&quot;));</span>
+        }
+<span class="fc" id="L459">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testGetPrefixLength() {
+<span class="fc" id="L463">        assertEquals(-1, FilenameUtils.getPrefixLength(null));</span>
+<span class="fc" id="L464">        assertEquals(-1, FilenameUtils.getPrefixLength(&quot;:&quot;));</span>
+<span class="fc" id="L465">        assertEquals(-1, FilenameUtils.getPrefixLength(&quot;1:\\a\\b\\c.txt&quot;));</span>
+<span class="fc" id="L466">        assertEquals(-1, FilenameUtils.getPrefixLength(&quot;1:&quot;));</span>
+<span class="fc" id="L467">        assertEquals(-1, FilenameUtils.getPrefixLength(&quot;1:a&quot;));</span>
+<span class="fc" id="L468">        assertEquals(-1, FilenameUtils.getPrefixLength(&quot;\\\\\\a\\b\\c.txt&quot;));</span>
+<span class="fc" id="L469">        assertEquals(-1, FilenameUtils.getPrefixLength(&quot;\\\\a&quot;));</span>
+        
+<span class="fc" id="L471">        assertEquals(0, FilenameUtils.getPrefixLength(&quot;&quot;));</span>
+<span class="fc" id="L472">        assertEquals(1, FilenameUtils.getPrefixLength(&quot;\\&quot;));</span>
+<span class="fc" id="L473">        assertEquals(2, FilenameUtils.getPrefixLength(&quot;C:&quot;));</span>
+<span class="fc" id="L474">        assertEquals(3, FilenameUtils.getPrefixLength(&quot;C:\\&quot;));</span>
+<span class="fc" id="L475">        assertEquals(9, FilenameUtils.getPrefixLength(&quot;//server/&quot;));</span>
+<span class="fc" id="L476">        assertEquals(2, FilenameUtils.getPrefixLength(&quot;~&quot;));</span>
+<span class="fc" id="L477">        assertEquals(2, FilenameUtils.getPrefixLength(&quot;~/&quot;));</span>
+<span class="fc" id="L478">        assertEquals(6, FilenameUtils.getPrefixLength(&quot;~user&quot;));</span>
+<span class="fc" id="L479">        assertEquals(6, FilenameUtils.getPrefixLength(&quot;~user/&quot;));</span>
+        
+<span class="fc" id="L481">        assertEquals(0, FilenameUtils.getPrefixLength(&quot;a\\b\\c.txt&quot;));</span>
+<span class="fc" id="L482">        assertEquals(1, FilenameUtils.getPrefixLength(&quot;\\a\\b\\c.txt&quot;));</span>
+<span class="fc" id="L483">        assertEquals(2, FilenameUtils.getPrefixLength(&quot;C:a\\b\\c.txt&quot;));</span>
+<span class="fc" id="L484">        assertEquals(3, FilenameUtils.getPrefixLength(&quot;C:\\a\\b\\c.txt&quot;));</span>
+<span class="fc" id="L485">        assertEquals(9, FilenameUtils.getPrefixLength(&quot;\\\\server\\a\\b\\c.txt&quot;));</span>
+        
+<span class="fc" id="L487">        assertEquals(0, FilenameUtils.getPrefixLength(&quot;a/b/c.txt&quot;));</span>
+<span class="fc" id="L488">        assertEquals(1, FilenameUtils.getPrefixLength(&quot;/a/b/c.txt&quot;));</span>
+<span class="fc" id="L489">        assertEquals(3, FilenameUtils.getPrefixLength(&quot;C:/a/b/c.txt&quot;));</span>
+<span class="fc" id="L490">        assertEquals(9, FilenameUtils.getPrefixLength(&quot;//server/a/b/c.txt&quot;));</span>
+<span class="fc" id="L491">        assertEquals(2, FilenameUtils.getPrefixLength(&quot;~/a/b/c.txt&quot;));</span>
+<span class="fc" id="L492">        assertEquals(6, FilenameUtils.getPrefixLength(&quot;~user/a/b/c.txt&quot;));</span>
+        
+<span class="fc" id="L494">        assertEquals(0, FilenameUtils.getPrefixLength(&quot;a\\b\\c.txt&quot;));</span>
+<span class="fc" id="L495">        assertEquals(1, FilenameUtils.getPrefixLength(&quot;\\a\\b\\c.txt&quot;));</span>
+<span class="fc" id="L496">        assertEquals(2, FilenameUtils.getPrefixLength(&quot;~\\a\\b\\c.txt&quot;));</span>
+<span class="fc" id="L497">        assertEquals(6, FilenameUtils.getPrefixLength(&quot;~user\\a\\b\\c.txt&quot;));</span>
+<span class="fc" id="L498">    }</span>
+    
+    public void testIndexOfLastSeparator() {
+<span class="fc" id="L501">        assertEquals(-1, FilenameUtils.indexOfLastSeparator(null));</span>
+<span class="fc" id="L502">        assertEquals(-1, FilenameUtils.indexOfLastSeparator(&quot;noseperator.inthispath&quot;));</span>
+<span class="fc" id="L503">        assertEquals(3, FilenameUtils.indexOfLastSeparator(&quot;a/b/c&quot;));</span>
+<span class="fc" id="L504">        assertEquals(3, FilenameUtils.indexOfLastSeparator(&quot;a\\b\\c&quot;));</span>
+<span class="fc" id="L505">    }</span>
+
+    public void testIndexOfExtension() {
+<span class="fc" id="L508">        assertEquals(-1, FilenameUtils.indexOfExtension(null));</span>
+<span class="fc" id="L509">        assertEquals(-1, FilenameUtils.indexOfExtension(&quot;file&quot;));</span>
+<span class="fc" id="L510">        assertEquals(4, FilenameUtils.indexOfExtension(&quot;file.txt&quot;));</span>
+<span class="fc" id="L511">        assertEquals(13, FilenameUtils.indexOfExtension(&quot;a.txt/b.txt/c.txt&quot;));</span>
+<span class="fc" id="L512">        assertEquals(-1, FilenameUtils.indexOfExtension(&quot;a/b/c&quot;));</span>
+<span class="fc" id="L513">        assertEquals(-1, FilenameUtils.indexOfExtension(&quot;a\\b\\c&quot;));</span>
+<span class="fc" id="L514">        assertEquals(-1, FilenameUtils.indexOfExtension(&quot;a/b.notextension/c&quot;));</span>
+<span class="fc" id="L515">        assertEquals(-1, FilenameUtils.indexOfExtension(&quot;a\\b.notextension\\c&quot;));</span>
+<span class="fc" id="L516">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testGetPrefix() {
+<span class="fc" id="L520">        assertEquals(null, FilenameUtils.getPrefix(null));</span>
+<span class="fc" id="L521">        assertEquals(null, FilenameUtils.getPrefix(&quot;:&quot;));</span>
+<span class="fc" id="L522">        assertEquals(null, FilenameUtils.getPrefix(&quot;1:\\a\\b\\c.txt&quot;));</span>
+<span class="fc" id="L523">        assertEquals(null, FilenameUtils.getPrefix(&quot;1:&quot;));</span>
+<span class="fc" id="L524">        assertEquals(null, FilenameUtils.getPrefix(&quot;1:a&quot;));</span>
+<span class="fc" id="L525">        assertEquals(null, FilenameUtils.getPrefix(&quot;\\\\\\a\\b\\c.txt&quot;));</span>
+<span class="fc" id="L526">        assertEquals(null, FilenameUtils.getPrefix(&quot;\\\\a&quot;));</span>
+        
+<span class="fc" id="L528">        assertEquals(&quot;&quot;, FilenameUtils.getPrefix(&quot;&quot;));</span>
+<span class="fc" id="L529">        assertEquals(&quot;\\&quot;, FilenameUtils.getPrefix(&quot;\\&quot;));</span>
+<span class="fc" id="L530">        assertEquals(&quot;C:&quot;, FilenameUtils.getPrefix(&quot;C:&quot;));</span>
+<span class="fc" id="L531">        assertEquals(&quot;C:\\&quot;, FilenameUtils.getPrefix(&quot;C:\\&quot;));</span>
+<span class="fc" id="L532">        assertEquals(&quot;//server/&quot;, FilenameUtils.getPrefix(&quot;//server/&quot;));</span>
+<span class="fc" id="L533">        assertEquals(&quot;~/&quot;, FilenameUtils.getPrefix(&quot;~&quot;));</span>
+<span class="fc" id="L534">        assertEquals(&quot;~/&quot;, FilenameUtils.getPrefix(&quot;~/&quot;));</span>
+<span class="fc" id="L535">        assertEquals(&quot;~user/&quot;, FilenameUtils.getPrefix(&quot;~user&quot;));</span>
+<span class="fc" id="L536">        assertEquals(&quot;~user/&quot;, FilenameUtils.getPrefix(&quot;~user/&quot;));</span>
+        
+<span class="fc" id="L538">        assertEquals(&quot;&quot;, FilenameUtils.getPrefix(&quot;a\\b\\c.txt&quot;));</span>
+<span class="fc" id="L539">        assertEquals(&quot;\\&quot;, FilenameUtils.getPrefix(&quot;\\a\\b\\c.txt&quot;));</span>
+<span class="fc" id="L540">        assertEquals(&quot;C:\\&quot;, FilenameUtils.getPrefix(&quot;C:\\a\\b\\c.txt&quot;));</span>
+<span class="fc" id="L541">        assertEquals(&quot;\\\\server\\&quot;, FilenameUtils.getPrefix(&quot;\\\\server\\a\\b\\c.txt&quot;));</span>
+        
+<span class="fc" id="L543">        assertEquals(&quot;&quot;, FilenameUtils.getPrefix(&quot;a/b/c.txt&quot;));</span>
+<span class="fc" id="L544">        assertEquals(&quot;/&quot;, FilenameUtils.getPrefix(&quot;/a/b/c.txt&quot;));</span>
+<span class="fc" id="L545">        assertEquals(&quot;C:/&quot;, FilenameUtils.getPrefix(&quot;C:/a/b/c.txt&quot;));</span>
+<span class="fc" id="L546">        assertEquals(&quot;//server/&quot;, FilenameUtils.getPrefix(&quot;//server/a/b/c.txt&quot;));</span>
+<span class="fc" id="L547">        assertEquals(&quot;~/&quot;, FilenameUtils.getPrefix(&quot;~/a/b/c.txt&quot;));</span>
+<span class="fc" id="L548">        assertEquals(&quot;~user/&quot;, FilenameUtils.getPrefix(&quot;~user/a/b/c.txt&quot;));</span>
+        
+<span class="fc" id="L550">        assertEquals(&quot;&quot;, FilenameUtils.getPrefix(&quot;a\\b\\c.txt&quot;));</span>
+<span class="fc" id="L551">        assertEquals(&quot;\\&quot;, FilenameUtils.getPrefix(&quot;\\a\\b\\c.txt&quot;));</span>
+<span class="fc" id="L552">        assertEquals(&quot;~\\&quot;, FilenameUtils.getPrefix(&quot;~\\a\\b\\c.txt&quot;));</span>
+<span class="fc" id="L553">        assertEquals(&quot;~user\\&quot;, FilenameUtils.getPrefix(&quot;~user\\a\\b\\c.txt&quot;));</span>
+<span class="fc" id="L554">    }</span>
+
+    public void testGetPath() {
+<span class="fc" id="L557">        assertEquals(null, FilenameUtils.getPath(null));</span>
+<span class="fc" id="L558">        assertEquals(&quot;&quot;, FilenameUtils.getPath(&quot;noseperator.inthispath&quot;));</span>
+<span class="fc" id="L559">        assertEquals(&quot;a/b/&quot;, FilenameUtils.getPath(&quot;a/b/c.txt&quot;));</span>
+<span class="fc" id="L560">        assertEquals(&quot;a/b/&quot;, FilenameUtils.getPath(&quot;a/b/c&quot;));</span>
+<span class="fc" id="L561">        assertEquals(&quot;a/b/c/&quot;, FilenameUtils.getPath(&quot;a/b/c/&quot;));</span>
+<span class="fc" id="L562">        assertEquals(&quot;a\\b\\&quot;, FilenameUtils.getPath(&quot;a\\b\\c&quot;));</span>
+        
+<span class="fc" id="L564">        assertEquals(null, FilenameUtils.getPath(&quot;:&quot;));</span>
+<span class="fc" id="L565">        assertEquals(null, FilenameUtils.getPath(&quot;1:/a/b/c.txt&quot;));</span>
+<span class="fc" id="L566">        assertEquals(null, FilenameUtils.getPath(&quot;1:&quot;));</span>
+<span class="fc" id="L567">        assertEquals(null, FilenameUtils.getPath(&quot;1:a&quot;));</span>
+<span class="fc" id="L568">        assertEquals(null, FilenameUtils.getPath(&quot;///a/b/c.txt&quot;));</span>
+<span class="fc" id="L569">        assertEquals(null, FilenameUtils.getPath(&quot;//a&quot;));</span>
+        
+<span class="fc" id="L571">        assertEquals(&quot;&quot;, FilenameUtils.getPath(&quot;&quot;));</span>
+<span class="fc" id="L572">        assertEquals(&quot;&quot;, FilenameUtils.getPath(&quot;C:&quot;));</span>
+<span class="fc" id="L573">        assertEquals(&quot;&quot;, FilenameUtils.getPath(&quot;C:/&quot;));</span>
+<span class="fc" id="L574">        assertEquals(&quot;&quot;, FilenameUtils.getPath(&quot;//server/&quot;));</span>
+<span class="fc" id="L575">        assertEquals(&quot;&quot;, FilenameUtils.getPath(&quot;~&quot;));</span>
+<span class="fc" id="L576">        assertEquals(&quot;&quot;, FilenameUtils.getPath(&quot;~/&quot;));</span>
+<span class="fc" id="L577">        assertEquals(&quot;&quot;, FilenameUtils.getPath(&quot;~user&quot;));</span>
+<span class="fc" id="L578">        assertEquals(&quot;&quot;, FilenameUtils.getPath(&quot;~user/&quot;));</span>
+        
+<span class="fc" id="L580">        assertEquals(&quot;a/b/&quot;, FilenameUtils.getPath(&quot;a/b/c.txt&quot;));</span>
+<span class="fc" id="L581">        assertEquals(&quot;a/b/&quot;, FilenameUtils.getPath(&quot;/a/b/c.txt&quot;));</span>
+<span class="fc" id="L582">        assertEquals(&quot;&quot;, FilenameUtils.getPath(&quot;C:a&quot;));</span>
+<span class="fc" id="L583">        assertEquals(&quot;a/b/&quot;, FilenameUtils.getPath(&quot;C:a/b/c.txt&quot;));</span>
+<span class="fc" id="L584">        assertEquals(&quot;a/b/&quot;, FilenameUtils.getPath(&quot;C:/a/b/c.txt&quot;));</span>
+<span class="fc" id="L585">        assertEquals(&quot;a/b/&quot;, FilenameUtils.getPath(&quot;//server/a/b/c.txt&quot;));</span>
+<span class="fc" id="L586">        assertEquals(&quot;a/b/&quot;, FilenameUtils.getPath(&quot;~/a/b/c.txt&quot;));</span>
+<span class="fc" id="L587">        assertEquals(&quot;a/b/&quot;, FilenameUtils.getPath(&quot;~user/a/b/c.txt&quot;));</span>
+<span class="fc" id="L588">    }</span>
+
+    public void testGetPathNoEndSeparator() {
+<span class="fc" id="L591">        assertEquals(null, FilenameUtils.getPath(null));</span>
+<span class="fc" id="L592">        assertEquals(&quot;&quot;, FilenameUtils.getPath(&quot;noseperator.inthispath&quot;));</span>
+<span class="fc" id="L593">        assertEquals(&quot;a/b&quot;, FilenameUtils.getPathNoEndSeparator(&quot;a/b/c.txt&quot;));</span>
+<span class="fc" id="L594">        assertEquals(&quot;a/b&quot;, FilenameUtils.getPathNoEndSeparator(&quot;a/b/c&quot;));</span>
+<span class="fc" id="L595">        assertEquals(&quot;a/b/c&quot;, FilenameUtils.getPathNoEndSeparator(&quot;a/b/c/&quot;));</span>
+<span class="fc" id="L596">        assertEquals(&quot;a\\b&quot;, FilenameUtils.getPathNoEndSeparator(&quot;a\\b\\c&quot;));</span>
+        
+<span class="fc" id="L598">        assertEquals(null, FilenameUtils.getPathNoEndSeparator(&quot;:&quot;));</span>
+<span class="fc" id="L599">        assertEquals(null, FilenameUtils.getPathNoEndSeparator(&quot;1:/a/b/c.txt&quot;));</span>
+<span class="fc" id="L600">        assertEquals(null, FilenameUtils.getPathNoEndSeparator(&quot;1:&quot;));</span>
+<span class="fc" id="L601">        assertEquals(null, FilenameUtils.getPathNoEndSeparator(&quot;1:a&quot;));</span>
+<span class="fc" id="L602">        assertEquals(null, FilenameUtils.getPathNoEndSeparator(&quot;///a/b/c.txt&quot;));</span>
+<span class="fc" id="L603">        assertEquals(null, FilenameUtils.getPathNoEndSeparator(&quot;//a&quot;));</span>
+        
+<span class="fc" id="L605">        assertEquals(&quot;&quot;, FilenameUtils.getPathNoEndSeparator(&quot;&quot;));</span>
+<span class="fc" id="L606">        assertEquals(&quot;&quot;, FilenameUtils.getPathNoEndSeparator(&quot;C:&quot;));</span>
+<span class="fc" id="L607">        assertEquals(&quot;&quot;, FilenameUtils.getPathNoEndSeparator(&quot;C:/&quot;));</span>
+<span class="fc" id="L608">        assertEquals(&quot;&quot;, FilenameUtils.getPathNoEndSeparator(&quot;//server/&quot;));</span>
+<span class="fc" id="L609">        assertEquals(&quot;&quot;, FilenameUtils.getPathNoEndSeparator(&quot;~&quot;));</span>
+<span class="fc" id="L610">        assertEquals(&quot;&quot;, FilenameUtils.getPathNoEndSeparator(&quot;~/&quot;));</span>
+<span class="fc" id="L611">        assertEquals(&quot;&quot;, FilenameUtils.getPathNoEndSeparator(&quot;~user&quot;));</span>
+<span class="fc" id="L612">        assertEquals(&quot;&quot;, FilenameUtils.getPathNoEndSeparator(&quot;~user/&quot;));</span>
+        
+<span class="fc" id="L614">        assertEquals(&quot;a/b&quot;, FilenameUtils.getPathNoEndSeparator(&quot;a/b/c.txt&quot;));</span>
+<span class="fc" id="L615">        assertEquals(&quot;a/b&quot;, FilenameUtils.getPathNoEndSeparator(&quot;/a/b/c.txt&quot;));</span>
+<span class="fc" id="L616">        assertEquals(&quot;&quot;, FilenameUtils.getPathNoEndSeparator(&quot;C:a&quot;));</span>
+<span class="fc" id="L617">        assertEquals(&quot;a/b&quot;, FilenameUtils.getPathNoEndSeparator(&quot;C:a/b/c.txt&quot;));</span>
+<span class="fc" id="L618">        assertEquals(&quot;a/b&quot;, FilenameUtils.getPathNoEndSeparator(&quot;C:/a/b/c.txt&quot;));</span>
+<span class="fc" id="L619">        assertEquals(&quot;a/b&quot;, FilenameUtils.getPathNoEndSeparator(&quot;//server/a/b/c.txt&quot;));</span>
+<span class="fc" id="L620">        assertEquals(&quot;a/b&quot;, FilenameUtils.getPathNoEndSeparator(&quot;~/a/b/c.txt&quot;));</span>
+<span class="fc" id="L621">        assertEquals(&quot;a/b&quot;, FilenameUtils.getPathNoEndSeparator(&quot;~user/a/b/c.txt&quot;));</span>
+<span class="fc" id="L622">    }</span>
+
+    public void testGetFullPath() {
+<span class="fc" id="L625">        assertEquals(null, FilenameUtils.getFullPath(null));</span>
+<span class="fc" id="L626">        assertEquals(&quot;&quot;, FilenameUtils.getFullPath(&quot;noseperator.inthispath&quot;));</span>
+<span class="fc" id="L627">        assertEquals(&quot;a/b/&quot;, FilenameUtils.getFullPath(&quot;a/b/c.txt&quot;));</span>
+<span class="fc" id="L628">        assertEquals(&quot;a/b/&quot;, FilenameUtils.getFullPath(&quot;a/b/c&quot;));</span>
+<span class="fc" id="L629">        assertEquals(&quot;a/b/c/&quot;, FilenameUtils.getFullPath(&quot;a/b/c/&quot;));</span>
+<span class="fc" id="L630">        assertEquals(&quot;a\\b\\&quot;, FilenameUtils.getFullPath(&quot;a\\b\\c&quot;));</span>
+        
+<span class="fc" id="L632">        assertEquals(null, FilenameUtils.getFullPath(&quot;:&quot;));</span>
+<span class="fc" id="L633">        assertEquals(null, FilenameUtils.getFullPath(&quot;1:/a/b/c.txt&quot;));</span>
+<span class="fc" id="L634">        assertEquals(null, FilenameUtils.getFullPath(&quot;1:&quot;));</span>
+<span class="fc" id="L635">        assertEquals(null, FilenameUtils.getFullPath(&quot;1:a&quot;));</span>
+<span class="fc" id="L636">        assertEquals(null, FilenameUtils.getFullPath(&quot;///a/b/c.txt&quot;));</span>
+<span class="fc" id="L637">        assertEquals(null, FilenameUtils.getFullPath(&quot;//a&quot;));</span>
+        
+<span class="fc" id="L639">        assertEquals(&quot;&quot;, FilenameUtils.getFullPath(&quot;&quot;));</span>
+<span class="fc" id="L640">        assertEquals(&quot;C:&quot;, FilenameUtils.getFullPath(&quot;C:&quot;));</span>
+<span class="fc" id="L641">        assertEquals(&quot;C:/&quot;, FilenameUtils.getFullPath(&quot;C:/&quot;));</span>
+<span class="fc" id="L642">        assertEquals(&quot;//server/&quot;, FilenameUtils.getFullPath(&quot;//server/&quot;));</span>
+<span class="fc" id="L643">        assertEquals(&quot;~/&quot;, FilenameUtils.getFullPath(&quot;~&quot;));</span>
+<span class="fc" id="L644">        assertEquals(&quot;~/&quot;, FilenameUtils.getFullPath(&quot;~/&quot;));</span>
+<span class="fc" id="L645">        assertEquals(&quot;~user/&quot;, FilenameUtils.getFullPath(&quot;~user&quot;));</span>
+<span class="fc" id="L646">        assertEquals(&quot;~user/&quot;, FilenameUtils.getFullPath(&quot;~user/&quot;));</span>
+        
+<span class="fc" id="L648">        assertEquals(&quot;a/b/&quot;, FilenameUtils.getFullPath(&quot;a/b/c.txt&quot;));</span>
+<span class="fc" id="L649">        assertEquals(&quot;/a/b/&quot;, FilenameUtils.getFullPath(&quot;/a/b/c.txt&quot;));</span>
+<span class="fc" id="L650">        assertEquals(&quot;C:&quot;, FilenameUtils.getFullPath(&quot;C:a&quot;));</span>
+<span class="fc" id="L651">        assertEquals(&quot;C:a/b/&quot;, FilenameUtils.getFullPath(&quot;C:a/b/c.txt&quot;));</span>
+<span class="fc" id="L652">        assertEquals(&quot;C:/a/b/&quot;, FilenameUtils.getFullPath(&quot;C:/a/b/c.txt&quot;));</span>
+<span class="fc" id="L653">        assertEquals(&quot;//server/a/b/&quot;, FilenameUtils.getFullPath(&quot;//server/a/b/c.txt&quot;));</span>
+<span class="fc" id="L654">        assertEquals(&quot;~/a/b/&quot;, FilenameUtils.getFullPath(&quot;~/a/b/c.txt&quot;));</span>
+<span class="fc" id="L655">        assertEquals(&quot;~user/a/b/&quot;, FilenameUtils.getFullPath(&quot;~user/a/b/c.txt&quot;));</span>
+<span class="fc" id="L656">    }</span>
+
+    public void testGetFullPathNoEndSeparator() {
+<span class="fc" id="L659">        assertEquals(null, FilenameUtils.getFullPathNoEndSeparator(null));</span>
+<span class="fc" id="L660">        assertEquals(&quot;&quot;, FilenameUtils.getFullPathNoEndSeparator(&quot;noseperator.inthispath&quot;));</span>
+<span class="fc" id="L661">        assertEquals(&quot;a/b&quot;, FilenameUtils.getFullPathNoEndSeparator(&quot;a/b/c.txt&quot;));</span>
+<span class="fc" id="L662">        assertEquals(&quot;a/b&quot;, FilenameUtils.getFullPathNoEndSeparator(&quot;a/b/c&quot;));</span>
+<span class="fc" id="L663">        assertEquals(&quot;a/b/c&quot;, FilenameUtils.getFullPathNoEndSeparator(&quot;a/b/c/&quot;));</span>
+<span class="fc" id="L664">        assertEquals(&quot;a\\b&quot;, FilenameUtils.getFullPathNoEndSeparator(&quot;a\\b\\c&quot;));</span>
+        
+<span class="fc" id="L666">        assertEquals(null, FilenameUtils.getFullPathNoEndSeparator(&quot;:&quot;));</span>
+<span class="fc" id="L667">        assertEquals(null, FilenameUtils.getFullPathNoEndSeparator(&quot;1:/a/b/c.txt&quot;));</span>
+<span class="fc" id="L668">        assertEquals(null, FilenameUtils.getFullPathNoEndSeparator(&quot;1:&quot;));</span>
+<span class="fc" id="L669">        assertEquals(null, FilenameUtils.getFullPathNoEndSeparator(&quot;1:a&quot;));</span>
+<span class="fc" id="L670">        assertEquals(null, FilenameUtils.getFullPathNoEndSeparator(&quot;///a/b/c.txt&quot;));</span>
+<span class="fc" id="L671">        assertEquals(null, FilenameUtils.getFullPathNoEndSeparator(&quot;//a&quot;));</span>
+        
+<span class="fc" id="L673">        assertEquals(&quot;&quot;, FilenameUtils.getFullPathNoEndSeparator(&quot;&quot;));</span>
+<span class="fc" id="L674">        assertEquals(&quot;C:&quot;, FilenameUtils.getFullPathNoEndSeparator(&quot;C:&quot;));</span>
+<span class="fc" id="L675">        assertEquals(&quot;C:/&quot;, FilenameUtils.getFullPathNoEndSeparator(&quot;C:/&quot;));</span>
+<span class="fc" id="L676">        assertEquals(&quot;//server/&quot;, FilenameUtils.getFullPathNoEndSeparator(&quot;//server/&quot;));</span>
+<span class="fc" id="L677">        assertEquals(&quot;~&quot;, FilenameUtils.getFullPathNoEndSeparator(&quot;~&quot;));</span>
+<span class="fc" id="L678">        assertEquals(&quot;~/&quot;, FilenameUtils.getFullPathNoEndSeparator(&quot;~/&quot;));</span>
+<span class="fc" id="L679">        assertEquals(&quot;~user&quot;, FilenameUtils.getFullPathNoEndSeparator(&quot;~user&quot;));</span>
+<span class="fc" id="L680">        assertEquals(&quot;~user/&quot;, FilenameUtils.getFullPathNoEndSeparator(&quot;~user/&quot;));</span>
+        
+<span class="fc" id="L682">        assertEquals(&quot;a/b&quot;, FilenameUtils.getFullPathNoEndSeparator(&quot;a/b/c.txt&quot;));</span>
+<span class="fc" id="L683">        assertEquals(&quot;/a/b&quot;, FilenameUtils.getFullPathNoEndSeparator(&quot;/a/b/c.txt&quot;));</span>
+<span class="fc" id="L684">        assertEquals(&quot;C:&quot;, FilenameUtils.getFullPathNoEndSeparator(&quot;C:a&quot;));</span>
+<span class="fc" id="L685">        assertEquals(&quot;C:a/b&quot;, FilenameUtils.getFullPathNoEndSeparator(&quot;C:a/b/c.txt&quot;));</span>
+<span class="fc" id="L686">        assertEquals(&quot;C:/a/b&quot;, FilenameUtils.getFullPathNoEndSeparator(&quot;C:/a/b/c.txt&quot;));</span>
+<span class="fc" id="L687">        assertEquals(&quot;//server/a/b&quot;, FilenameUtils.getFullPathNoEndSeparator(&quot;//server/a/b/c.txt&quot;));</span>
+<span class="fc" id="L688">        assertEquals(&quot;~/a/b&quot;, FilenameUtils.getFullPathNoEndSeparator(&quot;~/a/b/c.txt&quot;));</span>
+<span class="fc" id="L689">        assertEquals(&quot;~user/a/b&quot;, FilenameUtils.getFullPathNoEndSeparator(&quot;~user/a/b/c.txt&quot;));</span>
+<span class="fc" id="L690">    }</span>
+
+    public void testGetName() {
+<span class="fc" id="L693">        assertEquals(null, FilenameUtils.getName(null));</span>
+<span class="fc" id="L694">        assertEquals(&quot;noseperator.inthispath&quot;, FilenameUtils.getName(&quot;noseperator.inthispath&quot;));</span>
+<span class="fc" id="L695">        assertEquals(&quot;c.txt&quot;, FilenameUtils.getName(&quot;a/b/c.txt&quot;));</span>
+<span class="fc" id="L696">        assertEquals(&quot;c&quot;, FilenameUtils.getName(&quot;a/b/c&quot;));</span>
+<span class="fc" id="L697">        assertEquals(&quot;&quot;, FilenameUtils.getName(&quot;a/b/c/&quot;));</span>
+<span class="fc" id="L698">        assertEquals(&quot;c&quot;, FilenameUtils.getName(&quot;a\\b\\c&quot;));</span>
+<span class="fc" id="L699">    }</span>
+
+    public void testGetBaseName() {
+<span class="fc" id="L702">        assertEquals(null, FilenameUtils.getBaseName(null));</span>
+<span class="fc" id="L703">        assertEquals(&quot;noseperator&quot;, FilenameUtils.getBaseName(&quot;noseperator.inthispath&quot;));</span>
+<span class="fc" id="L704">        assertEquals(&quot;c&quot;, FilenameUtils.getBaseName(&quot;a/b/c.txt&quot;));</span>
+<span class="fc" id="L705">        assertEquals(&quot;c&quot;, FilenameUtils.getBaseName(&quot;a/b/c&quot;));</span>
+<span class="fc" id="L706">        assertEquals(&quot;&quot;, FilenameUtils.getBaseName(&quot;a/b/c/&quot;));</span>
+<span class="fc" id="L707">        assertEquals(&quot;c&quot;, FilenameUtils.getBaseName(&quot;a\\b\\c&quot;));</span>
+<span class="fc" id="L708">        assertEquals(&quot;file.txt&quot;, FilenameUtils.getBaseName(&quot;file.txt.bak&quot;));</span>
+<span class="fc" id="L709">    }</span>
+
+    public void testGetExtension() {
+<span class="fc" id="L712">        assertEquals(null, FilenameUtils.getExtension(null));</span>
+<span class="fc" id="L713">        assertEquals(&quot;ext&quot;, FilenameUtils.getExtension(&quot;file.ext&quot;));</span>
+<span class="fc" id="L714">        assertEquals(&quot;&quot;, FilenameUtils.getExtension(&quot;README&quot;));</span>
+<span class="fc" id="L715">        assertEquals(&quot;com&quot;, FilenameUtils.getExtension(&quot;domain.dot.com&quot;));</span>
+<span class="fc" id="L716">        assertEquals(&quot;jpeg&quot;, FilenameUtils.getExtension(&quot;image.jpeg&quot;));</span>
+<span class="fc" id="L717">        assertEquals(&quot;&quot;, FilenameUtils.getExtension(&quot;a.b/c&quot;));</span>
+<span class="fc" id="L718">        assertEquals(&quot;txt&quot;, FilenameUtils.getExtension(&quot;a.b/c.txt&quot;));</span>
+<span class="fc" id="L719">        assertEquals(&quot;&quot;, FilenameUtils.getExtension(&quot;a/b/c&quot;));</span>
+<span class="fc" id="L720">        assertEquals(&quot;&quot;, FilenameUtils.getExtension(&quot;a.b\\c&quot;));</span>
+<span class="fc" id="L721">        assertEquals(&quot;txt&quot;, FilenameUtils.getExtension(&quot;a.b\\c.txt&quot;));</span>
+<span class="fc" id="L722">        assertEquals(&quot;&quot;, FilenameUtils.getExtension(&quot;a\\b\\c&quot;));</span>
+<span class="fc" id="L723">        assertEquals(&quot;&quot;, FilenameUtils.getExtension(&quot;C:\\temp\\foo.bar\\README&quot;));</span>
+<span class="fc" id="L724">        assertEquals(&quot;ext&quot;, FilenameUtils.getExtension(&quot;../filename.ext&quot;));</span>
+<span class="fc" id="L725">    }</span>
+
+    public void testRemoveExtension() {
+<span class="fc" id="L728">        assertEquals(null, FilenameUtils.removeExtension(null));</span>
+<span class="fc" id="L729">        assertEquals(&quot;file&quot;, FilenameUtils.removeExtension(&quot;file.ext&quot;));</span>
+<span class="fc" id="L730">        assertEquals(&quot;README&quot;, FilenameUtils.removeExtension(&quot;README&quot;));</span>
+<span class="fc" id="L731">        assertEquals(&quot;domain.dot&quot;, FilenameUtils.removeExtension(&quot;domain.dot.com&quot;));</span>
+<span class="fc" id="L732">        assertEquals(&quot;image&quot;, FilenameUtils.removeExtension(&quot;image.jpeg&quot;));</span>
+<span class="fc" id="L733">        assertEquals(&quot;a.b/c&quot;, FilenameUtils.removeExtension(&quot;a.b/c&quot;));</span>
+<span class="fc" id="L734">        assertEquals(&quot;a.b/c&quot;, FilenameUtils.removeExtension(&quot;a.b/c.txt&quot;));</span>
+<span class="fc" id="L735">        assertEquals(&quot;a/b/c&quot;, FilenameUtils.removeExtension(&quot;a/b/c&quot;));</span>
+<span class="fc" id="L736">        assertEquals(&quot;a.b\\c&quot;, FilenameUtils.removeExtension(&quot;a.b\\c&quot;));</span>
+<span class="fc" id="L737">        assertEquals(&quot;a.b\\c&quot;, FilenameUtils.removeExtension(&quot;a.b\\c.txt&quot;));</span>
+<span class="fc" id="L738">        assertEquals(&quot;a\\b\\c&quot;, FilenameUtils.removeExtension(&quot;a\\b\\c&quot;));</span>
+<span class="fc" id="L739">        assertEquals(&quot;C:\\temp\\foo.bar\\README&quot;, FilenameUtils.removeExtension(&quot;C:\\temp\\foo.bar\\README&quot;));</span>
+<span class="fc" id="L740">        assertEquals(&quot;../filename&quot;, FilenameUtils.removeExtension(&quot;../filename.ext&quot;));</span>
+<span class="fc" id="L741">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testEquals() {
+<span class="fc" id="L745">        assertEquals(true, FilenameUtils.equals(null, null));</span>
+<span class="fc" id="L746">        assertEquals(false, FilenameUtils.equals(null, &quot;&quot;));</span>
+<span class="fc" id="L747">        assertEquals(false, FilenameUtils.equals(&quot;&quot;, null));</span>
+<span class="fc" id="L748">        assertEquals(true, FilenameUtils.equals(&quot;&quot;, &quot;&quot;));</span>
+<span class="fc" id="L749">        assertEquals(true, FilenameUtils.equals(&quot;file.txt&quot;, &quot;file.txt&quot;));</span>
+<span class="fc" id="L750">        assertEquals(false, FilenameUtils.equals(&quot;file.txt&quot;, &quot;FILE.TXT&quot;));</span>
+<span class="fc" id="L751">        assertEquals(false, FilenameUtils.equals(&quot;a\\b\\file.txt&quot;, &quot;a/b/file.txt&quot;));</span>
+<span class="fc" id="L752">    }</span>
+
+    public void testEqualsOnSystem() {
+<span class="fc" id="L755">        assertEquals(true, FilenameUtils.equalsOnSystem(null, null));</span>
+<span class="fc" id="L756">        assertEquals(false, FilenameUtils.equalsOnSystem(null, &quot;&quot;));</span>
+<span class="fc" id="L757">        assertEquals(false, FilenameUtils.equalsOnSystem(&quot;&quot;, null));</span>
+<span class="fc" id="L758">        assertEquals(true, FilenameUtils.equalsOnSystem(&quot;&quot;, &quot;&quot;));</span>
+<span class="fc" id="L759">        assertEquals(true, FilenameUtils.equalsOnSystem(&quot;file.txt&quot;, &quot;file.txt&quot;));</span>
+<span class="fc" id="L760">        assertEquals(WINDOWS, FilenameUtils.equalsOnSystem(&quot;file.txt&quot;, &quot;FILE.TXT&quot;));</span>
+<span class="fc" id="L761">        assertEquals(false, FilenameUtils.equalsOnSystem(&quot;a\\b\\file.txt&quot;, &quot;a/b/file.txt&quot;));</span>
+<span class="fc" id="L762">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testEqualsNormalized() {
+<span class="fc" id="L766">        assertEquals(true, FilenameUtils.equalsNormalized(null, null));</span>
+<span class="fc" id="L767">        assertEquals(false, FilenameUtils.equalsNormalized(null, &quot;&quot;));</span>
+<span class="fc" id="L768">        assertEquals(false, FilenameUtils.equalsNormalized(&quot;&quot;, null));</span>
+<span class="fc" id="L769">        assertEquals(true, FilenameUtils.equalsNormalized(&quot;&quot;, &quot;&quot;));</span>
+<span class="fc" id="L770">        assertEquals(true, FilenameUtils.equalsNormalized(&quot;file.txt&quot;, &quot;file.txt&quot;));</span>
+<span class="fc" id="L771">        assertEquals(false, FilenameUtils.equalsNormalized(&quot;file.txt&quot;, &quot;FILE.TXT&quot;));</span>
+<span class="fc" id="L772">        assertEquals(true, FilenameUtils.equalsNormalized(&quot;a\\b\\file.txt&quot;, &quot;a/b/file.txt&quot;));</span>
+<span class="fc" id="L773">        assertEquals(false, FilenameUtils.equalsNormalized(&quot;a/b/&quot;, &quot;a/b&quot;));</span>
+<span class="fc" id="L774">    }</span>
+
+    public void testEqualsNormalizedOnSystem() {
+<span class="fc" id="L777">        assertEquals(true, FilenameUtils.equalsNormalizedOnSystem(null, null));</span>
+<span class="fc" id="L778">        assertEquals(false, FilenameUtils.equalsNormalizedOnSystem(null, &quot;&quot;));</span>
+<span class="fc" id="L779">        assertEquals(false, FilenameUtils.equalsNormalizedOnSystem(&quot;&quot;, null));</span>
+<span class="fc" id="L780">        assertEquals(true, FilenameUtils.equalsNormalizedOnSystem(&quot;&quot;, &quot;&quot;));</span>
+<span class="fc" id="L781">        assertEquals(true, FilenameUtils.equalsNormalizedOnSystem(&quot;file.txt&quot;, &quot;file.txt&quot;));</span>
+<span class="fc" id="L782">        assertEquals(WINDOWS, FilenameUtils.equalsNormalizedOnSystem(&quot;file.txt&quot;, &quot;FILE.TXT&quot;));</span>
+<span class="fc" id="L783">        assertEquals(true, FilenameUtils.equalsNormalizedOnSystem(&quot;a\\b\\file.txt&quot;, &quot;a/b/file.txt&quot;));</span>
+<span class="fc" id="L784">        assertEquals(false, FilenameUtils.equalsNormalizedOnSystem(&quot;a/b/&quot;, &quot;a/b&quot;));</span>
+<span class="fc" id="L785">    }</span>
+
+    public void testEquals_fullControl() {
+<span class="fc" id="L788">        assertEquals(false, FilenameUtils.equals(&quot;file.txt&quot;, &quot;FILE.TXT&quot;, true, IOCase.SENSITIVE));</span>
+<span class="fc" id="L789">        assertEquals(true, FilenameUtils.equals(&quot;file.txt&quot;, &quot;FILE.TXT&quot;, true, IOCase.INSENSITIVE));</span>
+<span class="fc" id="L790">        assertEquals(WINDOWS, FilenameUtils.equals(&quot;file.txt&quot;, &quot;FILE.TXT&quot;, true, IOCase.SYSTEM));</span>
+<span class="fc" id="L791">        assertEquals(false, FilenameUtils.equals(&quot;file.txt&quot;, &quot;FILE.TXT&quot;, true, null));</span>
+<span class="fc" id="L792">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testIsExtension() {
+<span class="fc" id="L796">        assertEquals(false, FilenameUtils.isExtension(null, (String) null));</span>
+<span class="fc" id="L797">        assertEquals(false, FilenameUtils.isExtension(&quot;file.txt&quot;, (String) null));</span>
+<span class="fc" id="L798">        assertEquals(true, FilenameUtils.isExtension(&quot;file&quot;, (String) null));</span>
+<span class="fc" id="L799">        assertEquals(false, FilenameUtils.isExtension(&quot;file.txt&quot;, &quot;&quot;));</span>
+<span class="fc" id="L800">        assertEquals(true, FilenameUtils.isExtension(&quot;file&quot;, &quot;&quot;));</span>
+<span class="fc" id="L801">        assertEquals(true, FilenameUtils.isExtension(&quot;file.txt&quot;, &quot;txt&quot;));</span>
+<span class="fc" id="L802">        assertEquals(false, FilenameUtils.isExtension(&quot;file.txt&quot;, &quot;rtf&quot;));</span>
+        
+<span class="fc" id="L804">        assertEquals(false, FilenameUtils.isExtension(&quot;a/b/file.txt&quot;, (String) null));</span>
+<span class="fc" id="L805">        assertEquals(false, FilenameUtils.isExtension(&quot;a/b/file.txt&quot;, &quot;&quot;));</span>
+<span class="fc" id="L806">        assertEquals(true, FilenameUtils.isExtension(&quot;a/b/file.txt&quot;, &quot;txt&quot;));</span>
+<span class="fc" id="L807">        assertEquals(false, FilenameUtils.isExtension(&quot;a/b/file.txt&quot;, &quot;rtf&quot;));</span>
+        
+<span class="fc" id="L809">        assertEquals(false, FilenameUtils.isExtension(&quot;a.b/file.txt&quot;, (String) null));</span>
+<span class="fc" id="L810">        assertEquals(false, FilenameUtils.isExtension(&quot;a.b/file.txt&quot;, &quot;&quot;));</span>
+<span class="fc" id="L811">        assertEquals(true, FilenameUtils.isExtension(&quot;a.b/file.txt&quot;, &quot;txt&quot;));</span>
+<span class="fc" id="L812">        assertEquals(false, FilenameUtils.isExtension(&quot;a.b/file.txt&quot;, &quot;rtf&quot;));</span>
+        
+<span class="fc" id="L814">        assertEquals(false, FilenameUtils.isExtension(&quot;a\\b\\file.txt&quot;, (String) null));</span>
+<span class="fc" id="L815">        assertEquals(false, FilenameUtils.isExtension(&quot;a\\b\\file.txt&quot;, &quot;&quot;));</span>
+<span class="fc" id="L816">        assertEquals(true, FilenameUtils.isExtension(&quot;a\\b\\file.txt&quot;, &quot;txt&quot;));</span>
+<span class="fc" id="L817">        assertEquals(false, FilenameUtils.isExtension(&quot;a\\b\\file.txt&quot;, &quot;rtf&quot;));</span>
+        
+<span class="fc" id="L819">        assertEquals(false, FilenameUtils.isExtension(&quot;a.b\\file.txt&quot;, (String) null));</span>
+<span class="fc" id="L820">        assertEquals(false, FilenameUtils.isExtension(&quot;a.b\\file.txt&quot;, &quot;&quot;));</span>
+<span class="fc" id="L821">        assertEquals(true, FilenameUtils.isExtension(&quot;a.b\\file.txt&quot;, &quot;txt&quot;));</span>
+<span class="fc" id="L822">        assertEquals(false, FilenameUtils.isExtension(&quot;a.b\\file.txt&quot;, &quot;rtf&quot;));</span>
+        
+<span class="fc" id="L824">        assertEquals(false, FilenameUtils.isExtension(&quot;a.b\\file.txt&quot;, &quot;TXT&quot;));</span>
+<span class="fc" id="L825">    }</span>
+
+    public void testIsExtensionArray() {
+<span class="fc" id="L828">        assertEquals(false, FilenameUtils.isExtension(null, (String[]) null));</span>
+<span class="fc" id="L829">        assertEquals(false, FilenameUtils.isExtension(&quot;file.txt&quot;, (String[]) null));</span>
+<span class="fc" id="L830">        assertEquals(true, FilenameUtils.isExtension(&quot;file&quot;, (String[]) null));</span>
+<span class="fc" id="L831">        assertEquals(false, FilenameUtils.isExtension(&quot;file.txt&quot;, new String[0]));</span>
+<span class="fc" id="L832">        assertEquals(true, FilenameUtils.isExtension(&quot;file.txt&quot;, new String[] {&quot;txt&quot;}));</span>
+<span class="fc" id="L833">        assertEquals(false, FilenameUtils.isExtension(&quot;file.txt&quot;, new String[] {&quot;rtf&quot;}));</span>
+<span class="fc" id="L834">        assertEquals(true, FilenameUtils.isExtension(&quot;file&quot;, new String[] {&quot;rtf&quot;, &quot;&quot;}));</span>
+<span class="fc" id="L835">        assertEquals(true, FilenameUtils.isExtension(&quot;file.txt&quot;, new String[] {&quot;rtf&quot;, &quot;txt&quot;}));</span>
+        
+<span class="fc" id="L837">        assertEquals(false, FilenameUtils.isExtension(&quot;a/b/file.txt&quot;, (String[]) null));</span>
+<span class="fc" id="L838">        assertEquals(false, FilenameUtils.isExtension(&quot;a/b/file.txt&quot;, new String[0]));</span>
+<span class="fc" id="L839">        assertEquals(true, FilenameUtils.isExtension(&quot;a/b/file.txt&quot;, new String[] {&quot;txt&quot;}));</span>
+<span class="fc" id="L840">        assertEquals(false, FilenameUtils.isExtension(&quot;a/b/file.txt&quot;, new String[] {&quot;rtf&quot;}));</span>
+<span class="fc" id="L841">        assertEquals(true, FilenameUtils.isExtension(&quot;a/b/file.txt&quot;, new String[] {&quot;rtf&quot;, &quot;txt&quot;}));</span>
+        
+<span class="fc" id="L843">        assertEquals(false, FilenameUtils.isExtension(&quot;a.b/file.txt&quot;, (String[]) null));</span>
+<span class="fc" id="L844">        assertEquals(false, FilenameUtils.isExtension(&quot;a.b/file.txt&quot;, new String[0]));</span>
+<span class="fc" id="L845">        assertEquals(true, FilenameUtils.isExtension(&quot;a.b/file.txt&quot;, new String[] {&quot;txt&quot;}));</span>
+<span class="fc" id="L846">        assertEquals(false, FilenameUtils.isExtension(&quot;a.b/file.txt&quot;, new String[] {&quot;rtf&quot;}));</span>
+<span class="fc" id="L847">        assertEquals(true, FilenameUtils.isExtension(&quot;a.b/file.txt&quot;, new String[] {&quot;rtf&quot;, &quot;txt&quot;}));</span>
+        
+<span class="fc" id="L849">        assertEquals(false, FilenameUtils.isExtension(&quot;a\\b\\file.txt&quot;, (String[]) null));</span>
+<span class="fc" id="L850">        assertEquals(false, FilenameUtils.isExtension(&quot;a\\b\\file.txt&quot;, new String[0]));</span>
+<span class="fc" id="L851">        assertEquals(true, FilenameUtils.isExtension(&quot;a\\b\\file.txt&quot;, new String[] {&quot;txt&quot;}));</span>
+<span class="fc" id="L852">        assertEquals(false, FilenameUtils.isExtension(&quot;a\\b\\file.txt&quot;, new String[] {&quot;rtf&quot;}));</span>
+<span class="fc" id="L853">        assertEquals(true, FilenameUtils.isExtension(&quot;a\\b\\file.txt&quot;, new String[] {&quot;rtf&quot;, &quot;txt&quot;}));</span>
+        
+<span class="fc" id="L855">        assertEquals(false, FilenameUtils.isExtension(&quot;a.b\\file.txt&quot;, (String[]) null));</span>
+<span class="fc" id="L856">        assertEquals(false, FilenameUtils.isExtension(&quot;a.b\\file.txt&quot;, new String[0]));</span>
+<span class="fc" id="L857">        assertEquals(true, FilenameUtils.isExtension(&quot;a.b\\file.txt&quot;, new String[] {&quot;txt&quot;}));</span>
+<span class="fc" id="L858">        assertEquals(false, FilenameUtils.isExtension(&quot;a.b\\file.txt&quot;, new String[] {&quot;rtf&quot;}));</span>
+<span class="fc" id="L859">        assertEquals(true, FilenameUtils.isExtension(&quot;a.b\\file.txt&quot;, new String[] {&quot;rtf&quot;, &quot;txt&quot;}));</span>
+        
+<span class="fc" id="L861">        assertEquals(false, FilenameUtils.isExtension(&quot;a.b\\file.txt&quot;, new String[] {&quot;TXT&quot;}));</span>
+<span class="fc" id="L862">        assertEquals(false, FilenameUtils.isExtension(&quot;a.b\\file.txt&quot;, new String[] {&quot;TXT&quot;, &quot;RTF&quot;}));</span>
+<span class="fc" id="L863">    }</span>
+
+    public void testIsExtensionCollection() {
+<span class="fc" id="L866">        assertEquals(false, FilenameUtils.isExtension(null, (Collection) null));</span>
+<span class="fc" id="L867">        assertEquals(false, FilenameUtils.isExtension(&quot;file.txt&quot;, (Collection) null));</span>
+<span class="fc" id="L868">        assertEquals(true, FilenameUtils.isExtension(&quot;file&quot;, (Collection) null));</span>
+<span class="fc" id="L869">        assertEquals(false, FilenameUtils.isExtension(&quot;file.txt&quot;, new ArrayList()));</span>
+<span class="fc" id="L870">        assertEquals(true, FilenameUtils.isExtension(&quot;file.txt&quot;, new ArrayList(Arrays.asList(new String[] {&quot;txt&quot;}))));</span>
+<span class="fc" id="L871">        assertEquals(false, FilenameUtils.isExtension(&quot;file.txt&quot;, new ArrayList(Arrays.asList(new String[] {&quot;rtf&quot;}))));</span>
+<span class="fc" id="L872">        assertEquals(true, FilenameUtils.isExtension(&quot;file&quot;, new ArrayList(Arrays.asList(new String[] {&quot;rtf&quot;, &quot;&quot;}))));</span>
+<span class="fc" id="L873">        assertEquals(true, FilenameUtils.isExtension(&quot;file.txt&quot;, new ArrayList(Arrays.asList(new String[] {&quot;rtf&quot;, &quot;txt&quot;}))));</span>
+        
+<span class="fc" id="L875">        assertEquals(false, FilenameUtils.isExtension(&quot;a/b/file.txt&quot;, (Collection) null));</span>
+<span class="fc" id="L876">        assertEquals(false, FilenameUtils.isExtension(&quot;a/b/file.txt&quot;, new ArrayList()));</span>
+<span class="fc" id="L877">        assertEquals(true, FilenameUtils.isExtension(&quot;a/b/file.txt&quot;, new ArrayList(Arrays.asList(new String[] {&quot;txt&quot;}))));</span>
+<span class="fc" id="L878">        assertEquals(false, FilenameUtils.isExtension(&quot;a/b/file.txt&quot;, new ArrayList(Arrays.asList(new String[] {&quot;rtf&quot;}))));</span>
+<span class="fc" id="L879">        assertEquals(true, FilenameUtils.isExtension(&quot;a/b/file.txt&quot;, new ArrayList(Arrays.asList(new String[] {&quot;rtf&quot;, &quot;txt&quot;}))));</span>
+        
+<span class="fc" id="L881">        assertEquals(false, FilenameUtils.isExtension(&quot;a.b/file.txt&quot;, (Collection) null));</span>
+<span class="fc" id="L882">        assertEquals(false, FilenameUtils.isExtension(&quot;a.b/file.txt&quot;, new ArrayList()));</span>
+<span class="fc" id="L883">        assertEquals(true, FilenameUtils.isExtension(&quot;a.b/file.txt&quot;, new ArrayList(Arrays.asList(new String[] {&quot;txt&quot;}))));</span>
+<span class="fc" id="L884">        assertEquals(false, FilenameUtils.isExtension(&quot;a.b/file.txt&quot;, new ArrayList(Arrays.asList(new String[] {&quot;rtf&quot;}))));</span>
+<span class="fc" id="L885">        assertEquals(true, FilenameUtils.isExtension(&quot;a.b/file.txt&quot;, new ArrayList(Arrays.asList(new String[] {&quot;rtf&quot;, &quot;txt&quot;}))));</span>
+        
+<span class="fc" id="L887">        assertEquals(false, FilenameUtils.isExtension(&quot;a\\b\\file.txt&quot;, (Collection) null));</span>
+<span class="fc" id="L888">        assertEquals(false, FilenameUtils.isExtension(&quot;a\\b\\file.txt&quot;, new ArrayList()));</span>
+<span class="fc" id="L889">        assertEquals(true, FilenameUtils.isExtension(&quot;a\\b\\file.txt&quot;, new ArrayList(Arrays.asList(new String[] {&quot;txt&quot;}))));</span>
+<span class="fc" id="L890">        assertEquals(false, FilenameUtils.isExtension(&quot;a\\b\\file.txt&quot;, new ArrayList(Arrays.asList(new String[] {&quot;rtf&quot;}))));</span>
+<span class="fc" id="L891">        assertEquals(true, FilenameUtils.isExtension(&quot;a\\b\\file.txt&quot;, new ArrayList(Arrays.asList(new String[] {&quot;rtf&quot;, &quot;txt&quot;}))));</span>
+        
+<span class="fc" id="L893">        assertEquals(false, FilenameUtils.isExtension(&quot;a.b\\file.txt&quot;, (Collection) null));</span>
+<span class="fc" id="L894">        assertEquals(false, FilenameUtils.isExtension(&quot;a.b\\file.txt&quot;, new ArrayList()));</span>
+<span class="fc" id="L895">        assertEquals(true, FilenameUtils.isExtension(&quot;a.b\\file.txt&quot;, new ArrayList(Arrays.asList(new String[] {&quot;txt&quot;}))));</span>
+<span class="fc" id="L896">        assertEquals(false, FilenameUtils.isExtension(&quot;a.b\\file.txt&quot;, new ArrayList(Arrays.asList(new String[] {&quot;rtf&quot;}))));</span>
+<span class="fc" id="L897">        assertEquals(true, FilenameUtils.isExtension(&quot;a.b\\file.txt&quot;, new ArrayList(Arrays.asList(new String[] {&quot;rtf&quot;, &quot;txt&quot;}))));</span>
+        
+<span class="fc" id="L899">        assertEquals(false, FilenameUtils.isExtension(&quot;a.b\\file.txt&quot;, new ArrayList(Arrays.asList(new String[] {&quot;TXT&quot;}))));</span>
+<span class="fc" id="L900">        assertEquals(false, FilenameUtils.isExtension(&quot;a.b\\file.txt&quot;, new ArrayList(Arrays.asList(new String[] {&quot;TXT&quot;, &quot;RTF&quot;}))));</span>
+<span class="fc" id="L901">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>v1.3.2 (Apr 4, 2019 2:59:17 AM)</div></body></html>

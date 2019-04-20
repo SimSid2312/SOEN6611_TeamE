@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>DeferredFileOutputStreamTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">v1.3.2 (Apr 4, 2019 2:59:17 AM)</a> &gt; <a href="../../index.html" class="el_group">v1.3.2</a> &gt; <a href="../index.html" class="el_bundle">src/test</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.output</a> &gt; <span class="el_source">DeferredFileOutputStreamTest.java</span></div><h1>DeferredFileOutputStreamTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.output;
+
+import junit.framework.TestCase;
+//import org.apache.commons.fileupload.DeferredFileOutputStream;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.Arrays;
+
+/**
+ * Unit tests for the &lt;code&gt;DeferredFileOutputStream&lt;/code&gt; class.
+ *
+ * @author &lt;a href=&quot;mailto:martinc@apache.org&quot;&gt;Martin Cooper&lt;/a&gt;
+ *
+ * @version $Id$
+ */
+public class DeferredFileOutputStreamTest extends TestCase
+ {
+
+    /**
+     * The test data as a string (which is the simplest form).
+     */
+<span class="fc" id="L41">    private String testString = &quot;0123456789&quot;;</span>
+
+    /**
+     * The test data as a byte array, derived from the string.
+     */
+<span class="fc" id="L46">    private byte[] testBytes = testString.getBytes();</span>
+
+    /**
+     * Standard JUnit test case constructor.
+     *
+     * @param name The name of the test case.
+     */
+    public DeferredFileOutputStreamTest(String name)
+    {
+<span class="fc" id="L55">        super(name);</span>
+<span class="fc" id="L56">    }</span>
+
+    /**
+     * Tests the case where the amount of data falls below the threshold, and
+     * is therefore confined to memory.
+     */
+    public void testBelowThreshold()
+    {
+<span class="fc" id="L64">        DeferredFileOutputStream dfos =</span>
+<span class="fc" id="L65">                new DeferredFileOutputStream(testBytes.length + 42, null);</span>
+        try
+        {
+<span class="fc" id="L68">            dfos.write(testBytes, 0, testBytes.length);</span>
+<span class="fc" id="L69">            dfos.close();</span>
+<span class="fc" id="L70">        }</span>
+<span class="nc" id="L71">        catch (IOException e) {</span>
+<span class="nc" id="L72">            fail(&quot;Unexpected IOException&quot;);</span>
+        }
+<span class="fc" id="L74">        assertTrue(dfos.isInMemory());</span>
+
+<span class="fc" id="L76">        byte[] resultBytes = dfos.getData();</span>
+<span class="pc bpc" id="L77" title="1 of 2 branches missed.">        assertTrue(resultBytes.length == testBytes.length);</span>
+<span class="fc" id="L78">        assertTrue(Arrays.equals(resultBytes, testBytes));</span>
+<span class="fc" id="L79">    }</span>
+
+    /**
+     * Tests the case where the amount of data is exactly the same as the
+     * threshold. The behavior should be the same as that for the amount of
+     * data being below (i.e. not exceeding) the threshold.
+     */
+    public void testAtThreshold() {
+<span class="fc" id="L87">        DeferredFileOutputStream dfos =</span>
+<span class="fc" id="L88">                new DeferredFileOutputStream(testBytes.length, null);</span>
+        try
+        {
+<span class="fc" id="L91">            dfos.write(testBytes, 0, testBytes.length);</span>
+<span class="fc" id="L92">            dfos.close();</span>
+<span class="fc" id="L93">        }</span>
+<span class="nc" id="L94">        catch (IOException e) {</span>
+<span class="nc" id="L95">            fail(&quot;Unexpected IOException&quot;);</span>
+        }
+<span class="fc" id="L97">        assertTrue(dfos.isInMemory());</span>
+
+<span class="fc" id="L99">        byte[] resultBytes = dfos.getData();</span>
+<span class="pc bpc" id="L100" title="1 of 2 branches missed.">        assertTrue(resultBytes.length == testBytes.length);</span>
+<span class="fc" id="L101">        assertTrue(Arrays.equals(resultBytes, testBytes));</span>
+<span class="fc" id="L102">    }</span>
+
+    /**
+     * Tests the case where the amount of data exceeds the threshold, and is
+     * therefore written to disk. The actual data written to disk is verified,
+     * as is the file itself.
+     */
+    public void testAboveThreshold() {
+<span class="fc" id="L110">        File testFile = new File(&quot;testAboveThreshold.dat&quot;);</span>
+
+        // Ensure that the test starts from a clean base.
+<span class="fc" id="L113">        testFile.delete();</span>
+
+<span class="fc" id="L115">        DeferredFileOutputStream dfos =</span>
+<span class="fc" id="L116">                new DeferredFileOutputStream(testBytes.length - 5, testFile);</span>
+        try
+        {
+<span class="fc" id="L119">            dfos.write(testBytes, 0, testBytes.length);</span>
+<span class="fc" id="L120">            dfos.close();</span>
+<span class="fc" id="L121">        }</span>
+<span class="nc" id="L122">        catch (IOException e) {</span>
+<span class="nc" id="L123">            fail(&quot;Unexpected IOException&quot;);</span>
+        }
+<span class="fc" id="L125">        assertFalse(dfos.isInMemory());</span>
+<span class="fc" id="L126">        assertNull(dfos.getData());</span>
+
+<span class="fc" id="L128">        verifyResultFile(testFile);</span>
+
+        // Ensure that the test starts from a clean base.
+<span class="fc" id="L131">        testFile.delete();</span>
+<span class="fc" id="L132">    }</span>
+
+    /**
+     * Tests the case where there are multiple writes beyond the threshold, to
+     * ensure that the &lt;code&gt;thresholdReached()&lt;/code&gt; method is only called
+     * once, as the threshold is crossed for the first time.
+     */
+    public void testThresholdReached() {
+<span class="fc" id="L140">        File testFile = new File(&quot;testThresholdReached.dat&quot;);</span>
+
+        // Ensure that the test starts from a clean base.
+<span class="fc" id="L143">        testFile.delete();</span>
+
+<span class="fc" id="L145">        DeferredFileOutputStream dfos =</span>
+<span class="fc" id="L146">                new DeferredFileOutputStream(testBytes.length / 2, testFile);</span>
+<span class="fc" id="L147">        int chunkSize = testBytes.length / 3;</span>
+
+        try
+        {
+<span class="fc" id="L151">            dfos.write(testBytes, 0, chunkSize);</span>
+<span class="fc" id="L152">            dfos.write(testBytes, chunkSize, chunkSize);</span>
+<span class="fc" id="L153">            dfos.write(testBytes, chunkSize * 2,</span>
+<span class="fc" id="L154">                    testBytes.length - chunkSize * 2);</span>
+<span class="fc" id="L155">            dfos.close();</span>
+<span class="fc" id="L156">        }</span>
+<span class="nc" id="L157">        catch (IOException e) {</span>
+<span class="nc" id="L158">            fail(&quot;Unexpected IOException&quot;);</span>
+        }
+<span class="fc" id="L160">        assertFalse(dfos.isInMemory());</span>
+<span class="fc" id="L161">        assertNull(dfos.getData());</span>
+
+<span class="fc" id="L163">        verifyResultFile(testFile);</span>
+
+        // Ensure that the test starts from a clean base.
+<span class="fc" id="L166">        testFile.delete();</span>
+<span class="fc" id="L167">    }</span>
+    
+
+    /**
+     * Test wether writeTo() properly writes small content.
+     */
+    public void testWriteToSmall(){
+<span class="fc" id="L174">        File testFile = new File(&quot;testWriteToMem.dat&quot;);</span>
+<span class="fc" id="L175">        ByteArrayOutputStream baos = new ByteArrayOutputStream();</span>
+        // Ensure that the test starts from a clean base.
+<span class="fc" id="L177">        testFile.delete();</span>
+
+<span class="fc" id="L179">        DeferredFileOutputStream dfos =</span>
+<span class="fc" id="L180">                new DeferredFileOutputStream(testBytes.length *2, testFile);</span>
+        try{
+<span class="fc" id="L182">            dfos.write(testBytes);</span>
+
+<span class="fc" id="L184">            assertFalse(testFile.exists());</span>
+<span class="fc" id="L185">            assertTrue(dfos.isInMemory());</span>
+            
+            try {
+<span class="nc" id="L188">                dfos.writeTo(baos);</span>
+<span class="nc" id="L189">                fail(&quot;Should not have been able to write before closing&quot;);</span>
+<span class="pc" id="L190">            } catch (IOException ioe) {</span>
+                // ok, as expected
+            }
+        
+<span class="fc" id="L194">            dfos.close();</span>
+<span class="fc" id="L195">            dfos.writeTo(baos);</span>
+<span class="pc" id="L196">        } catch (IOException ioe) {</span>
+<span class="nc" id="L197">            fail(&quot;Unexpected IOException&quot;);</span>
+        }
+<span class="fc" id="L199">        byte[] copiedBytes  = baos.toByteArray();</span>
+<span class="fc" id="L200">        assertTrue(Arrays.equals(testBytes, copiedBytes));</span>
+
+<span class="fc" id="L202">        testFile.delete();</span>
+<span class="fc" id="L203">    }</span>
+
+    /**
+     * Test wether writeTo() properly writes large content.
+     */
+    public void testWriteToLarge(){
+<span class="fc" id="L209">        File testFile = new File(&quot;testWriteToFile.dat&quot;);</span>
+<span class="fc" id="L210">        ByteArrayOutputStream baos = new ByteArrayOutputStream();</span>
+        // Ensure that the test starts from a clean base.
+<span class="fc" id="L212">        testFile.delete();</span>
+
+<span class="fc" id="L214">        DeferredFileOutputStream dfos =</span>
+<span class="fc" id="L215">                new DeferredFileOutputStream(testBytes.length /2, testFile);</span>
+        try{
+<span class="fc" id="L217">            dfos.write(testBytes);</span>
+
+<span class="fc" id="L219">            assertTrue(testFile.exists());</span>
+<span class="fc" id="L220">            assertFalse(dfos.isInMemory());</span>
+            
+            try {
+<span class="nc" id="L223">                dfos.writeTo(baos);</span>
+<span class="nc" id="L224">                fail(&quot;Should not have been able to write before closeing&quot;);</span>
+<span class="pc" id="L225">            } catch (IOException ioe) {</span>
+                // ok, as expected
+            }
+        
+<span class="fc" id="L229">            dfos.close();</span>
+<span class="fc" id="L230">            dfos.writeTo(baos);</span>
+<span class="pc" id="L231">        } catch (IOException ioe) {</span>
+<span class="nc" id="L232">            fail(&quot;Unexpected IOException&quot;);</span>
+        }
+<span class="fc" id="L234">        byte[] copiedBytes  = baos.toByteArray();</span>
+<span class="fc" id="L235">        assertTrue(Arrays.equals(testBytes, copiedBytes));</span>
+<span class="fc" id="L236">        verifyResultFile(testFile);</span>
+<span class="fc" id="L237">        testFile.delete();</span>
+<span class="fc" id="L238">    }</span>
+
+    /**
+     * Verifies that the specified file contains the same data as the original
+     * test data.
+     *
+     * @param testFile The file containing the test output.
+     */
+    private void verifyResultFile(File testFile) {
+        try
+        {
+<span class="fc" id="L249">            FileInputStream fis = new FileInputStream(testFile);</span>
+<span class="pc bpc" id="L250" title="1 of 2 branches missed.">            assertTrue(fis.available() == testBytes.length);</span>
+
+<span class="fc" id="L252">            byte[] resultBytes = new byte[testBytes.length];</span>
+<span class="pc bpc" id="L253" title="1 of 2 branches missed.">            assertTrue(fis.read(resultBytes) == testBytes.length);</span>
+
+<span class="fc" id="L255">            assertTrue(Arrays.equals(resultBytes, testBytes));</span>
+<span class="pc bpc" id="L256" title="1 of 2 branches missed.">            assertTrue(fis.read(resultBytes) == -1);</span>
+
+            try
+            {
+<span class="fc" id="L260">                fis.close();</span>
+<span class="fc" id="L261">            }</span>
+<span class="nc" id="L262">            catch (IOException e) {</span>
+                // Ignore an exception on close
+            }
+<span class="nc" id="L265">        }</span>
+<span class="nc" id="L266">        catch (FileNotFoundException e) {</span>
+<span class="nc" id="L267">            fail(&quot;Unexpected FileNotFoundException&quot;);</span>
+        }
+<span class="nc" id="L269">        catch (IOException e) {</span>
+<span class="nc" id="L270">            fail(&quot;Unexpected IOException&quot;);</span>
+        }
+<span class="fc" id="L272">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>v1.3.2 (Apr 4, 2019 2:59:17 AM)</div></body></html>

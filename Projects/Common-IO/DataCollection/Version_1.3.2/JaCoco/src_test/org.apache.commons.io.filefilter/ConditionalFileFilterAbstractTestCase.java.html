@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ConditionalFileFilterAbstractTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">v1.3.2 (Apr 4, 2019 2:59:17 AM)</a> &gt; <a href="../../index.html" class="el_group">v1.3.2</a> &gt; <a href="../index.html" class="el_bundle">src/test</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.filefilter</a> &gt; <span class="el_source">ConditionalFileFilterAbstractTestCase.java</span></div><h1>ConditionalFileFilterAbstractTestCase.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.filefilter;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+public abstract class ConditionalFileFilterAbstractTestCase
+  extends IOFileFilterAbstractTestCase {
+    
+  private static final String TEST_FILE_NAME_PREFIX = &quot;TestFile&quot;;
+  private static final String TEST_FILE_TYPE = &quot;.tst&quot;;
+  
+  protected TesterTrueFileFilter[] trueFilters;
+  protected TesterFalseFileFilter[] falseFilters;
+  
+  private File file;
+  private File workingPath;
+  
+  public ConditionalFileFilterAbstractTestCase(final String name) {
+<span class="fc" id="L37">    super(name);</span>
+<span class="fc" id="L38">  }</span>
+  
+  public void setUp() throws Exception {
+<span class="fc" id="L41">    this.workingPath = this.determineWorkingDirectoryPath(this.getWorkingPathNamePropertyKey(), this.getDefaultWorkingPath());</span>
+<span class="fc" id="L42">    this.file = new File(this.workingPath, TEST_FILE_NAME_PREFIX + 1 + TEST_FILE_TYPE);</span>
+<span class="fc" id="L43">    this.trueFilters = new TesterTrueFileFilter[4];</span>
+<span class="fc" id="L44">    this.falseFilters = new TesterFalseFileFilter[4];</span>
+<span class="fc" id="L45">    this.trueFilters[1] = new TesterTrueFileFilter();</span>
+<span class="fc" id="L46">    this.trueFilters[2] = new TesterTrueFileFilter();</span>
+<span class="fc" id="L47">    this.trueFilters[3] = new TesterTrueFileFilter();</span>
+<span class="fc" id="L48">    this.falseFilters[1] = new TesterFalseFileFilter();</span>
+<span class="fc" id="L49">    this.falseFilters[2] = new TesterFalseFileFilter();</span>
+<span class="fc" id="L50">    this.falseFilters[3] = new TesterFalseFileFilter();</span>
+<span class="fc" id="L51">  }</span>
+  
+  public void testAdd() {
+<span class="fc" id="L54">    List filters = new ArrayList();</span>
+<span class="fc" id="L55">    ConditionalFileFilter fileFilter = this.getConditionalFileFilter();</span>
+<span class="fc" id="L56">    filters.add(new TesterTrueFileFilter());</span>
+<span class="fc" id="L57">    filters.add(new TesterTrueFileFilter());</span>
+<span class="fc" id="L58">    filters.add(new TesterTrueFileFilter());</span>
+<span class="fc" id="L59">    filters.add(new TesterTrueFileFilter());</span>
+<span class="fc bfc" id="L60" title="All 2 branches covered.">    for(int i = 0; i &lt; filters.size(); i++) {</span>
+<span class="fc" id="L61">      assertEquals(&quot;file filters count: &quot;, i, fileFilter.getFileFilters().size());</span>
+<span class="fc" id="L62">      fileFilter.addFileFilter((IOFileFilter) filters.get(i));</span>
+<span class="fc" id="L63">      assertEquals(&quot;file filters count: &quot;, i+1, fileFilter.getFileFilters().size());</span>
+    }
+<span class="fc bfc" id="L65" title="All 2 branches covered.">    for(Iterator iter = fileFilter.getFileFilters().iterator(); iter.hasNext();) {</span>
+<span class="fc" id="L66">      IOFileFilter filter = (IOFileFilter) iter.next();</span>
+<span class="fc" id="L67">      assertTrue(&quot;found file filter&quot;, filters.contains(filter));</span>
+    }
+<span class="fc" id="L69">    assertEquals(&quot;file filters count&quot;, filters.size(), fileFilter.getFileFilters().size());</span>
+<span class="fc" id="L70">  }</span>
+  
+  public void testRemove() {
+<span class="fc" id="L73">    List filters = new ArrayList();</span>
+<span class="fc" id="L74">    ConditionalFileFilter fileFilter = this.getConditionalFileFilter();</span>
+<span class="fc" id="L75">    filters.add(new TesterTrueFileFilter());</span>
+<span class="fc" id="L76">    filters.add(new TesterTrueFileFilter());</span>
+<span class="fc" id="L77">    filters.add(new TesterTrueFileFilter());</span>
+<span class="fc" id="L78">    filters.add(new TesterTrueFileFilter());</span>
+<span class="fc bfc" id="L79" title="All 2 branches covered.">    for(int i = 0; i &lt; filters.size(); i++) {</span>
+<span class="fc" id="L80">      fileFilter.removeFileFilter((IOFileFilter) filters.get(i));</span>
+<span class="pc bpc" id="L81" title="1 of 2 branches missed.">      assertTrue(&quot;file filter removed&quot;, !fileFilter.getFileFilters().contains((IOFileFilter) filters.get(i)));</span>
+    }
+<span class="fc" id="L83">    assertEquals(&quot;file filters count&quot;, 0, fileFilter.getFileFilters().size());</span>
+<span class="fc" id="L84">  }</span>
+
+  public void testNoFilters() throws Exception {
+<span class="fc" id="L87">    ConditionalFileFilter fileFilter = this.getConditionalFileFilter();</span>
+<span class="fc" id="L88">    File file = new File(this.workingPath, TEST_FILE_NAME_PREFIX + 1 + TEST_FILE_TYPE);</span>
+<span class="fc" id="L89">    assertFileFiltering(1, (IOFileFilter) fileFilter, file, false);</span>
+<span class="fc" id="L90">    assertFilenameFiltering(1, (IOFileFilter) fileFilter, file, false);</span>
+<span class="fc" id="L91">  }</span>
+  
+  public void testFilterBuiltUsingConstructor() throws Exception {
+<span class="fc" id="L94">    List testFilters = this.getTestFilters();</span>
+<span class="fc" id="L95">    List testTrueResults = this.getTrueResults();</span>
+<span class="fc" id="L96">    List testFalseResults = this.getFalseResults();</span>
+<span class="fc" id="L97">    List testFileResults = this.getFileResults();</span>
+<span class="fc" id="L98">    List testFilenameResults = this.getFilenameResults();</span>
+    
+<span class="fc bfc" id="L100" title="All 2 branches covered.">    for(int i = 1; i &lt; testFilters.size(); i++) {</span>
+<span class="fc" id="L101">      List filters = (List) testFilters.get(i);</span>
+<span class="fc" id="L102">      boolean[] trueResults = (boolean []) testTrueResults.get(i);</span>
+<span class="fc" id="L103">      boolean[] falseResults = (boolean []) testFalseResults.get(i);</span>
+<span class="fc" id="L104">      boolean fileResults = ((Boolean) testFileResults.get(i)).booleanValue();</span>
+<span class="fc" id="L105">      boolean filenameResults = ((Boolean) testFilenameResults.get(i)).booleanValue();</span>
+
+      // Test conditional AND filter created by passing filters to the constructor
+<span class="fc" id="L108">      IOFileFilter filter = this.buildFilterUsingConstructor(filters);</span>
+      
+      // Test as a file filter
+<span class="fc" id="L111">      this.resetTrueFilters(this.trueFilters);</span>
+<span class="fc" id="L112">      this.resetFalseFilters(this.falseFilters);</span>
+<span class="fc" id="L113">      this.assertFileFiltering(i, filter, this.file, fileResults);</span>
+<span class="fc" id="L114">      this.assertTrueFiltersInvoked(i, trueFilters, trueResults);</span>
+<span class="fc" id="L115">      this.assertFalseFiltersInvoked(i, falseFilters, falseResults);</span>
+
+      // Test as a filename filter
+<span class="fc" id="L118">      this.resetTrueFilters(this.trueFilters);</span>
+<span class="fc" id="L119">      this.resetFalseFilters(this.falseFilters);</span>
+<span class="fc" id="L120">      this.assertFilenameFiltering(i, filter, this.file, filenameResults);</span>
+<span class="fc" id="L121">      this.assertTrueFiltersInvoked(i, trueFilters, trueResults);</span>
+<span class="fc" id="L122">      this.assertFalseFiltersInvoked(i, falseFilters, falseResults);</span>
+    }
+<span class="fc" id="L124">  }</span>
+  
+  public void testFilterBuiltUsingAdd() throws Exception {
+<span class="fc" id="L127">    List testFilters = this.getTestFilters();</span>
+<span class="fc" id="L128">    List testTrueResults = this.getTrueResults();</span>
+<span class="fc" id="L129">    List testFalseResults = this.getFalseResults();</span>
+<span class="fc" id="L130">    List testFileResults = this.getFileResults();</span>
+<span class="fc" id="L131">    List testFilenameResults = this.getFilenameResults();</span>
+    
+<span class="fc bfc" id="L133" title="All 2 branches covered.">    for(int i = 1; i &lt; testFilters.size(); i++) {</span>
+<span class="fc" id="L134">      List filters = (List) testFilters.get(i);</span>
+<span class="fc" id="L135">      boolean[] trueResults = (boolean []) testTrueResults.get(i);</span>
+<span class="fc" id="L136">      boolean[] falseResults = (boolean []) testFalseResults.get(i);</span>
+<span class="fc" id="L137">      boolean fileResults = ((Boolean) testFileResults.get(i)).booleanValue();</span>
+<span class="fc" id="L138">      boolean filenameResults = ((Boolean) testFilenameResults.get(i)).booleanValue();</span>
+
+      // Test conditional AND filter created by passing filters to the constructor
+<span class="fc" id="L141">      IOFileFilter filter = this.buildFilterUsingAdd(filters);</span>
+      
+      // Test as a file filter
+<span class="fc" id="L144">      this.resetTrueFilters(this.trueFilters);</span>
+<span class="fc" id="L145">      this.resetFalseFilters(this.falseFilters);</span>
+<span class="fc" id="L146">      this.assertFileFiltering(i, filter, this.file, fileResults);</span>
+<span class="fc" id="L147">      this.assertTrueFiltersInvoked(i, trueFilters, trueResults);</span>
+<span class="fc" id="L148">      this.assertFalseFiltersInvoked(i, falseFilters, falseResults);</span>
+
+      // Test as a filename filter
+<span class="fc" id="L151">      this.resetTrueFilters(this.trueFilters);</span>
+<span class="fc" id="L152">      this.resetFalseFilters(this.falseFilters);</span>
+<span class="fc" id="L153">      this.assertFilenameFiltering(i, filter, this.file, filenameResults);</span>
+<span class="fc" id="L154">      this.assertTrueFiltersInvoked(i, trueFilters, trueResults);</span>
+<span class="fc" id="L155">      this.assertFalseFiltersInvoked(i, falseFilters, falseResults);</span>
+    }
+<span class="fc" id="L157">  }</span>
+
+  protected abstract ConditionalFileFilter getConditionalFileFilter();
+  protected abstract IOFileFilter buildFilterUsingAdd(List filters);
+  protected abstract IOFileFilter buildFilterUsingConstructor(List filters);
+  protected abstract List getTestFilters();
+  protected abstract List getTrueResults();
+  protected abstract List getFalseResults();
+  protected abstract List getFileResults();
+  protected abstract List getFilenameResults();
+  protected abstract String getWorkingPathNamePropertyKey();
+  protected abstract String getDefaultWorkingPath();
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>v1.3.2 (Apr 4, 2019 2:59:17 AM)</div></body></html>
