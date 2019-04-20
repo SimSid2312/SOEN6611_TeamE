@@ -7,7 +7,8 @@
     - spearman_and_pearson.py
     - data_for_script.py
 + Projects
-    - Project1
+    - OverallDataAnalysis
+    - Project1 e.g. apache-sling
         + Code Change
             - Upload POM.txt
         + Data Analysis
