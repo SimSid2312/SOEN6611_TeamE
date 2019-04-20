@@ -1,0 +1,774 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>BOMInputStreamTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-io (Apr 20, 2019 6:11:46 PM)</a> &gt; <a href="../../index.html" class="el_group">commons-io</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.input</a> &gt; <span class="el_source">BOMInputStreamTest.java</span></div><h1>BOMInputStreamTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.input;
+
+import static org.junit.Assert.*;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.nio.charset.Charset;
+
+import org.apache.commons.io.ByteOrderMark;
+import org.apache.commons.io.Charsets;
+import org.junit.Assert;
+import org.junit.Assume;
+import org.junit.Test;
+import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+/**
+ * Test case for {@link BOMInputStream}.
+ *
+ * @version $Id$
+ */
+@SuppressWarnings(&quot;ResultOfMethodCallIgnored&quot;)
+<span class="fc" id="L47">public class BOMInputStreamTest {</span>
+    //----------------------------------------------------------------------------
+    //  Support code
+    //----------------------------------------------------------------------------
+
+    /**
+     *  A mock InputStream that expects &lt;code&gt;close()&lt;/code&gt; to be called.
+     */
+    private static class ExpectCloseInputStream extends InputStream {
+        private boolean _closeCalled;
+
+        public void assertCloseCalled() {
+<span class="fc" id="L59">            assertTrue(_closeCalled);</span>
+<span class="fc" id="L60">        }</span>
+
+        @Override
+        public void close() throws IOException {
+<span class="fc" id="L64">            _closeCalled = true;</span>
+<span class="fc" id="L65">        }</span>
+
+        @Override
+        public int read() throws IOException {
+<span class="nc" id="L69">            return -1;</span>
+        }
+    }
+
+    private void assertData(final byte[] expected, final byte[] actual, final int len)
+        throws Exception {
+<span class="fc" id="L75">        assertEquals(&quot;length&quot;, expected.length, len);</span>
+<span class="fc bfc" id="L76" title="All 2 branches covered.">        for (int ii = 0; ii &lt; expected.length; ii++) {</span>
+<span class="fc" id="L77">            assertEquals(&quot;byte &quot; + ii, expected[ii], actual[ii]);</span>
+        }
+<span class="fc" id="L79">    }</span>
+
+    /**
+     *  Creates the underlying data stream, with or without BOM.
+     */
+    private InputStream createUtf16BeDataStream(final byte[] baseData, final boolean addBOM) {
+<span class="fc" id="L85">        byte[] data = baseData;</span>
+<span class="pc bpc" id="L86" title="1 of 2 branches missed.">        if (addBOM) {</span>
+<span class="fc" id="L87">            data = new byte[baseData.length + 2];</span>
+<span class="fc" id="L88">            data[0] = (byte) 0xFE;</span>
+<span class="fc" id="L89">            data[1] = (byte) 0xFF;</span>
+<span class="fc" id="L90">            System.arraycopy(baseData, 0, data, 2, baseData.length);</span>
+        }
+<span class="fc" id="L92">        return new ByteArrayInputStream(data);</span>
+    }
+
+    /**
+     *  Creates the underlying data stream, with or without BOM.
+     */
+    private InputStream createUtf16LeDataStream(final byte[] baseData, final boolean addBOM) {
+<span class="fc" id="L99">        byte[] data = baseData;</span>
+<span class="pc bpc" id="L100" title="1 of 2 branches missed.">        if (addBOM) {</span>
+<span class="fc" id="L101">            data = new byte[baseData.length + 2];</span>
+<span class="fc" id="L102">            data[0] = (byte) 0xFF;</span>
+<span class="fc" id="L103">            data[1] = (byte) 0xFE;</span>
+<span class="fc" id="L104">            System.arraycopy(baseData, 0, data, 2, baseData.length);</span>
+        }
+<span class="fc" id="L106">        return new ByteArrayInputStream(data);</span>
+    }
+
+    /**
+     *  Creates the underlying data stream, with or without BOM.
+     */
+    private InputStream createUtf32BeDataStream(final byte[] baseData, final boolean addBOM) {
+<span class="fc" id="L113">        byte[] data = baseData;</span>
+<span class="fc bfc" id="L114" title="All 2 branches covered.">        if (addBOM) {</span>
+<span class="fc" id="L115">            data = new byte[baseData.length + 4];</span>
+<span class="fc" id="L116">            data[0] = 0;</span>
+<span class="fc" id="L117">            data[1] = 0;</span>
+<span class="fc" id="L118">            data[2] = (byte) 0xFE;</span>
+<span class="fc" id="L119">            data[3] = (byte) 0xFF;</span>
+<span class="fc" id="L120">            System.arraycopy(baseData, 0, data, 4, baseData.length);</span>
+        }
+<span class="fc" id="L122">        return new ByteArrayInputStream(data);</span>
+    }
+
+    /**
+     *  Creates the underlying data stream, with or without BOM.
+     */
+    private InputStream createUtf32LeDataStream(final byte[] baseData, final boolean addBOM) {
+<span class="fc" id="L129">        byte[] data = baseData;</span>
+<span class="fc bfc" id="L130" title="All 2 branches covered.">        if (addBOM) {</span>
+<span class="fc" id="L131">            data = new byte[baseData.length + 4];</span>
+<span class="fc" id="L132">            data[0] = (byte) 0xFF;</span>
+<span class="fc" id="L133">            data[1] = (byte) 0xFE;</span>
+<span class="fc" id="L134">            data[2] = 0;</span>
+<span class="fc" id="L135">            data[3] = 0;</span>
+<span class="fc" id="L136">            System.arraycopy(baseData, 0, data, 4, baseData.length);</span>
+        }
+<span class="fc" id="L138">        return new ByteArrayInputStream(data);</span>
+    }
+
+    /**
+     *  Creates the underlying data stream, with or without BOM.
+     */
+    private InputStream createUtf8DataStream(final byte[] baseData, final boolean addBOM) {
+<span class="fc" id="L145">        byte[] data = baseData;</span>
+<span class="fc bfc" id="L146" title="All 2 branches covered.">        if (addBOM) {</span>
+<span class="fc" id="L147">            data = new byte[baseData.length + 3];</span>
+<span class="fc" id="L148">            data[0] = (byte) 0xEF;</span>
+<span class="fc" id="L149">            data[1] = (byte) 0xBB;</span>
+<span class="fc" id="L150">            data[2] = (byte) 0xBF;</span>
+<span class="fc" id="L151">            System.arraycopy(baseData, 0, data, 3, baseData.length);</span>
+        }
+<span class="fc" id="L153">        return new ByteArrayInputStream(data);</span>
+    }
+
+    //----------------------------------------------------------------------------
+    //  Test cases
+    //----------------------------------------------------------------------------
+
+    private void parseXml(final InputStream in) throws SAXException, IOException, ParserConfigurationException {
+<span class="fc" id="L161">        final Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(in));</span>
+<span class="fc" id="L162">        assertNotNull(doc);</span>
+<span class="fc" id="L163">        assertEquals(&quot;X&quot;, doc.getFirstChild().getNodeName());</span>
+<span class="fc" id="L164">    }</span>
+
+    private void parseXml(final Reader in) throws SAXException, IOException, ParserConfigurationException {
+<span class="fc" id="L167">        final Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(in));</span>
+<span class="fc" id="L168">        assertNotNull(doc);</span>
+<span class="fc" id="L169">        assertEquals(&quot;X&quot;, doc.getFirstChild().getNodeName());</span>
+<span class="fc" id="L170">    }</span>
+
+    private void readBOMInputStreamTwice(final String resource) throws Exception {
+<span class="fc" id="L173">        final InputStream inputStream = this.getClass().getResourceAsStream(resource);</span>
+<span class="fc" id="L174">        Assert.assertNotNull(inputStream);</span>
+<span class="fc" id="L175">        final BOMInputStream bomInputStream = new BOMInputStream(inputStream);</span>
+<span class="fc" id="L176">        bomInputStream.mark(1000000);</span>
+
+<span class="fc" id="L178">        this.readFile(bomInputStream);</span>
+<span class="fc" id="L179">        bomInputStream.reset();</span>
+<span class="fc" id="L180">        this.readFile(bomInputStream);</span>
+<span class="fc" id="L181">        inputStream.close();</span>
+<span class="fc" id="L182">        bomInputStream.close();</span>
+<span class="fc" id="L183">    }</span>
+
+    private void readFile(final BOMInputStream bomInputStream) throws Exception {
+        int bytes;
+<span class="fc" id="L187">        final byte[] bytesFromStream = new byte[100];</span>
+        do {
+<span class="fc" id="L189">            bytes = bomInputStream.read(bytesFromStream);</span>
+<span class="fc bfc" id="L190" title="All 2 branches covered.">        } while (bytes &gt; 0);</span>
+<span class="fc" id="L191">    }</span>
+
+    @Test
+    public void testAvailableWithBOM() throws Exception {
+<span class="fc" id="L195">        final byte[] data = new byte[] { 'A', 'B', 'C', 'D' };</span>
+<span class="fc" id="L196">        final InputStream in = new BOMInputStream(createUtf8DataStream(data, true));</span>
+<span class="fc" id="L197">        assertEquals(7, in.available());</span>
+<span class="fc" id="L198">        in.close();</span>
+<span class="fc" id="L199">    }</span>
+
+    @Test
+    public void testAvailableWithoutBOM() throws Exception {
+<span class="fc" id="L203">        final byte[] data = new byte[] { 'A', 'B', 'C', 'D' };</span>
+<span class="fc" id="L204">        final InputStream in = new BOMInputStream(createUtf8DataStream(data, false));</span>
+<span class="fc" id="L205">        assertEquals(4, in.available());</span>
+<span class="fc" id="L206">        in.close();</span>
+<span class="fc" id="L207">    }</span>
+
+    @Test
+    // this is here for coverage
+    public void testClose() throws Exception {
+<span class="fc" id="L212">        final ExpectCloseInputStream del = new ExpectCloseInputStream();</span>
+<span class="fc" id="L213">        final InputStream in = new BOMInputStream(del);</span>
+
+<span class="fc" id="L215">        in.close();</span>
+<span class="fc" id="L216">        del.assertCloseCalled();</span>
+<span class="fc" id="L217">        del.close();</span>
+<span class="fc" id="L218">    }</span>
+
+    @Test
+    public void testEmptyBufferWithBOM() throws Exception {
+<span class="fc" id="L222">        final byte[] data = new byte[] {};</span>
+<span class="fc" id="L223">        final InputStream in = new BOMInputStream(createUtf8DataStream(data, true));</span>
+<span class="fc" id="L224">        final byte[] buf = new byte[1024];</span>
+<span class="fc" id="L225">        assertEquals(-1, in.read(buf));</span>
+<span class="fc" id="L226">        in.close();</span>
+<span class="fc" id="L227">    }</span>
+
+    @Test
+    public void testEmptyBufferWithoutBOM() throws Exception {
+<span class="fc" id="L231">        final byte[] data = new byte[] {};</span>
+<span class="fc" id="L232">        final InputStream in = new BOMInputStream(createUtf8DataStream(data, false));</span>
+<span class="fc" id="L233">        final byte[] buf = new byte[1024];</span>
+<span class="fc" id="L234">        assertEquals(-1, in.read(buf));</span>
+<span class="fc" id="L235">        in.close();</span>
+<span class="fc" id="L236">    }</span>
+
+    @Test
+    public void testGetBOMFirstThenRead() throws Exception {
+<span class="fc" id="L240">        final byte[] data = new byte[] { 'A', 'B', 'C' };</span>
+<span class="fc" id="L241">        final BOMInputStream in = new BOMInputStream(createUtf8DataStream(data, true));</span>
+<span class="fc" id="L242">        assertEquals(&quot;getBOM&quot;, ByteOrderMark.UTF_8, in.getBOM());</span>
+<span class="fc" id="L243">        assertTrue(&quot;hasBOM()&quot;, in.hasBOM());</span>
+<span class="fc" id="L244">        assertTrue(&quot;hasBOM(UTF-8)&quot;, in.hasBOM(ByteOrderMark.UTF_8));</span>
+<span class="fc" id="L245">        assertEquals('A', in.read());</span>
+<span class="fc" id="L246">        assertEquals('B', in.read());</span>
+<span class="fc" id="L247">        assertEquals('C', in.read());</span>
+<span class="fc" id="L248">        assertEquals(-1, in.read());</span>
+<span class="fc" id="L249">        in.close();</span>
+<span class="fc" id="L250">    }</span>
+
+    @Test
+    public void testGetBOMFirstThenReadInclude() throws Exception {
+<span class="fc" id="L254">        final byte[] data = new byte[] { 'A', 'B', 'C' };</span>
+<span class="fc" id="L255">        final BOMInputStream in = new BOMInputStream(createUtf8DataStream(data, true), true);</span>
+<span class="fc" id="L256">        assertTrue(&quot;hasBOM()&quot;, in.hasBOM());</span>
+<span class="fc" id="L257">        assertTrue(&quot;hasBOM(UTF-8)&quot;, in.hasBOM(ByteOrderMark.UTF_8));</span>
+<span class="fc" id="L258">        assertEquals(&quot;getBOM&quot;, ByteOrderMark.UTF_8, in.getBOM());</span>
+<span class="fc" id="L259">        assertEquals(0xEF, in.read());</span>
+<span class="fc" id="L260">        assertEquals(0xBB, in.read());</span>
+<span class="fc" id="L261">        assertEquals(0xBF, in.read());</span>
+<span class="fc" id="L262">        assertEquals('A', in.read());</span>
+<span class="fc" id="L263">        assertEquals('B', in.read());</span>
+<span class="fc" id="L264">        assertEquals('C', in.read());</span>
+<span class="fc" id="L265">        assertEquals(-1, in.read());</span>
+<span class="fc" id="L266">        in.close();</span>
+<span class="fc" id="L267">    }</span>
+
+    @Test
+    public void testLargeBufferWithBOM() throws Exception {
+<span class="fc" id="L271">        final byte[] data = new byte[] { 'A', 'B', 'C' };</span>
+<span class="fc" id="L272">        final InputStream in = new BOMInputStream(createUtf8DataStream(data, true));</span>
+<span class="fc" id="L273">        final byte[] buf = new byte[1024];</span>
+<span class="fc" id="L274">        assertData(data, buf, in.read(buf));</span>
+<span class="fc" id="L275">        in.close();</span>
+<span class="fc" id="L276">    }</span>
+
+    @Test
+    public void testLargeBufferWithoutBOM() throws Exception {
+<span class="fc" id="L280">        final byte[] data = new byte[] { 'A', 'B', 'C' };</span>
+<span class="fc" id="L281">        final InputStream in = new BOMInputStream(createUtf8DataStream(data, false));</span>
+<span class="fc" id="L282">        final byte[] buf = new byte[1024];</span>
+<span class="fc" id="L283">        assertData(data, buf, in.read(buf));</span>
+<span class="fc" id="L284">        in.close();</span>
+<span class="fc" id="L285">    }</span>
+
+    @Test
+    public void testLeadingNonBOMBufferedRead() throws Exception {
+<span class="fc" id="L289">        final byte[] data = new byte[] { (byte) 0xEF, (byte) 0xAB, (byte) 0xCD };</span>
+<span class="fc" id="L290">        final InputStream in = new BOMInputStream(createUtf8DataStream(data, false));</span>
+<span class="fc" id="L291">        final byte[] buf = new byte[1024];</span>
+<span class="fc" id="L292">        assertData(data, buf, in.read(buf));</span>
+<span class="fc" id="L293">        in.close();</span>
+<span class="fc" id="L294">    }</span>
+
+    @Test
+    public void testLeadingNonBOMSingleRead() throws Exception {
+<span class="fc" id="L298">        final byte[] data = new byte[] { (byte) 0xEF, (byte) 0xAB, (byte) 0xCD };</span>
+<span class="fc" id="L299">        final InputStream in = new BOMInputStream(createUtf8DataStream(data, false));</span>
+<span class="fc" id="L300">        assertEquals(0xEF, in.read());</span>
+<span class="fc" id="L301">        assertEquals(0xAB, in.read());</span>
+<span class="fc" id="L302">        assertEquals(0xCD, in.read());</span>
+<span class="fc" id="L303">        assertEquals(-1, in.read());</span>
+<span class="fc" id="L304">        in.close();</span>
+<span class="fc" id="L305">    }</span>
+
+    @Test
+    public void testMarkResetAfterReadWithBOM() throws Exception {
+<span class="fc" id="L309">        final byte[] data = new byte[] { 'A', 'B', 'C', 'D' };</span>
+<span class="fc" id="L310">        final InputStream in = new BOMInputStream(createUtf8DataStream(data, true));</span>
+<span class="fc" id="L311">        assertTrue(in.markSupported());</span>
+
+<span class="fc" id="L313">        in.read();</span>
+<span class="fc" id="L314">        in.mark(10);</span>
+
+<span class="fc" id="L316">        in.read();</span>
+<span class="fc" id="L317">        in.read();</span>
+<span class="fc" id="L318">        in.reset();</span>
+<span class="fc" id="L319">        assertEquals('B', in.read());</span>
+<span class="fc" id="L320">        in.close();</span>
+<span class="fc" id="L321">    }</span>
+
+    @Test
+    public void testMarkResetAfterReadWithoutBOM() throws Exception {
+<span class="fc" id="L325">        final byte[] data = new byte[] { 'A', 'B', 'C', 'D' };</span>
+<span class="fc" id="L326">        final InputStream in = new BOMInputStream(createUtf8DataStream(data, false));</span>
+<span class="fc" id="L327">        assertTrue(in.markSupported());</span>
+
+<span class="fc" id="L329">        in.read();</span>
+<span class="fc" id="L330">        in.mark(10);</span>
+
+<span class="fc" id="L332">        in.read();</span>
+<span class="fc" id="L333">        in.read();</span>
+<span class="fc" id="L334">        in.reset();</span>
+<span class="fc" id="L335">        assertEquals('B', in.read());</span>
+<span class="fc" id="L336">        in.close();</span>
+<span class="fc" id="L337">    }</span>
+
+    @Test
+    public void testMarkResetBeforeReadWithBOM() throws Exception {
+<span class="fc" id="L341">        final byte[] data = new byte[] { 'A', 'B', 'C', 'D' };</span>
+<span class="fc" id="L342">        final InputStream in = new BOMInputStream(createUtf8DataStream(data, true));</span>
+<span class="fc" id="L343">        assertTrue(in.markSupported());</span>
+
+<span class="fc" id="L345">        in.mark(10);</span>
+
+<span class="fc" id="L347">        in.read();</span>
+<span class="fc" id="L348">        in.read();</span>
+<span class="fc" id="L349">        in.reset();</span>
+<span class="fc" id="L350">        assertEquals('A', in.read());</span>
+<span class="fc" id="L351">        in.close();</span>
+<span class="fc" id="L352">    }</span>
+
+    @Test
+    public void testMarkResetBeforeReadWithoutBOM() throws Exception {
+<span class="fc" id="L356">        final byte[] data = new byte[] { 'A', 'B', 'C', 'D' };</span>
+<span class="fc" id="L357">        final InputStream in = new BOMInputStream(createUtf8DataStream(data, false));</span>
+<span class="fc" id="L358">        assertTrue(in.markSupported());</span>
+
+<span class="fc" id="L360">        in.mark(10);</span>
+
+<span class="fc" id="L362">        in.read();</span>
+<span class="fc" id="L363">        in.read();</span>
+<span class="fc" id="L364">        in.reset();</span>
+<span class="fc" id="L365">        assertEquals('A', in.read());</span>
+<span class="fc" id="L366">        in.close();</span>
+<span class="fc" id="L367">    }</span>
+
+    @Test
+    public void testNoBoms() throws Exception {
+<span class="fc" id="L371">        final byte[] data = new byte[] { 'A', 'B', 'C' };</span>
+        try {
+<span class="nc" id="L373">            (new BOMInputStream(createUtf8DataStream(data, true), false, (ByteOrderMark[])null)).close();</span>
+<span class="nc" id="L374">            fail(&quot;Null BOMs, expected IllegalArgumentException&quot;);</span>
+<span class="fc" id="L375">        } catch (final IllegalArgumentException e) {</span>
+            // expected
+<span class="nc" id="L377">        }</span>
+        try {
+<span class="nc" id="L379">            (new BOMInputStream(createUtf8DataStream(data, true), false, new ByteOrderMark[0])).close();</span>
+<span class="nc" id="L380">            fail(&quot;Null BOMs, expected IllegalArgumentException&quot;);</span>
+<span class="fc" id="L381">        } catch (final IllegalArgumentException e) {</span>
+            // expected
+<span class="nc" id="L383">        }</span>
+<span class="fc" id="L384">    }</span>
+
+
+
+
+
+    @Test
+    public void testReadEmpty() throws Exception {
+<span class="fc" id="L392">        final byte[] data = new byte[] {};</span>
+<span class="fc" id="L393">        final BOMInputStream in = new BOMInputStream(createUtf8DataStream(data, false));</span>
+<span class="fc" id="L394">        assertEquals(-1, in.read());</span>
+<span class="fc" id="L395">        assertFalse(&quot;hasBOM()&quot;, in.hasBOM());</span>
+<span class="fc" id="L396">        assertFalse(&quot;hasBOM(UTF-8)&quot;, in.hasBOM(ByteOrderMark.UTF_8));</span>
+<span class="fc" id="L397">        assertNull(&quot;getBOM&quot;, in.getBOM());</span>
+<span class="fc" id="L398">        in.close();</span>
+<span class="fc" id="L399">    }</span>
+
+    @Test
+    public void testReadSmall() throws Exception {
+<span class="fc" id="L403">        final byte[] data = new byte[] { 'A', 'B' };</span>
+<span class="fc" id="L404">        final BOMInputStream in = new BOMInputStream(createUtf8DataStream(data, false));</span>
+<span class="fc" id="L405">        assertEquals('A', in.read());</span>
+<span class="fc" id="L406">        assertEquals('B', in.read());</span>
+<span class="fc" id="L407">        assertEquals(-1, in.read());</span>
+<span class="fc" id="L408">        assertFalse(&quot;hasBOM()&quot;, in.hasBOM());</span>
+<span class="fc" id="L409">        assertFalse(&quot;hasBOM(UTF-8)&quot;, in.hasBOM(ByteOrderMark.UTF_8));</span>
+<span class="fc" id="L410">        assertNull(&quot;getBOM&quot;, in.getBOM());</span>
+<span class="fc" id="L411">        in.close();</span>
+<span class="fc" id="L412">    }</span>
+
+    @Test
+    public void testReadTwiceWithBOM() throws Exception {
+<span class="fc" id="L416">        this.readBOMInputStreamTwice(&quot;/org/apache/commons/io/testfileBOM.xml&quot;);</span>
+<span class="fc" id="L417">    }</span>
+
+    @Test
+    public void testReadTwiceWithoutBOM() throws Exception {
+<span class="fc" id="L421">        this.readBOMInputStreamTwice(&quot;/org/apache/commons/io/testfileNoBOM.xml&quot;);</span>
+<span class="fc" id="L422">    }</span>
+
+    @Test
+    public void testReadWithBOMInclude() throws Exception {
+<span class="fc" id="L426">        final byte[] data = new byte[] { 'A', 'B', 'C' };</span>
+<span class="fc" id="L427">        final BOMInputStream in = new BOMInputStream(createUtf8DataStream(data, true), true);</span>
+<span class="fc" id="L428">        assertEquals(0xEF, in.read());</span>
+<span class="fc" id="L429">        assertEquals(0xBB, in.read());</span>
+<span class="fc" id="L430">        assertEquals(0xBF, in.read());</span>
+<span class="fc" id="L431">        assertEquals('A', in.read());</span>
+<span class="fc" id="L432">        assertEquals('B', in.read());</span>
+<span class="fc" id="L433">        assertEquals('C', in.read());</span>
+<span class="fc" id="L434">        assertEquals(-1, in.read());</span>
+<span class="fc" id="L435">        assertTrue(&quot;hasBOM()&quot;, in.hasBOM());</span>
+<span class="fc" id="L436">        assertTrue(&quot;hasBOM(UTF-8)&quot;, in.hasBOM(ByteOrderMark.UTF_8));</span>
+<span class="fc" id="L437">        assertEquals(&quot;getBOM&quot;, ByteOrderMark.UTF_8, in.getBOM());</span>
+<span class="fc" id="L438">        in.close();</span>
+<span class="fc" id="L439">    }</span>
+
+    @Test
+    public void testReadWithBOMUtf16Be() throws Exception {
+        @SuppressWarnings(&quot;deprecation&quot;) // unavoidable until Java 7
+<span class="fc" id="L444">        final byte[] data = &quot;ABC&quot;.getBytes(Charsets.UTF_16BE);</span>
+<span class="fc" id="L445">        final BOMInputStream in = new BOMInputStream(createUtf16BeDataStream(data, true), ByteOrderMark.UTF_16BE);</span>
+<span class="fc" id="L446">        assertEquals(0, in.read());</span>
+<span class="fc" id="L447">        assertEquals('A', in.read());</span>
+<span class="fc" id="L448">        assertEquals(0, in.read());</span>
+<span class="fc" id="L449">        assertEquals('B', in.read());</span>
+<span class="fc" id="L450">        assertEquals(0, in.read());</span>
+<span class="fc" id="L451">        assertEquals('C', in.read());</span>
+<span class="fc" id="L452">        assertEquals(-1, in.read());</span>
+<span class="fc" id="L453">        assertTrue(&quot;hasBOM()&quot;, in.hasBOM());</span>
+<span class="fc" id="L454">        assertTrue(&quot;hasBOM(UTF-16BE)&quot;, in.hasBOM(ByteOrderMark.UTF_16BE));</span>
+<span class="fc" id="L455">        assertEquals(&quot;getBOM&quot;, ByteOrderMark.UTF_16BE, in.getBOM());</span>
+        try {
+<span class="nc" id="L457">            in.hasBOM(ByteOrderMark.UTF_16LE);</span>
+<span class="nc" id="L458">            fail(&quot;Expected IllegalArgumentException&quot;);</span>
+<span class="fc" id="L459">        } catch (final IllegalArgumentException e) {</span>
+            // expected - not configured for UTF-16LE
+<span class="nc" id="L461">        }</span>
+<span class="fc" id="L462">        in.close();</span>
+<span class="fc" id="L463">    }</span>
+
+    @Test
+    public void testReadWithBOMUtf16Le() throws Exception {
+        @SuppressWarnings(&quot;deprecation&quot;) // unavoidable until Java 7
+<span class="fc" id="L468">        final byte[] data = &quot;ABC&quot;.getBytes(Charsets.UTF_16LE);</span>
+<span class="fc" id="L469">        final BOMInputStream in = new BOMInputStream(createUtf16LeDataStream(data, true), ByteOrderMark.UTF_16LE);</span>
+<span class="fc" id="L470">        assertEquals('A', in.read());</span>
+<span class="fc" id="L471">        assertEquals(0, in.read());</span>
+<span class="fc" id="L472">        assertEquals('B', in.read());</span>
+<span class="fc" id="L473">        assertEquals(0, in.read());</span>
+<span class="fc" id="L474">        assertEquals('C', in.read());</span>
+<span class="fc" id="L475">        assertEquals(0, in.read());</span>
+<span class="fc" id="L476">        assertEquals(-1, in.read());</span>
+<span class="fc" id="L477">        assertTrue(&quot;hasBOM()&quot;, in.hasBOM());</span>
+<span class="fc" id="L478">        assertTrue(&quot;hasBOM(UTF-16LE)&quot;, in.hasBOM(ByteOrderMark.UTF_16LE));</span>
+<span class="fc" id="L479">        assertEquals(&quot;getBOM&quot;, ByteOrderMark.UTF_16LE, in.getBOM());</span>
+        try {
+<span class="nc" id="L481">            in.hasBOM(ByteOrderMark.UTF_16BE);</span>
+<span class="nc" id="L482">            fail(&quot;Expected IllegalArgumentException&quot;);</span>
+<span class="fc" id="L483">        } catch (final IllegalArgumentException e) {</span>
+            // expected - not configured for UTF-16BE
+<span class="nc" id="L485">        }</span>
+<span class="fc" id="L486">        in.close();</span>
+<span class="fc" id="L487">    }</span>
+
+    @Test
+    public void testReadWithBOMUtf32Be() throws Exception {
+<span class="fc" id="L491">        Assume.assumeTrue(Charset.isSupported(&quot;UTF_32BE&quot;));</span>
+<span class="fc" id="L492">        final byte[] data = &quot;ABC&quot;.getBytes(&quot;UTF_32BE&quot;);</span>
+<span class="fc" id="L493">        final BOMInputStream in = new BOMInputStream(createUtf32BeDataStream(data, true), ByteOrderMark.UTF_32BE);</span>
+<span class="fc" id="L494">        assertEquals(0, in.read());</span>
+<span class="fc" id="L495">        assertEquals(0, in.read());</span>
+<span class="fc" id="L496">        assertEquals(0, in.read());</span>
+<span class="fc" id="L497">        assertEquals('A', in.read());</span>
+<span class="fc" id="L498">        assertEquals(0, in.read());</span>
+<span class="fc" id="L499">        assertEquals(0, in.read());</span>
+<span class="fc" id="L500">        assertEquals(0, in.read());</span>
+<span class="fc" id="L501">        assertEquals('B', in.read());</span>
+<span class="fc" id="L502">        assertEquals(0, in.read());</span>
+<span class="fc" id="L503">        assertEquals(0, in.read());</span>
+<span class="fc" id="L504">        assertEquals(0, in.read());</span>
+<span class="fc" id="L505">        assertEquals('C', in.read());</span>
+<span class="fc" id="L506">        assertEquals(-1, in.read());</span>
+<span class="fc" id="L507">        assertTrue(&quot;hasBOM()&quot;, in.hasBOM());</span>
+<span class="fc" id="L508">        assertTrue(&quot;hasBOM(UTF-32BE)&quot;, in.hasBOM(ByteOrderMark.UTF_32BE));</span>
+<span class="fc" id="L509">        assertEquals(&quot;getBOM&quot;, ByteOrderMark.UTF_32BE, in.getBOM());</span>
+        try {
+<span class="nc" id="L511">            in.hasBOM(ByteOrderMark.UTF_32LE);</span>
+<span class="nc" id="L512">            fail(&quot;Expected IllegalArgumentException&quot;);</span>
+<span class="fc" id="L513">        } catch (final IllegalArgumentException e) {</span>
+            // expected - not configured for UTF-32LE
+<span class="nc" id="L515">        }</span>
+<span class="fc" id="L516">        in.close();</span>
+<span class="fc" id="L517">    }</span>
+
+    @Test
+    public void testReadWithBOMUtf32Le() throws Exception {
+<span class="fc" id="L521">        Assume.assumeTrue(Charset.isSupported(&quot;UTF_32LE&quot;));</span>
+<span class="fc" id="L522">        final byte[] data = &quot;ABC&quot;.getBytes(&quot;UTF_32LE&quot;);</span>
+<span class="fc" id="L523">        final BOMInputStream in = new BOMInputStream(createUtf32LeDataStream(data, true), ByteOrderMark.UTF_32LE);</span>
+<span class="fc" id="L524">        assertEquals('A', in.read());</span>
+<span class="fc" id="L525">        assertEquals(0, in.read());</span>
+<span class="fc" id="L526">        assertEquals(0, in.read());</span>
+<span class="fc" id="L527">        assertEquals(0, in.read());</span>
+<span class="fc" id="L528">        assertEquals('B', in.read());</span>
+<span class="fc" id="L529">        assertEquals(0, in.read());</span>
+<span class="fc" id="L530">        assertEquals(0, in.read());</span>
+<span class="fc" id="L531">        assertEquals(0, in.read());</span>
+<span class="fc" id="L532">        assertEquals('C', in.read());</span>
+<span class="fc" id="L533">        assertEquals(0, in.read());</span>
+<span class="fc" id="L534">        assertEquals(0, in.read());</span>
+<span class="fc" id="L535">        assertEquals(0, in.read());</span>
+<span class="fc" id="L536">        assertEquals(-1, in.read());</span>
+<span class="fc" id="L537">        assertTrue(&quot;hasBOM()&quot;, in.hasBOM());</span>
+<span class="fc" id="L538">        assertTrue(&quot;hasBOM(UTF-32LE)&quot;, in.hasBOM(ByteOrderMark.UTF_32LE));</span>
+<span class="fc" id="L539">        assertEquals(&quot;getBOM&quot;, ByteOrderMark.UTF_32LE, in.getBOM());</span>
+        try {
+<span class="nc" id="L541">            in.hasBOM(ByteOrderMark.UTF_32BE);</span>
+<span class="nc" id="L542">            fail(&quot;Expected IllegalArgumentException&quot;);</span>
+<span class="fc" id="L543">        } catch (final IllegalArgumentException e) {</span>
+            // expected - not configured for UTF-32BE
+<span class="nc" id="L545">        }</span>
+<span class="fc" id="L546">        in.close();</span>
+<span class="fc" id="L547">    }</span>
+
+    @Test
+    public void testReadWithBOMUtf8() throws Exception {
+        @SuppressWarnings(&quot;deprecation&quot;) // unavoidable until Java 7
+<span class="fc" id="L552">        final byte[] data = &quot;ABC&quot;.getBytes(Charsets.UTF_8);</span>
+<span class="fc" id="L553">        final BOMInputStream in = new BOMInputStream(createUtf8DataStream(data, true), ByteOrderMark.UTF_8);</span>
+<span class="fc" id="L554">        assertEquals('A', in.read());</span>
+<span class="fc" id="L555">        assertEquals('B', in.read());</span>
+<span class="fc" id="L556">        assertEquals('C', in.read());</span>
+<span class="fc" id="L557">        assertEquals(-1, in.read());</span>
+<span class="fc" id="L558">        assertTrue(&quot;hasBOM()&quot;, in.hasBOM());</span>
+<span class="fc" id="L559">        assertTrue(&quot;hasBOM(UTF-8)&quot;, in.hasBOM(ByteOrderMark.UTF_8));</span>
+<span class="fc" id="L560">        assertEquals(&quot;getBOM&quot;, ByteOrderMark.UTF_8, in.getBOM());</span>
+        try {
+<span class="nc" id="L562">            in.hasBOM(ByteOrderMark.UTF_16BE);</span>
+<span class="nc" id="L563">            fail(&quot;Expected IllegalArgumentException&quot;);</span>
+<span class="fc" id="L564">        } catch (final IllegalArgumentException e) {</span>
+            // expected - not configured for UTF-16BE
+<span class="nc" id="L566">        }</span>
+<span class="fc" id="L567">        in.close();</span>
+<span class="fc" id="L568">    }</span>
+
+    @Test
+    public void testReadWithMultipleBOM() throws Exception {
+<span class="fc" id="L572">        final byte[] data = new byte[] { 'A', 'B', 'C' };</span>
+<span class="fc" id="L573">        final BOMInputStream in = new BOMInputStream(createUtf8DataStream(data, true),</span>
+                                            ByteOrderMark.UTF_16BE, ByteOrderMark.UTF_8);
+<span class="fc" id="L575">        assertEquals('A', in.read());</span>
+<span class="fc" id="L576">        assertEquals('B', in.read());</span>
+<span class="fc" id="L577">        assertEquals('C', in.read());</span>
+<span class="fc" id="L578">        assertEquals(-1, in.read());</span>
+<span class="fc" id="L579">        assertTrue(&quot;hasBOM()&quot;, in.hasBOM());</span>
+<span class="fc" id="L580">        assertTrue(&quot;hasBOM(UTF-8)&quot;, in.hasBOM(ByteOrderMark.UTF_8));</span>
+<span class="fc" id="L581">        assertFalse(&quot;hasBOM(UTF-16BE)&quot;, in.hasBOM(ByteOrderMark.UTF_16BE));</span>
+<span class="fc" id="L582">        assertEquals(&quot;getBOM&quot;, ByteOrderMark.UTF_8, in.getBOM());</span>
+<span class="fc" id="L583">        in.close();</span>
+<span class="fc" id="L584">    }</span>
+
+    @Test
+    public void testReadWithoutBOM() throws Exception {
+<span class="fc" id="L588">        final byte[] data = new byte[] { 'A', 'B', 'C' };</span>
+<span class="fc" id="L589">        final BOMInputStream in = new BOMInputStream(createUtf8DataStream(data, false));</span>
+<span class="fc" id="L590">        assertEquals('A', in.read());</span>
+<span class="fc" id="L591">        assertEquals('B', in.read());</span>
+<span class="fc" id="L592">        assertEquals('C', in.read());</span>
+<span class="fc" id="L593">        assertEquals(-1, in.read());</span>
+<span class="fc" id="L594">        assertFalse(&quot;hasBOM()&quot;, in.hasBOM());</span>
+<span class="fc" id="L595">        assertFalse(&quot;hasBOM(UTF-8)&quot;, in.hasBOM(ByteOrderMark.UTF_8));</span>
+<span class="fc" id="L596">        assertNull(&quot;getBOM&quot;, in.getBOM());</span>
+<span class="fc" id="L597">        in.close();</span>
+<span class="fc" id="L598">    }</span>
+
+    @Test
+    public void testReadXmlWithBOMUcs2() throws Exception {
+<span class="fc" id="L602">        Assume.assumeFalse(&quot;This test does not pass on some IBM VMs xml parsers&quot;, System.getProperty(&quot;java.vendor&quot;).contains(&quot;IBM&quot;));</span>
+
+        // UCS-2 is BE.
+<span class="fc" id="L605">        Assume.assumeTrue(Charset.isSupported(&quot;ISO-10646-UCS-2&quot;));</span>
+<span class="fc" id="L606">        final byte[] data = &quot;&lt;?xml version=\&quot;1.0\&quot; encoding=\&quot;ISO-10646-UCS-2\&quot;?&gt;&lt;X/&gt;&quot;.getBytes(&quot;ISO-10646-UCS-2&quot;);</span>
+<span class="fc" id="L607">        parseXml(new BOMInputStream(createUtf16BeDataStream(data, true), ByteOrderMark.UTF_16BE));</span>
+<span class="fc" id="L608">        parseXml(createUtf16BeDataStream(data, true));</span>
+<span class="fc" id="L609">    }</span>
+
+    @Test
+    public void testReadXmlWithBOMUcs4() throws Exception {
+        // UCS-4 is BE or LE?
+        // Hm: ISO-10646-UCS-4 is not supported on Oracle 1.6.0_31
+<span class="nc" id="L615">        Assume.assumeTrue(Charset.isSupported(&quot;ISO-10646-UCS-4&quot;));</span>
+<span class="nc" id="L616">        final byte[] data = &quot;&lt;?xml version=\&quot;1.0\&quot; encoding=\&quot;ISO-10646-UCS-4\&quot;?&gt;&lt;X/&gt;&quot;.getBytes(&quot;ISO-10646-UCS-4&quot;);</span>
+        // XML parser does not know what to do with UTF-32
+<span class="nc" id="L618">        parseXml(new BOMInputStream(createUtf32BeDataStream(data, true), ByteOrderMark.UTF_32BE));</span>
+        // XML parser does not know what to do with UTF-32
+<span class="nc" id="L620">        Assume.assumeTrue(&quot;JVM and SAX need to support UTF_32LE for this&quot;, jvmAndSaxBothSupportCharset(&quot;UTF_32LE&quot;));</span>
+<span class="nc" id="L621">        parseXml(createUtf32BeDataStream(data, true));</span>
+<span class="nc" id="L622">    }</span>
+
+    @Test
+    @SuppressWarnings(&quot;deprecation&quot;) // unavoidable until Java 7
+    public void testReadXmlWithBOMUtf16Be() throws Exception {
+<span class="fc" id="L627">        final byte[] data = &quot;&lt;?xml version=\&quot;1.0\&quot; encoding=\&quot;UTF-16BE\&quot;?&gt;&lt;X/&gt;&quot;.getBytes(Charsets.UTF_16BE);</span>
+<span class="fc" id="L628">        parseXml(new BOMInputStream(createUtf16BeDataStream(data, true), ByteOrderMark.UTF_16BE));</span>
+<span class="fc" id="L629">        parseXml(createUtf16BeDataStream(data, true));</span>
+<span class="fc" id="L630">    }</span>
+
+    @Test
+    @SuppressWarnings(&quot;deprecation&quot;) // unavoidable until Java 7
+    public void testReadXmlWithBOMUtf16Le() throws Exception {
+<span class="fc" id="L635">        final byte[] data = &quot;&lt;?xml version=\&quot;1.0\&quot; encoding=\&quot;UTF-16LE\&quot;?&gt;&lt;X/&gt;&quot;.getBytes(Charsets.UTF_16LE);</span>
+<span class="fc" id="L636">        parseXml(new BOMInputStream(createUtf16LeDataStream(data, true), ByteOrderMark.UTF_16LE));</span>
+<span class="fc" id="L637">        parseXml(createUtf16LeDataStream(data, true));</span>
+<span class="fc" id="L638">    }</span>
+
+    @Test
+    public void testReadXmlWithBOMUtf32Be() throws Exception {
+<span class="fc" id="L642">        Assume.assumeTrue(&quot;JVM and SAX need to support UTF_32BE for this&quot;, jvmAndSaxBothSupportCharset(&quot;UTF_32BE&quot;));</span>
+<span class="fc" id="L643">        final byte[] data = &quot;&lt;?xml version=\&quot;1.0\&quot; encoding=\&quot;UTF-32BE\&quot;?&gt;&lt;X/&gt;&quot;.getBytes(&quot;UTF_32BE&quot;);</span>
+<span class="fc" id="L644">        parseXml(new BOMInputStream(createUtf32BeDataStream(data, true), ByteOrderMark.UTF_32BE));</span>
+        // XML parser does not know what to do with UTF-32, so we warp the input stream with a XmlStreamReader
+<span class="fc" id="L646">        parseXml(new XmlStreamReader(createUtf32BeDataStream(data, true)));</span>
+<span class="fc" id="L647">    }</span>
+
+    @Test
+    public void testReadXmlWithBOMUtf32Le() throws Exception {
+<span class="fc" id="L651">        Assume.assumeTrue(&quot;JVM and SAX need to support UTF_32LE for this&quot;, jvmAndSaxBothSupportCharset(&quot;UTF_32LE&quot;));</span>
+<span class="fc" id="L652">        final byte[] data = &quot;&lt;?xml version=\&quot;1.0\&quot; encoding=\&quot;UTF-32LE\&quot;?&gt;&lt;X/&gt;&quot;.getBytes(&quot;UTF_32LE&quot;);</span>
+<span class="fc" id="L653">        parseXml(new BOMInputStream(createUtf32LeDataStream(data, true), ByteOrderMark.UTF_32LE));</span>
+        // XML parser does not know what to do with UTF-32, so we warp the input stream with a XmlStreamReader
+<span class="fc" id="L655">        parseXml(new XmlStreamReader(createUtf32LeDataStream(data, true)));</span>
+<span class="fc" id="L656">    }</span>
+
+    @Test
+    public void testReadXmlWithBOMUtf8() throws Exception {
+        @SuppressWarnings(&quot;deprecation&quot;) // unavoidable until Java 7
+<span class="fc" id="L661">        final byte[] data = &quot;&lt;?xml version=\&quot;1.0\&quot; encoding=\&quot;UTF-8\&quot;?&gt;&lt;X/&gt;&quot;.getBytes(Charsets.UTF_8);</span>
+<span class="fc" id="L662">        parseXml(new BOMInputStream(createUtf8DataStream(data, true)));</span>
+<span class="fc" id="L663">        parseXml(createUtf8DataStream(data, true));</span>
+<span class="fc" id="L664">    }</span>
+
+    @Test
+    public void testReadXmlWithoutBOMUtf32Be() throws Exception {
+<span class="fc" id="L668">        Assume.assumeTrue(&quot;JVM and SAX need to support UTF_32BE for this&quot;, jvmAndSaxBothSupportCharset(&quot;UTF_32BE&quot;));</span>
+<span class="fc" id="L669">        final byte[] data = &quot;&lt;?xml version=\&quot;1.0\&quot; encoding=\&quot;UTF_32BE\&quot;?&gt;&lt;X/&gt;&quot;.getBytes(&quot;UTF_32BE&quot;);</span>
+<span class="fc" id="L670">        parseXml(new BOMInputStream(createUtf32BeDataStream(data, false)));</span>
+<span class="fc" id="L671">        parseXml(createUtf32BeDataStream(data, false));</span>
+<span class="fc" id="L672">    }</span>
+
+    @Test
+    public void testReadXmlWithoutBOMUtf32Le() throws Exception {
+<span class="fc" id="L676">        Assume.assumeTrue(&quot;JVM and SAX need to support UTF_32LE for this&quot;, jvmAndSaxBothSupportCharset(&quot;UTF_32LE&quot;));</span>
+<span class="fc" id="L677">        final byte[] data = &quot;&lt;?xml version=\&quot;1.0\&quot; encoding=\&quot;UTF-32LE\&quot;?&gt;&lt;X/&gt;&quot;.getBytes(&quot;UTF_32LE&quot;);</span>
+<span class="fc" id="L678">        parseXml(new BOMInputStream(createUtf32LeDataStream(data, false)));</span>
+<span class="fc" id="L679">        parseXml(createUtf32BeDataStream(data, false));</span>
+<span class="fc" id="L680">    }</span>
+
+    @Test
+    public void testSkipWithBOM() throws Exception {
+<span class="fc" id="L684">        final byte[] data = new byte[] { 'A', 'B', 'C', 'D' };</span>
+<span class="fc" id="L685">        final InputStream in = new BOMInputStream(createUtf8DataStream(data, true));</span>
+<span class="fc" id="L686">        in.skip(2L);</span>
+<span class="fc" id="L687">        assertEquals('C', in.read());</span>
+<span class="fc" id="L688">        in.close();</span>
+<span class="fc" id="L689">    }</span>
+
+    @Test
+    public void testSkipWithoutBOM() throws Exception {
+<span class="fc" id="L693">        final byte[] data = new byte[] { 'A', 'B', 'C', 'D' };</span>
+<span class="fc" id="L694">        final InputStream in = new BOMInputStream(createUtf8DataStream(data, false));</span>
+<span class="fc" id="L695">        in.skip(2L);</span>
+<span class="fc" id="L696">        assertEquals('C', in.read());</span>
+<span class="fc" id="L697">        in.close();</span>
+<span class="fc" id="L698">    }</span>
+
+
+    @Test
+    public void skipReturnValueWithBom() throws IOException {
+<span class="fc" id="L703">        byte[] baseData = new byte[]{(byte) 0x31, (byte) 0x32, (byte) 0x33};</span>
+<span class="fc" id="L704">        BOMInputStream is1 = new BOMInputStream(createUtf8DataStream(baseData, true));</span>
+<span class="fc" id="L705">        assertEquals(2, is1.skip(2));</span>
+<span class="fc" id="L706">        assertEquals((byte) 0x33, is1.read());</span>
+<span class="fc" id="L707">        is1.close();</span>
+<span class="fc" id="L708">    }</span>
+
+    @Test
+    public void skipReturnValueWithoutBom() throws IOException {
+<span class="fc" id="L712">        byte[] baseData = new byte[]{(byte) 0x31, (byte) 0x32, (byte) 0x33};</span>
+<span class="fc" id="L713">        BOMInputStream is2 = new BOMInputStream(createUtf8DataStream(baseData, false));</span>
+<span class="fc" id="L714">        assertEquals(2, is2.skip(2)); // IO-428</span>
+<span class="fc" id="L715">        assertEquals((byte) 0x33, is2.read());</span>
+<span class="fc" id="L716">        is2.close();</span>
+<span class="fc" id="L717">    }</span>
+
+    @Test
+    public void testSmallBufferWithBOM() throws Exception {
+<span class="fc" id="L721">        final byte[] data = new byte[] { 'A', 'B', 'C' };</span>
+<span class="fc" id="L722">        final InputStream in = new BOMInputStream(createUtf8DataStream(data, true));</span>
+<span class="fc" id="L723">        final byte[] buf = new byte[1024];</span>
+<span class="fc" id="L724">        assertData(new byte[] { 'A', 'B' }, buf, in.read(buf, 0, 2));</span>
+<span class="fc" id="L725">        assertData(new byte[] { 'C' }, buf, in.read(buf, 0, 2));</span>
+<span class="fc" id="L726">        in.close();</span>
+<span class="fc" id="L727">    }</span>
+
+    @Test
+    public void testSmallBufferWithoutBOM() throws Exception {
+<span class="fc" id="L731">        final byte[] data = new byte[] { 'A', 'B', 'C' };</span>
+<span class="fc" id="L732">        final InputStream in = new BOMInputStream(createUtf8DataStream(data, false));</span>
+<span class="fc" id="L733">        final byte[] buf = new byte[1024];</span>
+<span class="fc" id="L734">        assertData(new byte[] { 'A', 'B' }, buf, in.read(buf, 0, 2));</span>
+<span class="fc" id="L735">        assertData(new byte[] { 'C' }, buf, in.read(buf, 0, 2));</span>
+<span class="fc" id="L736">        in.close();</span>
+<span class="fc" id="L737">    }</span>
+
+    @Test
+    // make sure that our support code works as expected
+    public void testSupportCode() throws Exception {
+<span class="fc" id="L742">        final InputStream in = createUtf8DataStream(new byte[] { 'A', 'B' }, true);</span>
+<span class="fc" id="L743">        final byte[] buf = new byte[1024];</span>
+<span class="fc" id="L744">        final int len = in.read(buf);</span>
+<span class="fc" id="L745">        assertEquals(5, len);</span>
+<span class="fc" id="L746">        assertEquals(0xEF, buf[0] &amp; 0xFF);</span>
+<span class="fc" id="L747">        assertEquals(0xBB, buf[1] &amp; 0xFF);</span>
+<span class="fc" id="L748">        assertEquals(0xBF, buf[2] &amp; 0xFF);</span>
+<span class="fc" id="L749">        assertEquals('A', buf[3] &amp; 0xFF);</span>
+<span class="fc" id="L750">        assertEquals('B', buf[4] &amp; 0xFF);</span>
+
+<span class="fc" id="L752">        assertData(</span>
+                new byte[] { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF, 'A', 'B' },
+                buf, len);
+<span class="fc" id="L755">    }</span>
+
+    private boolean jvmAndSaxBothSupportCharset(String charSetName) throws ParserConfigurationException, SAXException, IOException {
+<span class="pc bpc" id="L758" title="2 of 4 branches missed.">        return Charset.isSupported(charSetName) &amp;&amp;  doesSaxSupportCharacterSet(charSetName);</span>
+    }
+
+    private boolean doesSaxSupportCharacterSet(String charSetName) throws ParserConfigurationException, SAXException, IOException {
+<span class="fc" id="L762">        final byte[] data = (&quot;&lt;?xml version=\&quot;1.0\&quot; encoding=\&quot;&quot; + charSetName + &quot;\&quot;?&gt;&lt;Z/&gt;&quot;).getBytes(charSetName);</span>
+<span class="fc" id="L763">        final DocumentBuilder documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();</span>
+        try {
+<span class="fc" id="L765">            final InputSource is = new InputSource(new ByteArrayInputStream(data));</span>
+<span class="fc" id="L766">            is.setEncoding(charSetName);</span>
+<span class="fc" id="L767">            documentBuilder.parse(is);</span>
+<span class="nc" id="L768">        } catch (SAXParseException e) {</span>
+<span class="nc bnc" id="L769" title="All 2 branches missed.">            if (e.getMessage().contains(charSetName)) return false;</span>
+<span class="fc" id="L770">        }</span>
+<span class="fc" id="L771">        return true;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>commons-io (Apr 20, 2019 6:11:46 PM)</div></body></html>

@@ -1,0 +1,463 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>XmlStreamReaderTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-io (Apr 20, 2019 6:11:46 PM)</a> &gt; <a href="../../index.html" class="el_group">commons-io</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.input</a> &gt; <span class="el_source">XmlStreamReaderTest.java</span></div><h1>XmlStreamReaderTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.input;
+
+import static org.junit.Assert.*;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.text.MessageFormat;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.io.IOUtils;
+import org.junit.Test;
+
+<span class="fc" id="L34">public class XmlStreamReaderTest {</span>
+    private static final String XML5 = &quot;xml-prolog-encoding-spaced-single-quotes&quot;;
+    private static final String XML4 = &quot;xml-prolog-encoding-single-quotes&quot;;
+    private static final String XML3 = &quot;xml-prolog-encoding-double-quotes&quot;;
+    private static final String XML2 = &quot;xml-prolog&quot;;
+    private static final String XML1 = &quot;xml&quot;;
+
+    protected void _testRawNoBomValid(final String encoding) throws Exception {
+<span class="fc" id="L42">        InputStream is = getXmlStream(&quot;no-bom&quot;, XML1, encoding, encoding);</span>
+<span class="fc" id="L43">        XmlStreamReader xmlReader = new XmlStreamReader(is, false);</span>
+<span class="fc" id="L44">        assertEquals(xmlReader.getEncoding(), &quot;UTF-8&quot;);</span>
+<span class="fc" id="L45">        xmlReader.close();</span>
+
+<span class="fc" id="L47">        is = getXmlStream(&quot;no-bom&quot;, XML2, encoding, encoding);</span>
+<span class="fc" id="L48">        xmlReader = new XmlStreamReader(is);</span>
+<span class="fc" id="L49">        assertEquals(xmlReader.getEncoding(), &quot;UTF-8&quot;);</span>
+<span class="fc" id="L50">        xmlReader.close();</span>
+
+<span class="fc" id="L52">        is = getXmlStream(&quot;no-bom&quot;, XML3, encoding, encoding);</span>
+<span class="fc" id="L53">        xmlReader = new XmlStreamReader(is);</span>
+<span class="fc" id="L54">        assertEquals(xmlReader.getEncoding(), encoding);</span>
+<span class="fc" id="L55">        xmlReader.close();</span>
+
+<span class="fc" id="L57">        is = getXmlStream(&quot;no-bom&quot;, XML4, encoding, encoding);</span>
+<span class="fc" id="L58">        xmlReader = new XmlStreamReader(is);</span>
+<span class="fc" id="L59">        assertEquals(xmlReader.getEncoding(), encoding);</span>
+<span class="fc" id="L60">        xmlReader.close();</span>
+
+<span class="fc" id="L62">        is = getXmlStream(&quot;no-bom&quot;, XML5, encoding, encoding);</span>
+<span class="fc" id="L63">        xmlReader = new XmlStreamReader(is);</span>
+<span class="fc" id="L64">        assertEquals(xmlReader.getEncoding(), encoding);</span>
+<span class="fc" id="L65">        xmlReader.close();</span>
+<span class="fc" id="L66">    }</span>
+
+    protected void _testRawNoBomInvalid(final String encoding) throws Exception {
+<span class="nc" id="L69">        final InputStream is = getXmlStream(&quot;no-bom&quot;, XML3, encoding, encoding);</span>
+        try {
+<span class="nc" id="L71">            (new XmlStreamReader(is, false)).close();;</span>
+<span class="nc" id="L72">            fail(&quot;It should have failed&quot;);</span>
+<span class="nc" id="L73">        } catch (final IOException ex) {</span>
+<span class="nc" id="L74">            assertTrue(ex.getMessage().contains(&quot;Invalid encoding,&quot;));</span>
+<span class="nc" id="L75">        }</span>
+<span class="nc" id="L76">    }</span>
+
+    @Test
+    public void testRawNoBomUsAscii() throws Exception {
+<span class="fc" id="L80">        _testRawNoBomValid(&quot;US-ASCII&quot;);</span>
+<span class="fc" id="L81">    }</span>
+
+    @Test
+    public void testRawNoBomUtf8() throws Exception {
+<span class="fc" id="L85">        _testRawNoBomValid(&quot;UTF-8&quot;);</span>
+<span class="fc" id="L86">    }</span>
+
+    @Test
+    public void testRawNoBomUtf16BE() throws Exception {
+<span class="fc" id="L90">        _testRawNoBomValid(&quot;UTF-16BE&quot;);</span>
+<span class="fc" id="L91">    }</span>
+
+    @Test
+    public void testRawNoBomUtf16LE() throws Exception {
+<span class="fc" id="L95">        _testRawNoBomValid(&quot;UTF-16LE&quot;);</span>
+<span class="fc" id="L96">    }</span>
+
+    @Test
+    public void testRawNoBomUtf32BE() throws Exception {
+<span class="fc" id="L100">        _testRawNoBomValid(&quot;UTF-32BE&quot;);</span>
+<span class="fc" id="L101">    }</span>
+
+    @Test
+    public void testRawNoBomUtf32LE() throws Exception {
+<span class="fc" id="L105">        _testRawNoBomValid(&quot;UTF-32LE&quot;);</span>
+<span class="fc" id="L106">    }</span>
+
+    @Test
+    public void testRawNoBomIso8859_1() throws Exception {
+<span class="fc" id="L110">        _testRawNoBomValid(&quot;ISO-8859-1&quot;);</span>
+<span class="fc" id="L111">    }</span>
+
+    @Test
+    public void testRawNoBomCp1047() throws Exception {
+<span class="fc" id="L115">        _testRawNoBomValid(&quot;CP1047&quot;);</span>
+<span class="fc" id="L116">    }</span>
+
+    protected void _testRawBomValid(final String encoding) throws Exception {
+<span class="fc" id="L119">        final InputStream is = getXmlStream(encoding + &quot;-bom&quot;, XML3, encoding,</span>
+                encoding);
+<span class="fc" id="L121">        final XmlStreamReader xmlReader = new XmlStreamReader(is, false);</span>
+<span class="fc bfc" id="L122" title="All 4 branches covered.">        if (!encoding.equals(&quot;UTF-16&quot;) &amp;&amp; !encoding.equals(&quot;UTF-32&quot;)) {</span>
+<span class="fc" id="L123">            assertEquals(xmlReader.getEncoding(), encoding);</span>
+        } else {
+<span class="fc" id="L125">            assertEquals(xmlReader.getEncoding()</span>
+<span class="fc" id="L126">                    .substring(0, encoding.length()), encoding);</span>
+        }
+<span class="fc" id="L128">        xmlReader.close();</span>
+<span class="fc" id="L129">    }</span>
+
+    protected void _testRawBomInvalid(final String bomEnc, final String streamEnc,
+                                      final String prologEnc) throws Exception {
+<span class="fc" id="L133">        final InputStream is = getXmlStream(bomEnc, XML3, streamEnc, prologEnc);</span>
+<span class="fc" id="L134">        XmlStreamReader xmlReader = null;</span>
+        try {
+<span class="nc" id="L136">            xmlReader = new XmlStreamReader(is, false);</span>
+<span class="nc" id="L137">            final String foundEnc = xmlReader.getEncoding();</span>
+<span class="nc" id="L138">            fail(&quot;Expected IOException for BOM &quot; + bomEnc + &quot;, streamEnc &quot;</span>
+                    + streamEnc + &quot; and prologEnc &quot; + prologEnc + &quot;: found &quot;
+                    + foundEnc);
+<span class="fc" id="L141">        } catch (final IOException ex) {</span>
+<span class="fc" id="L142">            assertTrue(ex.getMessage().contains(&quot;Invalid encoding,&quot;));</span>
+<span class="nc" id="L143">        }</span>
+<span class="pc bpc" id="L144" title="1 of 2 branches missed.">        if (xmlReader != null) {</span>
+<span class="nc" id="L145">            xmlReader.close();</span>
+        }
+<span class="fc" id="L147">    }</span>
+
+    @Test
+    public void testRawBomUtf8() throws Exception {
+<span class="fc" id="L151">        _testRawBomValid(&quot;UTF-8&quot;);</span>
+<span class="fc" id="L152">        _testRawBomInvalid(&quot;UTF-8-bom&quot;, &quot;US-ASCII&quot;, &quot;US-ASCII&quot;);</span>
+<span class="fc" id="L153">        _testRawBomInvalid(&quot;UTF-8-bom&quot;, &quot;ISO-8859-1&quot;, &quot;ISO-8859-1&quot;);</span>
+<span class="fc" id="L154">        _testRawBomInvalid(&quot;UTF-8-bom&quot;, &quot;UTF-8&quot;, &quot;UTF-16&quot;);</span>
+<span class="fc" id="L155">        _testRawBomInvalid(&quot;UTF-8-bom&quot;, &quot;UTF-8&quot;, &quot;UTF-16BE&quot;);</span>
+<span class="fc" id="L156">        _testRawBomInvalid(&quot;UTF-8-bom&quot;, &quot;UTF-8&quot;, &quot;UTF-16LE&quot;);</span>
+<span class="fc" id="L157">        _testRawBomInvalid(&quot;UTF-16BE-bom&quot;, &quot;UTF-16BE&quot;, &quot;UTF-16LE&quot;);</span>
+<span class="fc" id="L158">        _testRawBomInvalid(&quot;UTF-16LE-bom&quot;, &quot;UTF-16LE&quot;, &quot;UTF-16BE&quot;);</span>
+<span class="fc" id="L159">        _testRawBomInvalid(&quot;UTF-16LE-bom&quot;, &quot;UTF-16LE&quot;, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L160">        _testRawBomInvalid(&quot;UTF-32BE-bom&quot;, &quot;UTF-32BE&quot;, &quot;UTF-32LE&quot;);</span>
+<span class="fc" id="L161">        _testRawBomInvalid(&quot;UTF-32LE-bom&quot;, &quot;UTF-32LE&quot;, &quot;UTF-32BE&quot;);</span>
+<span class="fc" id="L162">        _testRawBomInvalid(&quot;UTF-32LE-bom&quot;, &quot;UTF-32LE&quot;, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L163">    }</span>
+
+    @Test
+    public void testRawBomUtf16() throws Exception {
+<span class="fc" id="L167">        _testRawBomValid(&quot;UTF-16BE&quot;);</span>
+<span class="fc" id="L168">        _testRawBomValid(&quot;UTF-16LE&quot;);</span>
+<span class="fc" id="L169">        _testRawBomValid(&quot;UTF-16&quot;);</span>
+
+<span class="fc" id="L171">        _testRawBomInvalid(&quot;UTF-16BE-bom&quot;, &quot;UTF-16BE&quot;, &quot;UTF-16LE&quot;);</span>
+<span class="fc" id="L172">        _testRawBomInvalid(&quot;UTF-16LE-bom&quot;, &quot;UTF-16LE&quot;, &quot;UTF-16BE&quot;);</span>
+<span class="fc" id="L173">        _testRawBomInvalid(&quot;UTF-16LE-bom&quot;, &quot;UTF-16LE&quot;, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L174">    }</span>
+
+    @Test
+    public void testRawBomUtf32() throws Exception {
+<span class="fc" id="L178">        _testRawBomValid(&quot;UTF-32BE&quot;);</span>
+<span class="fc" id="L179">        _testRawBomValid(&quot;UTF-32LE&quot;);</span>
+<span class="fc" id="L180">        _testRawBomValid(&quot;UTF-32&quot;);</span>
+
+<span class="fc" id="L182">        _testRawBomInvalid(&quot;UTF-32BE-bom&quot;, &quot;UTF-32BE&quot;, &quot;UTF-32LE&quot;);</span>
+<span class="fc" id="L183">        _testRawBomInvalid(&quot;UTF-32LE-bom&quot;, &quot;UTF-32LE&quot;, &quot;UTF-32BE&quot;);</span>
+<span class="fc" id="L184">        _testRawBomInvalid(&quot;UTF-32LE-bom&quot;, &quot;UTF-32LE&quot;, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L185">    }</span>
+
+
+    @Test
+    public void testHttp() throws Exception {
+        // niallp 2010-10-06 - remove following 2 tests - I reinstated
+        // checks for non-UTF-16 encodings (18 tests) and these failed
+        // _testHttpValid(&quot;application/xml&quot;, &quot;no-bom&quot;, &quot;US-ASCII&quot;, null);
+        // _testHttpValid(&quot;application/xml&quot;, &quot;UTF-8-bom&quot;, &quot;US-ASCII&quot;, null);
+<span class="fc" id="L194">        _testHttpValid(&quot;application/xml&quot;, &quot;UTF-8-bom&quot;, &quot;UTF-8&quot;, null);</span>
+<span class="fc" id="L195">        _testHttpValid(&quot;application/xml&quot;, &quot;UTF-8-bom&quot;, &quot;UTF-8&quot;, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L196">        _testHttpValid(&quot;application/xml;charset=UTF-8&quot;, &quot;UTF-8-bom&quot;, &quot;UTF-8&quot;, null);</span>
+<span class="fc" id="L197">        _testHttpValid(&quot;application/xml;charset=\&quot;UTF-8\&quot;&quot;, &quot;UTF-8-bom&quot;, &quot;UTF-8&quot;, null);</span>
+<span class="fc" id="L198">        _testHttpValid(&quot;application/xml;charset='UTF-8'&quot;, &quot;UTF-8-bom&quot;, &quot;UTF-8&quot;, null);</span>
+<span class="fc" id="L199">        _testHttpValid(&quot;application/xml;charset=UTF-8&quot;, &quot;UTF-8-bom&quot;, &quot;UTF-8&quot;, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L200">        _testHttpValid(&quot;application/xml;charset=UTF-16&quot;, &quot;UTF-16BE-bom&quot;, &quot;UTF-16BE&quot;, null);</span>
+<span class="fc" id="L201">        _testHttpValid(&quot;application/xml;charset=UTF-16&quot;, &quot;UTF-16BE-bom&quot;, &quot;UTF-16BE&quot;, &quot;UTF-16&quot;);</span>
+<span class="fc" id="L202">        _testHttpValid(&quot;application/xml;charset=UTF-16&quot;, &quot;UTF-16BE-bom&quot;, &quot;UTF-16BE&quot;, &quot;UTF-16BE&quot;);</span>
+
+<span class="fc" id="L204">        _testHttpInvalid(&quot;application/xml;charset=UTF-16BE&quot;, &quot;UTF-16BE-bom&quot;, &quot;UTF-16BE&quot;, null);</span>
+<span class="fc" id="L205">        _testHttpInvalid(&quot;application/xml;charset=UTF-16BE&quot;, &quot;UTF-16BE-bom&quot;, &quot;UTF-16BE&quot;, &quot;UTF-16&quot;);</span>
+<span class="fc" id="L206">        _testHttpInvalid(&quot;application/xml;charset=UTF-16BE&quot;, &quot;UTF-16BE-bom&quot;, &quot;UTF-16BE&quot;, &quot;UTF-16BE&quot;);</span>
+
+<span class="fc" id="L208">        _testHttpInvalid(&quot;application/xml;charset=UTF-32BE&quot;, &quot;UTF-32BE-bom&quot;, &quot;UTF-32BE&quot;, null);</span>
+<span class="fc" id="L209">        _testHttpInvalid(&quot;application/xml;charset=UTF-32BE&quot;, &quot;UTF-32BE-bom&quot;, &quot;UTF-32BE&quot;, &quot;UTF-32&quot;);</span>
+<span class="fc" id="L210">        _testHttpInvalid(&quot;application/xml;charset=UTF-32BE&quot;, &quot;UTF-32BE-bom&quot;, &quot;UTF-32BE&quot;, &quot;UTF-32BE&quot;);</span>
+
+<span class="fc" id="L212">        _testHttpInvalid(&quot;application/xml&quot;, &quot;UTF-8-bom&quot;, &quot;US-ASCII&quot;, &quot;US-ASCII&quot;);</span>
+<span class="fc" id="L213">        _testHttpInvalid(&quot;application/xml;charset=UTF-16&quot;, &quot;UTF-16LE&quot;, &quot;UTF-8&quot;, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L214">        _testHttpInvalid(&quot;application/xml;charset=UTF-16&quot;, &quot;no-bom&quot;, &quot;UTF-16BE&quot;, &quot;UTF-16BE&quot;);</span>
+<span class="fc" id="L215">        _testHttpInvalid(&quot;application/xml;charset=UTF-32&quot;, &quot;UTF-32LE&quot;, &quot;UTF-8&quot;, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L216">        _testHttpInvalid(&quot;application/xml;charset=UTF-32&quot;, &quot;no-bom&quot;, &quot;UTF-32BE&quot;, &quot;UTF-32BE&quot;);</span>
+
+<span class="fc" id="L218">        _testHttpValid(&quot;text/xml&quot;, &quot;no-bom&quot;, &quot;US-ASCII&quot;, null);</span>
+<span class="fc" id="L219">        _testHttpValid(&quot;text/xml;charset=UTF-8&quot;, &quot;UTF-8-bom&quot;, &quot;UTF-8&quot;, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L220">        _testHttpValid(&quot;text/xml;charset=UTF-8&quot;, &quot;UTF-8-bom&quot;, &quot;UTF-8&quot;, null);</span>
+<span class="fc" id="L221">        _testHttpValid(&quot;text/xml;charset=UTF-16&quot;, &quot;UTF-16BE-bom&quot;, &quot;UTF-16BE&quot;, null);</span>
+<span class="fc" id="L222">        _testHttpValid(&quot;text/xml;charset=UTF-16&quot;, &quot;UTF-16BE-bom&quot;, &quot;UTF-16BE&quot;, &quot;UTF-16&quot;);</span>
+<span class="fc" id="L223">        _testHttpValid(&quot;text/xml;charset=UTF-16&quot;, &quot;UTF-16BE-bom&quot;, &quot;UTF-16BE&quot;, &quot;UTF-16BE&quot;);</span>
+<span class="fc" id="L224">        _testHttpValid(&quot;text/xml;charset=UTF-32&quot;, &quot;UTF-32BE-bom&quot;, &quot;UTF-32BE&quot;, null);</span>
+<span class="fc" id="L225">        _testHttpValid(&quot;text/xml;charset=UTF-32&quot;, &quot;UTF-32BE-bom&quot;, &quot;UTF-32BE&quot;, &quot;UTF-32&quot;);</span>
+<span class="fc" id="L226">        _testHttpValid(&quot;text/xml;charset=UTF-32&quot;, &quot;UTF-32BE-bom&quot;, &quot;UTF-32BE&quot;, &quot;UTF-32BE&quot;);</span>
+<span class="fc" id="L227">        _testHttpValid(&quot;text/xml&quot;, &quot;UTF-8-bom&quot;, &quot;US-ASCII&quot;, null);</span>
+
+<span class="fc" id="L229">        _testAlternateDefaultEncoding(&quot;application/xml&quot;, &quot;UTF-8-bom&quot;, &quot;UTF-8&quot;, null, null);</span>
+<span class="fc" id="L230">        _testAlternateDefaultEncoding(&quot;application/xml&quot;, &quot;no-bom&quot;, &quot;US-ASCII&quot;, null, &quot;US-ASCII&quot;);</span>
+<span class="fc" id="L231">        _testAlternateDefaultEncoding(&quot;application/xml&quot;, &quot;UTF-8-bom&quot;, &quot;UTF-8&quot;, null, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L232">        _testAlternateDefaultEncoding(&quot;text/xml&quot;, &quot;no-bom&quot;, &quot;US-ASCII&quot;, null, null);</span>
+<span class="fc" id="L233">        _testAlternateDefaultEncoding(&quot;text/xml&quot;, &quot;no-bom&quot;, &quot;US-ASCII&quot;, null, &quot;US-ASCII&quot;);</span>
+<span class="fc" id="L234">        _testAlternateDefaultEncoding(&quot;text/xml&quot;, &quot;no-bom&quot;, &quot;US-ASCII&quot;, null, &quot;UTF-8&quot;);</span>
+
+<span class="fc" id="L236">        _testHttpInvalid(&quot;text/xml;charset=UTF-16BE&quot;, &quot;UTF-16BE-bom&quot;, &quot;UTF-16BE&quot;, null);</span>
+<span class="fc" id="L237">        _testHttpInvalid(&quot;text/xml;charset=UTF-16BE&quot;, &quot;UTF-16BE-bom&quot;, &quot;UTF-16BE&quot;, &quot;UTF-16&quot;);</span>
+<span class="fc" id="L238">        _testHttpInvalid(&quot;text/xml;charset=UTF-16BE&quot;, &quot;UTF-16BE-bom&quot;, &quot;UTF-16BE&quot;, &quot;UTF-16BE&quot;);</span>
+<span class="fc" id="L239">        _testHttpInvalid(&quot;text/xml;charset=UTF-16&quot;, &quot;no-bom&quot;, &quot;UTF-16BE&quot;, &quot;UTF-16BE&quot;);</span>
+<span class="fc" id="L240">        _testHttpInvalid(&quot;text/xml;charset=UTF-16&quot;, &quot;no-bom&quot;, &quot;UTF-16BE&quot;, null);</span>
+
+<span class="fc" id="L242">        _testHttpInvalid(&quot;text/xml;charset=UTF-32BE&quot;, &quot;UTF-32BE-bom&quot;, &quot;UTF-32BE&quot;, null);</span>
+<span class="fc" id="L243">        _testHttpInvalid(&quot;text/xml;charset=UTF-32BE&quot;, &quot;UTF-32BE-bom&quot;, &quot;UTF-32BE&quot;, &quot;UTF-32&quot;);</span>
+<span class="fc" id="L244">        _testHttpInvalid(&quot;text/xml;charset=UTF-32BE&quot;, &quot;UTF-32BE-bom&quot;, &quot;UTF-32BE&quot;, &quot;UTF-32BE&quot;);</span>
+<span class="fc" id="L245">        _testHttpInvalid(&quot;text/xml;charset=UTF-32&quot;, &quot;no-bom&quot;, &quot;UTF-32BE&quot;, &quot;UTF-32BE&quot;);</span>
+<span class="fc" id="L246">        _testHttpInvalid(&quot;text/xml;charset=UTF-32&quot;, &quot;no-bom&quot;, &quot;UTF-32BE&quot;, null);</span>
+
+<span class="fc" id="L248">        _testHttpLenient(&quot;text/xml&quot;, &quot;no-bom&quot;, &quot;US-ASCII&quot;, null, &quot;US-ASCII&quot;);</span>
+<span class="fc" id="L249">        _testHttpLenient(&quot;text/xml;charset=UTF-8&quot;, &quot;UTF-8-bom&quot;, &quot;UTF-8&quot;, &quot;UTF-8&quot;, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L250">        _testHttpLenient(&quot;text/xml;charset=UTF-8&quot;, &quot;UTF-8-bom&quot;, &quot;UTF-8&quot;, null, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L251">        _testHttpLenient(&quot;text/xml;charset=UTF-16&quot;, &quot;UTF-16BE-bom&quot;, &quot;UTF-16BE&quot;, null, &quot;UTF-16BE&quot;);</span>
+<span class="fc" id="L252">        _testHttpLenient(&quot;text/xml;charset=UTF-16&quot;, &quot;UTF-16BE-bom&quot;, &quot;UTF-16BE&quot;, &quot;UTF-16&quot;, &quot;UTF-16&quot;);</span>
+<span class="fc" id="L253">        _testHttpLenient(&quot;text/xml;charset=UTF-16&quot;, &quot;UTF-16BE-bom&quot;, &quot;UTF-16BE&quot;, &quot;UTF-16BE&quot;, &quot;UTF-16BE&quot;);</span>
+<span class="fc" id="L254">        _testHttpLenient(&quot;text/xml;charset=UTF-32&quot;, &quot;UTF-32BE-bom&quot;, &quot;UTF-32BE&quot;, null, &quot;UTF-32BE&quot;);</span>
+<span class="fc" id="L255">        _testHttpLenient(&quot;text/xml;charset=UTF-32&quot;, &quot;UTF-32BE-bom&quot;, &quot;UTF-32BE&quot;, &quot;UTF-32&quot;, &quot;UTF-32&quot;);</span>
+<span class="fc" id="L256">        _testHttpLenient(&quot;text/xml;charset=UTF-32&quot;, &quot;UTF-32BE-bom&quot;, &quot;UTF-32BE&quot;, &quot;UTF-32BE&quot;, &quot;UTF-32BE&quot;);</span>
+<span class="fc" id="L257">        _testHttpLenient(&quot;text/xml&quot;, &quot;UTF-8-bom&quot;, &quot;US-ASCII&quot;, null, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L259">        _testHttpLenient(&quot;text/xml;charset=UTF-16BE&quot;, &quot;UTF-16BE-bom&quot;, &quot;UTF-16BE&quot;, null, &quot;UTF-16BE&quot;);</span>
+<span class="fc" id="L260">        _testHttpLenient(&quot;text/xml;charset=UTF-16BE&quot;, &quot;UTF-16BE-bom&quot;, &quot;UTF-16BE&quot;, &quot;UTF-16&quot;, &quot;UTF-16&quot;);</span>
+<span class="fc" id="L261">        _testHttpLenient(&quot;text/xml;charset=UTF-16BE&quot;, &quot;UTF-16BE-bom&quot;, &quot;UTF-16BE&quot;, &quot;UTF-16BE&quot;, &quot;UTF-16BE&quot;);</span>
+<span class="fc" id="L262">        _testHttpLenient(&quot;text/xml;charset=UTF-16&quot;, &quot;no-bom&quot;, &quot;UTF-16BE&quot;, &quot;UTF-16BE&quot;, &quot;UTF-16BE&quot;);</span>
+<span class="fc" id="L263">        _testHttpLenient(&quot;text/xml;charset=UTF-16&quot;, &quot;no-bom&quot;, &quot;UTF-16BE&quot;, null, &quot;UTF-16&quot;);</span>
+
+<span class="fc" id="L265">        _testHttpLenient(&quot;text/xml;charset=UTF-32BE&quot;, &quot;UTF-32BE-bom&quot;, &quot;UTF-32BE&quot;, null, &quot;UTF-32BE&quot;);</span>
+<span class="fc" id="L266">        _testHttpLenient(&quot;text/xml;charset=UTF-32BE&quot;, &quot;UTF-32BE-bom&quot;, &quot;UTF-32BE&quot;, &quot;UTF-32&quot;, &quot;UTF-32&quot;);</span>
+<span class="fc" id="L267">        _testHttpLenient(&quot;text/xml;charset=UTF-32BE&quot;, &quot;UTF-32BE-bom&quot;, &quot;UTF-32BE&quot;, &quot;UTF-32BE&quot;, &quot;UTF-32BE&quot;);</span>
+<span class="fc" id="L268">        _testHttpLenient(&quot;text/xml;charset=UTF-32&quot;, &quot;no-bom&quot;, &quot;UTF-32BE&quot;, &quot;UTF-32BE&quot;, &quot;UTF-32BE&quot;);</span>
+<span class="fc" id="L269">        _testHttpLenient(&quot;text/xml;charset=UTF-32&quot;, &quot;no-bom&quot;, &quot;UTF-32BE&quot;, null, &quot;UTF-32&quot;);</span>
+
+<span class="fc" id="L271">        _testHttpLenient(&quot;text/html&quot;, &quot;no-bom&quot;, &quot;US-ASCII&quot;, &quot;US-ASCII&quot;, &quot;US-ASCII&quot;);</span>
+<span class="fc" id="L272">        _testHttpLenient(&quot;text/html&quot;, &quot;no-bom&quot;, &quot;US-ASCII&quot;, null, &quot;US-ASCII&quot;);</span>
+<span class="fc" id="L273">        _testHttpLenient(&quot;text/html;charset=UTF-8&quot;, &quot;no-bom&quot;, &quot;US-ASCII&quot;, &quot;UTF-8&quot;, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L274">        _testHttpLenient(&quot;text/html;charset=UTF-16BE&quot;, &quot;no-bom&quot;, &quot;US-ASCII&quot;, &quot;UTF-8&quot;, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L275">        _testHttpLenient(&quot;text/html;charset=UTF-32BE&quot;, &quot;no-bom&quot;, &quot;US-ASCII&quot;, &quot;UTF-8&quot;, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L276">    }</span>
+
+    @Test
+    public void testRawContent() throws Exception {
+<span class="fc" id="L280">        final String encoding = &quot;UTF-8&quot;;</span>
+<span class="fc" id="L281">        final String xml = getXML(&quot;no-bom&quot;, XML3, encoding, encoding);</span>
+<span class="fc" id="L282">        final ByteArrayInputStream is = new ByteArrayInputStream(xml.getBytes(encoding));</span>
+<span class="fc" id="L283">        final XmlStreamReader xmlReader = new XmlStreamReader(is);</span>
+<span class="fc" id="L284">        assertEquals(&quot;Check encoding&quot;, xmlReader.getEncoding(), encoding);</span>
+<span class="fc" id="L285">        assertEquals(&quot;Check content&quot;, xml, IOUtils.toString(xmlReader));</span>
+<span class="fc" id="L286">    }</span>
+
+    @Test
+    public void testHttpContent() throws Exception {
+<span class="fc" id="L290">        final String encoding = &quot;UTF-8&quot;;</span>
+<span class="fc" id="L291">        final String xml = getXML(&quot;no-bom&quot;, XML3, encoding, encoding);</span>
+<span class="fc" id="L292">        final ByteArrayInputStream is = new ByteArrayInputStream(xml.getBytes(encoding));</span>
+<span class="fc" id="L293">        final XmlStreamReader xmlReader = new XmlStreamReader(is, encoding);</span>
+<span class="fc" id="L294">        assertEquals(&quot;Check encoding&quot;, xmlReader.getEncoding(), encoding);</span>
+<span class="fc" id="L295">        assertEquals(&quot;Check content&quot;, xml, IOUtils.toString(xmlReader));</span>
+<span class="fc" id="L296">    }</span>
+
+    public void _testAlternateDefaultEncoding(final String cT, final String bomEnc,
+                                              final String streamEnc, final String prologEnc, final String alternateEnc)
+            throws Exception {
+<span class="pc bpc" id="L301" title="1 of 2 branches missed.">        final InputStream is = getXmlStream(bomEnc, prologEnc == null ? XML1</span>
+                : XML3, streamEnc, prologEnc);
+<span class="fc" id="L303">        final XmlStreamReader xmlReader = new XmlStreamReader(is, cT, false, alternateEnc);</span>
+<span class="pc bpc" id="L304" title="1 of 2 branches missed.">        if (!streamEnc.equals(&quot;UTF-16&quot;)) {</span>
+            // we can not assert things here because UTF-8, US-ASCII and
+            // ISO-8859-1 look alike for the chars used for detection
+            // (niallp 2010-10-06 - I re-instated the check below - the tests(6) passed)
+<span class="fc bfc" id="L308" title="All 2 branches covered.">            final String enc = alternateEnc != null ? alternateEnc : streamEnc;</span>
+<span class="fc" id="L309">            assertEquals(xmlReader.getEncoding(), enc);</span>
+<span class="fc" id="L310">        } else {</span>
+            //String enc = (alternateEnc != null) ? alternateEnc : streamEnc;
+<span class="nc" id="L312">            assertEquals(xmlReader.getEncoding().substring(0,</span>
+<span class="nc" id="L313">                    streamEnc.length()), streamEnc);</span>
+        }
+<span class="fc" id="L315">        xmlReader.close();</span>
+<span class="fc" id="L316">    }</span>
+
+    public void _testHttpValid(final String cT, final String bomEnc, final String streamEnc,
+                               final String prologEnc) throws Exception {
+<span class="fc bfc" id="L320" title="All 2 branches covered.">        final InputStream is = getXmlStream(bomEnc,</span>
+                prologEnc == null ? XML1 : XML3, streamEnc, prologEnc);
+<span class="fc" id="L322">        final XmlStreamReader xmlReader = new XmlStreamReader(is, cT, false);</span>
+<span class="pc bpc" id="L323" title="1 of 2 branches missed.">        if (!streamEnc.equals(&quot;UTF-16&quot;)) {</span>
+            // we can not assert things here because UTF-8, US-ASCII and
+            // ISO-8859-1 look alike for the chars used for detection
+            // (niallp 2010-10-06 - I re-instated the check below and removed the 2 tests that failed)
+<span class="fc" id="L327">            assertEquals(xmlReader.getEncoding(), streamEnc);</span>
+        } else {
+<span class="nc" id="L329">            assertEquals(xmlReader.getEncoding().substring(0,</span>
+<span class="nc" id="L330">                    streamEnc.length()), streamEnc);</span>
+        }
+<span class="fc" id="L332">        xmlReader.close();</span>
+<span class="fc" id="L333">    }</span>
+
+    protected void _testHttpInvalid(final String cT, final String bomEnc, final String streamEnc,
+                                    final String prologEnc) throws Exception {
+<span class="fc bfc" id="L337" title="All 2 branches covered.">        final InputStream is = getXmlStream(bomEnc,</span>
+                prologEnc == null ? XML2 : XML3, streamEnc, prologEnc);
+        try {
+<span class="nc" id="L340">            (new XmlStreamReader(is, cT, false)).close();;</span>
+<span class="nc" id="L341">            fail(&quot;It should have failed for HTTP Content-type &quot; + cT + &quot;, BOM &quot;</span>
+                    + bomEnc + &quot;, streamEnc &quot; + streamEnc + &quot; and prologEnc &quot;
+                    + prologEnc);
+<span class="fc" id="L344">        } catch (final IOException ex) {</span>
+<span class="fc" id="L345">            assertTrue(ex.getMessage().contains(&quot;Invalid encoding,&quot;));</span>
+<span class="nc" id="L346">        }</span>
+<span class="fc" id="L347">    }</span>
+
+    protected void _testHttpLenient(final String cT, final String bomEnc, final String streamEnc,
+                                    final String prologEnc, final String shouldbe) throws Exception {
+<span class="fc bfc" id="L351" title="All 2 branches covered.">        final InputStream is = getXmlStream(bomEnc,</span>
+                prologEnc == null ? XML2 : XML3, streamEnc, prologEnc);
+<span class="fc" id="L353">        final XmlStreamReader xmlReader = new XmlStreamReader(is, cT, true);</span>
+<span class="fc" id="L354">        assertEquals(xmlReader.getEncoding(), shouldbe);</span>
+<span class="fc" id="L355">        xmlReader.close();</span>
+<span class="fc" id="L356">    }</span>
+
+    private static final String ENCODING_ATTRIBUTE_XML = &quot;&lt;?xml version=\&quot;1.0\&quot; ?&gt; \n&quot;
+            + &quot;&lt;atom:feed xmlns:atom=\&quot;http://www.w3.org/2005/Atom\&quot;&gt;\n&quot;
+            + &quot;\n&quot;
+            + &quot;  &lt;atom:entry&gt;\n&quot;
+            + &quot;    &lt;atom:title encoding='base64'&gt;&lt;![CDATA\n&quot;
+            + &quot;aW5nTGluZSIgLz4&quot;;
+
+    @Test
+    public void testEncodingAttributeXML() throws Exception {
+<span class="fc" id="L367">        final InputStream is = new ByteArrayInputStream(ENCODING_ATTRIBUTE_XML</span>
+<span class="fc" id="L368">                .getBytes(&quot;UTF-8&quot;));</span>
+<span class="fc" id="L369">        final XmlStreamReader xmlReader = new XmlStreamReader(is, &quot;&quot;, true);</span>
+<span class="fc" id="L370">        assertEquals(xmlReader.getEncoding(), &quot;UTF-8&quot;);</span>
+<span class="fc" id="L371">        xmlReader.close();</span>
+<span class="fc" id="L372">    }</span>
+
+    // XML Stream generator
+
+<span class="fc" id="L376">    private static final int[] NO_BOM_BYTES = {};</span>
+<span class="fc" id="L377">    private static final int[] UTF_16BE_BOM_BYTES = {0xFE, 0xFF};</span>
+<span class="fc" id="L378">    private static final int[] UTF_16LE_BOM_BYTES = {0xFF, 0XFE};</span>
+<span class="fc" id="L379">    private static final int[] UTF_32BE_BOM_BYTES = {0x00, 0x00, 0xFE, 0xFF};</span>
+<span class="fc" id="L380">    private static final int[] UTF_32LE_BOM_BYTES = {0xFF, 0XFE, 0x00, 0x00};</span>
+<span class="fc" id="L381">    private static final int[] UTF_8_BOM_BYTES = {0xEF, 0xBB, 0xBF};</span>
+
+<span class="fc" id="L383">    private static final Map&lt;String, int[]&gt; BOMs = new HashMap&lt;String, int[]&gt;();</span>
+
+    static {
+<span class="fc" id="L386">        BOMs.put(&quot;no-bom&quot;, NO_BOM_BYTES);</span>
+<span class="fc" id="L387">        BOMs.put(&quot;UTF-16BE-bom&quot;, UTF_16BE_BOM_BYTES);</span>
+<span class="fc" id="L388">        BOMs.put(&quot;UTF-16LE-bom&quot;, UTF_16LE_BOM_BYTES);</span>
+<span class="fc" id="L389">        BOMs.put(&quot;UTF-32BE-bom&quot;, UTF_32BE_BOM_BYTES);</span>
+<span class="fc" id="L390">        BOMs.put(&quot;UTF-32LE-bom&quot;, UTF_32LE_BOM_BYTES);</span>
+<span class="fc" id="L391">        BOMs.put(&quot;UTF-16-bom&quot;, NO_BOM_BYTES); // it's added by the writer</span>
+<span class="fc" id="L392">        BOMs.put(&quot;UTF-8-bom&quot;, UTF_8_BOM_BYTES);</span>
+    }
+
+<span class="fc" id="L395">    private static final MessageFormat XML = new MessageFormat(</span>
+            &quot;&lt;root&gt;{2}&lt;/root&gt;&quot;);
+<span class="fc" id="L397">    private static final MessageFormat XML_WITH_PROLOG = new MessageFormat(</span>
+            &quot;&lt;?xml version=\&quot;1.0\&quot;?&gt;\n&lt;root&gt;{2}&lt;/root&gt;&quot;);
+<span class="fc" id="L399">    private static final MessageFormat XML_WITH_PROLOG_AND_ENCODING_DOUBLE_QUOTES = new MessageFormat(</span>
+            &quot;&lt;?xml version=\&quot;1.0\&quot; encoding=\&quot;{1}\&quot;?&gt;\n&lt;root&gt;{2}&lt;/root&gt;&quot;);
+<span class="fc" id="L401">    private static final MessageFormat XML_WITH_PROLOG_AND_ENCODING_SINGLE_QUOTES = new MessageFormat(</span>
+            &quot;&lt;?xml version=\&quot;1.0\&quot; encoding=''{1}''?&gt;\n&lt;root&gt;{2}&lt;/root&gt;&quot;);
+<span class="fc" id="L403">    private static final MessageFormat XML_WITH_PROLOG_AND_ENCODING_SPACED_SINGLE_QUOTES = new MessageFormat(</span>
+            &quot;&lt;?xml version=\&quot;1.0\&quot; encoding =  \t \n \r''{1}''?&gt;\n&lt;root&gt;{2}&lt;/root&gt;&quot;);
+
+<span class="fc" id="L406">    private static final MessageFormat INFO = new MessageFormat(</span>
+            &quot;\nBOM : {0}\nDoc : {1}\nStream Enc : {2}\nProlog Enc : {3}\n&quot;);
+
+<span class="fc" id="L409">    private static final Map&lt;String, MessageFormat&gt; XMLs = new HashMap&lt;String, MessageFormat&gt;();</span>
+
+    static {
+<span class="fc" id="L412">        XMLs.put(XML1, XML);</span>
+<span class="fc" id="L413">        XMLs.put(XML2, XML_WITH_PROLOG);</span>
+<span class="fc" id="L414">        XMLs.put(XML3, XML_WITH_PROLOG_AND_ENCODING_DOUBLE_QUOTES);</span>
+<span class="fc" id="L415">        XMLs.put(XML4, XML_WITH_PROLOG_AND_ENCODING_SINGLE_QUOTES);</span>
+<span class="fc" id="L416">        XMLs.put(XML5, XML_WITH_PROLOG_AND_ENCODING_SPACED_SINGLE_QUOTES);</span>
+<span class="fc" id="L417">    }</span>
+
+    /**
+     * @param bomType   no-bom, UTF-16BE-bom, UTF-16LE-bom, UTF-8-bom
+     * @param xmlType   xml, xml-prolog, xml-prolog-charset
+     * @param streamEnc encoding of the stream
+     * @param prologEnc encoding of the prolog
+     * @return XML stream
+     * @throws IOException If an I/O error occurs
+     */
+    protected InputStream getXmlStream(final String bomType, final String xmlType,
+                                       final String streamEnc, final String prologEnc) throws IOException {
+<span class="fc" id="L429">        final ByteArrayOutputStream baos = new ByteArrayOutputStream(1024);</span>
+<span class="fc" id="L430">        int[] bom = BOMs.get(bomType);</span>
+<span class="fc bfc" id="L431" title="All 2 branches covered.">        if (bom == null) {</span>
+<span class="fc" id="L432">            bom = new int[0];</span>
+        }
+<span class="fc bfc" id="L434" title="All 2 branches covered.">        for (final int element : bom) {</span>
+<span class="fc" id="L435">            baos.write(element);</span>
+        }
+<span class="fc" id="L437">        final Writer writer = new OutputStreamWriter(baos, streamEnc);</span>
+<span class="fc" id="L438">        final String xmlDoc = getXML(bomType, xmlType, streamEnc, prologEnc);</span>
+<span class="fc" id="L439">        writer.write(xmlDoc);</span>
+
+        // PADDDING TO TEST THINGS WORK BEYOND PUSHBACK_SIZE
+<span class="fc" id="L442">        writer.write(&quot;&lt;da&gt;\n&quot;);</span>
+<span class="fc bfc" id="L443" title="All 2 branches covered.">        for (int i = 0; i &lt; 10000; i++) {</span>
+<span class="fc" id="L444">            writer.write(&quot;&lt;do/&gt;\n&quot;);</span>
+        }
+<span class="fc" id="L446">        writer.write(&quot;&lt;/da&gt;\n&quot;);</span>
+
+<span class="fc" id="L448">        writer.close();</span>
+<span class="fc" id="L449">        return new ByteArrayInputStream(baos.toByteArray());</span>
+    }
+
+    /**
+     * Create the XML.
+     */
+    private String getXML(final String bomType, final String xmlType,
+                          final String streamEnc, final String prologEnc) {
+<span class="fc" id="L457">        final MessageFormat xml = XMLs.get(xmlType);</span>
+<span class="fc" id="L458">        final String info = INFO.format(new Object[]{bomType, xmlType, prologEnc});</span>
+<span class="fc" id="L459">        final String xmlDoc = xml.format(new Object[]{streamEnc, prologEnc, info});</span>
+<span class="fc" id="L460">        return xmlDoc;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>commons-io (Apr 20, 2019 6:11:46 PM)</div></body></html>

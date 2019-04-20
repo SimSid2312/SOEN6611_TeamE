@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>AutoCloseInputStreamTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-io (Apr 20, 2019 6:11:46 PM)</a> &gt; <a href="../../index.html" class="el_group">commons-io</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.input</a> &gt; <span class="el_source">AutoCloseInputStreamTest.java</span></div><h1>AutoCloseInputStreamTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.input;
+
+import org.junit.Before;
+import org.junit.Test;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+/**
+ * JUnit Test Case for {@link AutoCloseInputStream}.
+ */
+<span class="fc" id="L33">public class AutoCloseInputStreamTest {</span>
+
+    private byte[] data;
+
+    private InputStream stream;
+
+    private boolean closed;
+
+    @Before
+    public void setUp() {
+<span class="fc" id="L43">        data = new byte[] { 'x', 'y', 'z' };</span>
+<span class="fc" id="L44">        stream = new AutoCloseInputStream(new ByteArrayInputStream(data) {</span>
+            @Override
+            public void close() {
+<span class="fc" id="L47">                closed = true;</span>
+<span class="fc" id="L48">            }</span>
+        });
+<span class="fc" id="L50">        closed = false;</span>
+<span class="fc" id="L51">    }</span>
+
+    @Test
+    public void testClose() throws IOException {
+<span class="fc" id="L55">        stream.close();</span>
+<span class="fc" id="L56">        assertTrue(&quot;closed&quot;, closed);</span>
+<span class="fc" id="L57">        assertEquals(&quot;read()&quot;, -1, stream.read());</span>
+<span class="fc" id="L58">    }</span>
+
+
+    @Test
+    public void testRead() throws IOException {
+<span class="fc bfc" id="L63" title="All 2 branches covered.">        for (final byte element : data) {</span>
+<span class="fc" id="L64">            assertEquals(&quot;read()&quot;, element, stream.read());</span>
+<span class="fc" id="L65">            assertFalse(&quot;closed&quot;, closed);</span>
+        }
+<span class="fc" id="L67">        assertEquals(&quot;read()&quot;, -1, stream.read());</span>
+<span class="fc" id="L68">        assertTrue(&quot;closed&quot;, closed);</span>
+<span class="fc" id="L69">    }</span>
+
+    @Test
+    public void testReadBuffer() throws IOException {
+<span class="fc" id="L73">        final byte[] b = new byte[data.length * 2];</span>
+<span class="fc" id="L74">        int total = 0;</span>
+<span class="fc bfc" id="L75" title="All 2 branches covered.">        for (int n = 0; n != -1; n = stream.read(b)) {</span>
+<span class="fc" id="L76">            assertFalse(&quot;closed&quot;, closed);</span>
+<span class="fc bfc" id="L77" title="All 2 branches covered.">            for (int i = 0; i &lt; n; i++) {</span>
+<span class="fc" id="L78">                assertEquals(&quot;read(b)&quot;, data[total + i], b[i]);</span>
+            }
+<span class="fc" id="L80">            total += n;</span>
+        }
+<span class="fc" id="L82">        assertEquals(&quot;read(b)&quot;, data.length, total);</span>
+<span class="fc" id="L83">        assertTrue(&quot;closed&quot;, closed);</span>
+<span class="fc" id="L84">        assertEquals(&quot;read(b)&quot;, -1, stream.read(b));</span>
+<span class="fc" id="L85">    }</span>
+
+    @Test
+    public void testReadBufferOffsetLength() throws IOException {
+<span class="fc" id="L89">        final byte[] b = new byte[data.length * 2];</span>
+<span class="fc" id="L90">        int total = 0;</span>
+<span class="fc bfc" id="L91" title="All 2 branches covered.">        for (int n = 0; n != -1; n = stream.read(b, total, b.length - total)) {</span>
+<span class="fc" id="L92">            assertFalse(&quot;closed&quot;, closed);</span>
+<span class="fc" id="L93">            total += n;</span>
+        }
+<span class="fc" id="L95">        assertEquals(&quot;read(b, off, len)&quot;, data.length, total);</span>
+<span class="fc bfc" id="L96" title="All 2 branches covered.">        for (int i = 0; i &lt; data.length; i++) {</span>
+<span class="fc" id="L97">            assertEquals(&quot;read(b, off, len)&quot;, data[i], b[i]);</span>
+        }
+<span class="fc" id="L99">        assertTrue(&quot;closed&quot;, closed);</span>
+<span class="fc" id="L100">        assertEquals(&quot;read(b, off, len)&quot;, -1, stream.read(b, 0, b.length));</span>
+<span class="fc" id="L101">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>commons-io (Apr 20, 2019 6:11:46 PM)</div></body></html>

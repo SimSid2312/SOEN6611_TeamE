@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FilenameUtilsWildcardTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.4 (Apr 20, 2019 6:07:50 PM)</a> &gt; <a href="../../index.html" class="el_group">2.4</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io</a> &gt; <span class="el_source">FilenameUtilsWildcardTestCase.java</span></div><h1>FilenameUtilsWildcardTestCase.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io;
+
+import java.io.File;
+import java.util.Locale;
+
+import junit.framework.TestCase;
+
+public class FilenameUtilsWildcardTestCase extends TestCase {
+
+<span class="pc bpc" id="L26" title="1 of 2 branches missed.">    private static final boolean WINDOWS = File.separatorChar == '\\';</span>
+
+    public FilenameUtilsWildcardTestCase(String name) {
+<span class="fc" id="L29">        super(name);</span>
+<span class="fc" id="L30">    }</span>
+
+    //-----------------------------------------------------------------------
+    // Testing:
+    //   FilenameUtils.wildcardMatch(String,String)
+
+    public void testMatch() {
+<span class="fc" id="L37">        assertFalse(FilenameUtils.wildcardMatch(null, &quot;Foo&quot;));</span>
+<span class="fc" id="L38">        assertFalse(FilenameUtils.wildcardMatch(&quot;Foo&quot;, null));</span>
+<span class="fc" id="L39">        assertTrue(FilenameUtils.wildcardMatch(null, null));</span>
+<span class="fc" id="L40">        assertTrue(FilenameUtils.wildcardMatch(&quot;Foo&quot;, &quot;Foo&quot;));</span>
+<span class="fc" id="L41">        assertTrue(FilenameUtils.wildcardMatch(&quot;&quot;, &quot;&quot;));</span>
+<span class="fc" id="L42">        assertTrue(FilenameUtils.wildcardMatch(&quot;&quot;, &quot;*&quot;));</span>
+<span class="fc" id="L43">        assertFalse(FilenameUtils.wildcardMatch(&quot;&quot;, &quot;?&quot;));</span>
+<span class="fc" id="L44">        assertTrue(FilenameUtils.wildcardMatch(&quot;Foo&quot;, &quot;Fo*&quot;));</span>
+<span class="fc" id="L45">        assertTrue(FilenameUtils.wildcardMatch(&quot;Foo&quot;, &quot;Fo?&quot;));</span>
+<span class="fc" id="L46">        assertTrue(FilenameUtils.wildcardMatch(&quot;Foo Bar and Catflap&quot;, &quot;Fo*&quot;));</span>
+<span class="fc" id="L47">        assertTrue(FilenameUtils.wildcardMatch(&quot;New Bookmarks&quot;, &quot;N?w ?o?k??r?s&quot;));</span>
+<span class="fc" id="L48">        assertFalse(FilenameUtils.wildcardMatch(&quot;Foo&quot;, &quot;Bar&quot;));</span>
+<span class="fc" id="L49">        assertTrue(FilenameUtils.wildcardMatch(&quot;Foo Bar Foo&quot;, &quot;F*o Bar*&quot;));</span>
+<span class="fc" id="L50">        assertTrue(FilenameUtils.wildcardMatch(&quot;Adobe Acrobat Installer&quot;, &quot;Ad*er&quot;));</span>
+<span class="fc" id="L51">        assertTrue(FilenameUtils.wildcardMatch(&quot;Foo&quot;, &quot;*Foo&quot;));</span>
+<span class="fc" id="L52">        assertTrue(FilenameUtils.wildcardMatch(&quot;BarFoo&quot;, &quot;*Foo&quot;));</span>
+<span class="fc" id="L53">        assertTrue(FilenameUtils.wildcardMatch(&quot;Foo&quot;, &quot;Foo*&quot;));</span>
+<span class="fc" id="L54">        assertTrue(FilenameUtils.wildcardMatch(&quot;FooBar&quot;, &quot;Foo*&quot;));</span>
+<span class="fc" id="L55">        assertFalse(FilenameUtils.wildcardMatch(&quot;FOO&quot;, &quot;*Foo&quot;));</span>
+<span class="fc" id="L56">        assertFalse(FilenameUtils.wildcardMatch(&quot;BARFOO&quot;, &quot;*Foo&quot;));</span>
+<span class="fc" id="L57">        assertFalse(FilenameUtils.wildcardMatch(&quot;FOO&quot;, &quot;Foo*&quot;));</span>
+<span class="fc" id="L58">        assertFalse(FilenameUtils.wildcardMatch(&quot;FOOBAR&quot;, &quot;Foo*&quot;));</span>
+<span class="fc" id="L59">    }</span>
+
+    public void testMatchOnSystem() {
+<span class="fc" id="L62">        assertFalse(FilenameUtils.wildcardMatchOnSystem(null, &quot;Foo&quot;));</span>
+<span class="fc" id="L63">        assertFalse(FilenameUtils.wildcardMatchOnSystem(&quot;Foo&quot;, null));</span>
+<span class="fc" id="L64">        assertTrue(FilenameUtils.wildcardMatchOnSystem(null, null));</span>
+<span class="fc" id="L65">        assertTrue(FilenameUtils.wildcardMatchOnSystem(&quot;Foo&quot;, &quot;Foo&quot;));</span>
+<span class="fc" id="L66">        assertTrue(FilenameUtils.wildcardMatchOnSystem(&quot;&quot;, &quot;&quot;));</span>
+<span class="fc" id="L67">        assertTrue(FilenameUtils.wildcardMatchOnSystem(&quot;Foo&quot;, &quot;Fo*&quot;));</span>
+<span class="fc" id="L68">        assertTrue(FilenameUtils.wildcardMatchOnSystem(&quot;Foo&quot;, &quot;Fo?&quot;));</span>
+<span class="fc" id="L69">        assertTrue(FilenameUtils.wildcardMatchOnSystem(&quot;Foo Bar and Catflap&quot;, &quot;Fo*&quot;));</span>
+<span class="fc" id="L70">        assertTrue(FilenameUtils.wildcardMatchOnSystem(&quot;New Bookmarks&quot;, &quot;N?w ?o?k??r?s&quot;));</span>
+<span class="fc" id="L71">        assertFalse(FilenameUtils.wildcardMatchOnSystem(&quot;Foo&quot;, &quot;Bar&quot;));</span>
+<span class="fc" id="L72">        assertTrue(FilenameUtils.wildcardMatchOnSystem(&quot;Foo Bar Foo&quot;, &quot;F*o Bar*&quot;));</span>
+<span class="fc" id="L73">        assertTrue(FilenameUtils.wildcardMatchOnSystem(&quot;Adobe Acrobat Installer&quot;, &quot;Ad*er&quot;));</span>
+<span class="fc" id="L74">        assertTrue(FilenameUtils.wildcardMatchOnSystem(&quot;Foo&quot;, &quot;*Foo&quot;));</span>
+<span class="fc" id="L75">        assertTrue(FilenameUtils.wildcardMatchOnSystem(&quot;BarFoo&quot;, &quot;*Foo&quot;));</span>
+<span class="fc" id="L76">        assertTrue(FilenameUtils.wildcardMatchOnSystem(&quot;Foo&quot;, &quot;Foo*&quot;));</span>
+<span class="fc" id="L77">        assertTrue(FilenameUtils.wildcardMatchOnSystem(&quot;FooBar&quot;, &quot;Foo*&quot;));</span>
+<span class="fc" id="L78">        assertEquals(WINDOWS, FilenameUtils.wildcardMatchOnSystem(&quot;FOO&quot;, &quot;*Foo&quot;));</span>
+<span class="fc" id="L79">        assertEquals(WINDOWS, FilenameUtils.wildcardMatchOnSystem(&quot;BARFOO&quot;, &quot;*Foo&quot;));</span>
+<span class="fc" id="L80">        assertEquals(WINDOWS, FilenameUtils.wildcardMatchOnSystem(&quot;FOO&quot;, &quot;Foo*&quot;));</span>
+<span class="fc" id="L81">        assertEquals(WINDOWS, FilenameUtils.wildcardMatchOnSystem(&quot;FOOBAR&quot;, &quot;Foo*&quot;));</span>
+<span class="fc" id="L82">    }</span>
+
+    public void testMatchCaseSpecified() {
+<span class="fc" id="L85">        assertFalse(FilenameUtils.wildcardMatch(null, &quot;Foo&quot;, IOCase.SENSITIVE));</span>
+<span class="fc" id="L86">        assertFalse(FilenameUtils.wildcardMatch(&quot;Foo&quot;, null, IOCase.SENSITIVE));</span>
+<span class="fc" id="L87">        assertTrue(FilenameUtils.wildcardMatch(null, null, IOCase.SENSITIVE));</span>
+<span class="fc" id="L88">        assertTrue(FilenameUtils.wildcardMatch(&quot;Foo&quot;, &quot;Foo&quot;, IOCase.SENSITIVE));</span>
+<span class="fc" id="L89">        assertTrue(FilenameUtils.wildcardMatch(&quot;&quot;, &quot;&quot;, IOCase.SENSITIVE));</span>
+<span class="fc" id="L90">        assertTrue(FilenameUtils.wildcardMatch(&quot;Foo&quot;, &quot;Fo*&quot;, IOCase.SENSITIVE));</span>
+<span class="fc" id="L91">        assertTrue(FilenameUtils.wildcardMatch(&quot;Foo&quot;, &quot;Fo?&quot;, IOCase.SENSITIVE));</span>
+<span class="fc" id="L92">        assertTrue(FilenameUtils.wildcardMatch(&quot;Foo Bar and Catflap&quot;, &quot;Fo*&quot;, IOCase.SENSITIVE));</span>
+<span class="fc" id="L93">        assertTrue(FilenameUtils.wildcardMatch(&quot;New Bookmarks&quot;, &quot;N?w ?o?k??r?s&quot;, IOCase.SENSITIVE));</span>
+<span class="fc" id="L94">        assertFalse(FilenameUtils.wildcardMatch(&quot;Foo&quot;, &quot;Bar&quot;, IOCase.SENSITIVE));</span>
+<span class="fc" id="L95">        assertTrue(FilenameUtils.wildcardMatch(&quot;Foo Bar Foo&quot;, &quot;F*o Bar*&quot;, IOCase.SENSITIVE));</span>
+<span class="fc" id="L96">        assertTrue(FilenameUtils.wildcardMatch(&quot;Adobe Acrobat Installer&quot;, &quot;Ad*er&quot;, IOCase.SENSITIVE));</span>
+<span class="fc" id="L97">        assertTrue(FilenameUtils.wildcardMatch(&quot;Foo&quot;, &quot;*Foo&quot;, IOCase.SENSITIVE));</span>
+<span class="fc" id="L98">        assertTrue(FilenameUtils.wildcardMatch(&quot;Foo&quot;, &quot;Foo*&quot;, IOCase.SENSITIVE));</span>
+<span class="fc" id="L99">        assertTrue(FilenameUtils.wildcardMatch(&quot;Foo&quot;, &quot;*Foo&quot;, IOCase.SENSITIVE));</span>
+<span class="fc" id="L100">        assertTrue(FilenameUtils.wildcardMatch(&quot;BarFoo&quot;, &quot;*Foo&quot;, IOCase.SENSITIVE));</span>
+<span class="fc" id="L101">        assertTrue(FilenameUtils.wildcardMatch(&quot;Foo&quot;, &quot;Foo*&quot;, IOCase.SENSITIVE));</span>
+<span class="fc" id="L102">        assertTrue(FilenameUtils.wildcardMatch(&quot;FooBar&quot;, &quot;Foo*&quot;, IOCase.SENSITIVE));</span>
+        
+<span class="fc" id="L104">        assertFalse(FilenameUtils.wildcardMatch(&quot;FOO&quot;, &quot;*Foo&quot;, IOCase.SENSITIVE));</span>
+<span class="fc" id="L105">        assertFalse(FilenameUtils.wildcardMatch(&quot;BARFOO&quot;, &quot;*Foo&quot;, IOCase.SENSITIVE));</span>
+<span class="fc" id="L106">        assertFalse(FilenameUtils.wildcardMatch(&quot;FOO&quot;, &quot;Foo*&quot;, IOCase.SENSITIVE));</span>
+<span class="fc" id="L107">        assertFalse(FilenameUtils.wildcardMatch(&quot;FOOBAR&quot;, &quot;Foo*&quot;, IOCase.SENSITIVE));</span>
+<span class="fc" id="L108">        assertTrue(FilenameUtils.wildcardMatch(&quot;FOO&quot;, &quot;*Foo&quot;, IOCase.INSENSITIVE));</span>
+<span class="fc" id="L109">        assertTrue(FilenameUtils.wildcardMatch(&quot;BARFOO&quot;, &quot;*Foo&quot;, IOCase.INSENSITIVE));</span>
+<span class="fc" id="L110">        assertTrue(FilenameUtils.wildcardMatch(&quot;FOO&quot;, &quot;Foo*&quot;, IOCase.INSENSITIVE));</span>
+<span class="fc" id="L111">        assertTrue(FilenameUtils.wildcardMatch(&quot;FOOBAR&quot;, &quot;Foo*&quot;, IOCase.INSENSITIVE));</span>
+<span class="fc" id="L112">        assertEquals(WINDOWS, FilenameUtils.wildcardMatch(&quot;FOO&quot;, &quot;*Foo&quot;, IOCase.SYSTEM));</span>
+<span class="fc" id="L113">        assertEquals(WINDOWS, FilenameUtils.wildcardMatch(&quot;BARFOO&quot;, &quot;*Foo&quot;, IOCase.SYSTEM));</span>
+<span class="fc" id="L114">        assertEquals(WINDOWS, FilenameUtils.wildcardMatch(&quot;FOO&quot;, &quot;Foo*&quot;, IOCase.SYSTEM));</span>
+<span class="fc" id="L115">        assertEquals(WINDOWS, FilenameUtils.wildcardMatch(&quot;FOOBAR&quot;, &quot;Foo*&quot;, IOCase.SYSTEM));</span>
+<span class="fc" id="L116">    }</span>
+
+    public void testSplitOnTokens() {
+<span class="fc" id="L119">        assertArrayEquals( new String[] { &quot;Ad&quot;, &quot;*&quot;, &quot;er&quot; }, FilenameUtils.splitOnTokens(&quot;Ad*er&quot;) );</span>
+<span class="fc" id="L120">        assertArrayEquals( new String[] { &quot;Ad&quot;, &quot;?&quot;, &quot;er&quot; }, FilenameUtils.splitOnTokens(&quot;Ad?er&quot;) );</span>
+<span class="fc" id="L121">        assertArrayEquals( new String[] { &quot;Test&quot;, &quot;*&quot;, &quot;?&quot;, &quot;One&quot; }, FilenameUtils.splitOnTokens(&quot;Test*?One&quot;) );</span>
+<span class="fc" id="L122">        assertArrayEquals( new String[] { &quot;Test&quot;, &quot;?&quot;, &quot;*&quot;, &quot;One&quot; }, FilenameUtils.splitOnTokens(&quot;Test?*One&quot;) );</span>
+<span class="fc" id="L123">        assertArrayEquals( new String[] { &quot;*&quot; }, FilenameUtils.splitOnTokens(&quot;****&quot;) );</span>
+<span class="fc" id="L124">        assertArrayEquals( new String[] { &quot;*&quot;, &quot;?&quot;, &quot;?&quot;, &quot;*&quot; }, FilenameUtils.splitOnTokens(&quot;*??*&quot;) );</span>
+<span class="fc" id="L125">        assertArrayEquals( new String[] { &quot;*&quot;, &quot;?&quot;, &quot;*&quot;, &quot;?&quot;, &quot;*&quot; }, FilenameUtils.splitOnTokens(&quot;*?**?*&quot;) );</span>
+<span class="fc" id="L126">        assertArrayEquals( new String[] { &quot;h&quot;, &quot;?&quot;, &quot;?&quot;, &quot;*&quot; }, FilenameUtils.splitOnTokens(&quot;h??*&quot;) );</span>
+<span class="fc" id="L127">        assertArrayEquals( new String[] { &quot;&quot; }, FilenameUtils.splitOnTokens(&quot;&quot;) );</span>
+<span class="fc" id="L128">    }</span>
+
+    private void assertArrayEquals(Object[] a1, Object[] a2) {
+<span class="fc" id="L131">        assertEquals(a1.length, a2.length);</span>
+<span class="fc bfc" id="L132" title="All 2 branches covered.">        for(int i=0; i&lt;a1.length; i++) {</span>
+<span class="fc" id="L133">            assertEquals(a1[i], a2[i]);</span>
+        }
+<span class="fc" id="L135">    }</span>
+
+    private void assertMatch(String text, String wildcard, boolean expected) {
+<span class="fc" id="L138">        assertEquals(text + &quot; &quot; + wildcard, expected, FilenameUtils.wildcardMatch(text, wildcard));</span>
+<span class="fc" id="L139">    }</span>
+
+    // A separate set of tests, added to this batch
+    public void testMatch2() {
+<span class="fc" id="L143">        assertMatch(&quot;log.txt&quot;, &quot;log.txt&quot;, true);</span>
+<span class="fc" id="L144">        assertMatch(&quot;log.txt1&quot;, &quot;log.txt&quot;, false);</span>
+
+<span class="fc" id="L146">        assertMatch(&quot;log.txt&quot;, &quot;log.txt*&quot;, true);</span>
+<span class="fc" id="L147">        assertMatch(&quot;log.txt&quot;, &quot;log.txt*1&quot;, false);</span>
+<span class="fc" id="L148">        assertMatch(&quot;log.txt&quot;, &quot;*log.txt*&quot;, true);</span>
+
+<span class="fc" id="L150">        assertMatch(&quot;log.txt&quot;, &quot;*.txt&quot;, true);</span>
+<span class="fc" id="L151">        assertMatch(&quot;txt.log&quot;, &quot;*.txt&quot;, false);</span>
+<span class="fc" id="L152">        assertMatch(&quot;config.ini&quot;, &quot;*.ini&quot;, true);</span>
+
+<span class="fc" id="L154">        assertMatch(&quot;config.txt.bak&quot;, &quot;con*.txt&quot;, false);</span>
+
+<span class="fc" id="L156">        assertMatch(&quot;log.txt9&quot;, &quot;*.txt?&quot;, true);</span>
+<span class="fc" id="L157">        assertMatch(&quot;log.txt&quot;, &quot;*.txt?&quot;, false);</span>
+
+<span class="fc" id="L159">        assertMatch(&quot;progtestcase.java~5~&quot;, &quot;*test*.java~*~&quot;, true);</span>
+<span class="fc" id="L160">        assertMatch(&quot;progtestcase.java;5~&quot;, &quot;*test*.java~*~&quot;, false);</span>
+<span class="fc" id="L161">        assertMatch(&quot;progtestcase.java~5&quot;, &quot;*test*.java~*~&quot;, false);</span>
+
+<span class="fc" id="L163">        assertMatch(&quot;log.txt&quot;, &quot;log.*&quot;, true);</span>
+
+<span class="fc" id="L165">        assertMatch(&quot;log.txt&quot;, &quot;log?*&quot;, true);</span>
+
+<span class="fc" id="L167">        assertMatch(&quot;log.txt12&quot;, &quot;log.txt??&quot;, true);</span>
+        
+<span class="fc" id="L169">        assertMatch(&quot;log.log&quot;, &quot;log**log&quot;, true);</span>
+<span class="fc" id="L170">        assertMatch(&quot;log.log&quot;, &quot;log**&quot;, true);</span>
+<span class="fc" id="L171">        assertMatch(&quot;log.log&quot;, &quot;log.**&quot;, true);</span>
+<span class="fc" id="L172">        assertMatch(&quot;log.log&quot;, &quot;**.log&quot;, true);</span>
+<span class="fc" id="L173">        assertMatch(&quot;log.log&quot;, &quot;**log&quot;, true);</span>
+
+<span class="fc" id="L175">        assertMatch(&quot;log.log&quot;, &quot;log*log&quot;, true);</span>
+<span class="fc" id="L176">        assertMatch(&quot;log.log&quot;, &quot;log*&quot;, true);</span>
+<span class="fc" id="L177">        assertMatch(&quot;log.log&quot;, &quot;log.*&quot;, true);</span>
+<span class="fc" id="L178">        assertMatch(&quot;log.log&quot;, &quot;*.log&quot;, true);</span>
+<span class="fc" id="L179">        assertMatch(&quot;log.log&quot;, &quot;*log&quot;, true);</span>
+        
+<span class="fc" id="L181">        assertMatch(&quot;log.log&quot;, &quot;*log?&quot;, false);</span>
+<span class="fc" id="L182">        assertMatch(&quot;log.log&quot;, &quot;*log?*&quot;, true);</span>
+<span class="fc" id="L183">        assertMatch(&quot;log.log.abc&quot;, &quot;*log?abc&quot;, true);</span>
+<span class="fc" id="L184">        assertMatch(&quot;log.log.abc.log.abc&quot;, &quot;*log?abc&quot;, true);</span>
+<span class="fc" id="L185">        assertMatch(&quot;log.log.abc.log.abc.d&quot;, &quot;*log?abc?d&quot;, true);</span>
+<span class="fc" id="L186">    }</span>
+
+    /**
+     * See https://issues.apache.org/jira/browse/IO-246
+     */
+    public void test_IO_246() {
+
+        // Tests for &quot;*?&quot;
+<span class="fc" id="L194">        assertMatch(&quot;aaa&quot;, &quot;aa*?&quot;, true);</span>
+        // these ought to work as well, but &quot;*?&quot; does not work properly at present
+//      assertMatch(&quot;aaa&quot;, &quot;a*?&quot;, true);
+//      assertMatch(&quot;aaa&quot;, &quot;*?&quot;, true);
+
+        // Tests for &quot;?*&quot;
+<span class="fc" id="L200">        assertMatch(&quot;&quot;,    &quot;?*&quot;,   false);</span>
+<span class="fc" id="L201">        assertMatch(&quot;a&quot;,   &quot;a?*&quot;,  false);</span>
+<span class="fc" id="L202">        assertMatch(&quot;aa&quot;,  &quot;aa?*&quot;, false);</span>
+<span class="fc" id="L203">        assertMatch(&quot;a&quot;,   &quot;?*&quot;,   true);</span>
+<span class="fc" id="L204">        assertMatch(&quot;aa&quot;,  &quot;?*&quot;,   true);</span>
+<span class="fc" id="L205">        assertMatch(&quot;aaa&quot;, &quot;?*&quot;,   true);</span>
+
+        // Test ending on &quot;?&quot;
+<span class="fc" id="L208">        assertMatch(&quot;&quot;,    &quot;?&quot;, false);</span>
+<span class="fc" id="L209">        assertMatch(&quot;a&quot;,   &quot;a?&quot;, false);</span>
+<span class="fc" id="L210">        assertMatch(&quot;aa&quot;,  &quot;aa?&quot;, false);</span>
+<span class="fc" id="L211">        assertMatch(&quot;aab&quot;, &quot;aa?&quot;, true);</span>
+<span class="fc" id="L212">        assertMatch(&quot;aaa&quot;, &quot;*a&quot;, true);</span>
+<span class="fc" id="L213">    }</span>
+
+    public void testLocaleIndependence() {
+<span class="fc" id="L216">        Locale orig = Locale.getDefault();</span>
+
+<span class="fc" id="L218">        Locale[] locales = Locale.getAvailableLocales();</span>
+
+<span class="fc" id="L220">        String[][] data = {</span>
+<span class="fc" id="L221">            { &quot;I&quot;, &quot;i&quot;},</span>
+<span class="fc" id="L222">            { &quot;i&quot;, &quot;I&quot;},</span>
+<span class="fc" id="L223">            { &quot;i&quot;, &quot;\u0130&quot;},</span>
+<span class="fc" id="L224">            { &quot;i&quot;, &quot;\u0131&quot;},</span>
+<span class="fc" id="L225">            { &quot;\u03A3&quot;, &quot;\u03C2&quot;},</span>
+<span class="fc" id="L226">            { &quot;\u03A3&quot;, &quot;\u03C3&quot;},</span>
+<span class="fc" id="L227">            { &quot;\u03C2&quot;, &quot;\u03C3&quot;},</span>
+        };
+
+        try {
+<span class="fc bfc" id="L231" title="All 2 branches covered.">            for (int i = 0; i &lt; data.length; i++) {</span>
+<span class="fc bfc" id="L232" title="All 2 branches covered.">                for (Locale locale : locales) {</span>
+<span class="fc" id="L233">                    Locale.setDefault(locale);</span>
+<span class="fc" id="L234">                    assertTrue(&quot;Test data corrupt: &quot; + i, data[i][0].equalsIgnoreCase(data[i][1]));</span>
+<span class="fc" id="L235">                    boolean match = FilenameUtils.wildcardMatch(data[i][0], data[i][1], IOCase.INSENSITIVE);</span>
+<span class="fc" id="L236">                    assertTrue(Locale.getDefault().toString() + &quot;: &quot; + i, match);</span>
+                }
+            }
+<span class="fc" id="L239">        } finally {</span>
+<span class="fc" id="L240">            Locale.setDefault(orig);</span>
+        }
+<span class="fc" id="L242">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.4 (Apr 20, 2019 6:07:50 PM)</div></body></html>

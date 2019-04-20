@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileAlterationObserverTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.0 (Apr 20, 2019 6:00:46 PM)</a> &gt; <a href="../../index.html" class="el_group">2.0</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.monitor</a> &gt; <span class="el_source">FileAlterationObserverTestCase.java</span></div><h1>FileAlterationObserverTestCase.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.monitor;
+
+import java.io.File;
+import java.io.FileFilter;
+import java.util.Iterator;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.CanReadFileFilter;
+import org.apache.commons.io.filefilter.FileFilterUtils;
+
+/**
+ * {@link FileAlterationObserver} Test Case.
+ */
+public class FileAlterationObserverTestCase extends AbstractMonitorTestCase {
+
+    /**
+     * Construct a new test case.
+     *
+     * @param name The name of the test
+     */
+    public FileAlterationObserverTestCase(String name) {
+<span class="fc" id="L38">        super(name);</span>
+<span class="fc" id="L39">        testDirName = &quot;test-observer&quot;;</span>
+<span class="fc" id="L40">    }</span>
+
+    @Override
+    protected void setUp() throws Exception {
+<span class="fc" id="L44">        listener = new CollectionFileListener(true);</span>
+<span class="fc" id="L45">        super.setUp();</span>
+<span class="fc" id="L46">    }</span>
+
+    /**
+     * Test add/remove listeners.
+     */
+    public void testAddRemoveListeners() {
+<span class="fc" id="L52">        FileAlterationObserver observer = new FileAlterationObserver(&quot;/foo&quot;);</span>
+        // Null Listener
+<span class="fc" id="L54">        observer.addListener(null);</span>
+<span class="fc" id="L55">        assertFalse(&quot;Listeners[1]&quot;, observer.getListeners().iterator().hasNext());</span>
+<span class="fc" id="L56">        observer.removeListener(null);</span>
+<span class="fc" id="L57">        assertFalse(&quot;Listeners[2]&quot;, observer.getListeners().iterator().hasNext());</span>
+
+        // Add Listener
+<span class="fc" id="L60">        FileAlterationListenerAdaptor listener = new FileAlterationListenerAdaptor();</span>
+<span class="fc" id="L61">        observer.addListener(listener);</span>
+<span class="fc" id="L62">        Iterator&lt;FileAlterationListener&gt; it = observer.getListeners().iterator();</span>
+<span class="fc" id="L63">        assertTrue(&quot;Listeners[3]&quot;, it.hasNext());</span>
+<span class="fc" id="L64">        assertEquals(&quot;Added&quot;, listener, it.next());</span>
+<span class="fc" id="L65">        assertFalse(&quot;Listeners[4]&quot;, it.hasNext());</span>
+
+        // Remove Listener
+<span class="fc" id="L68">        observer.removeListener(listener);</span>
+<span class="fc" id="L69">        assertFalse(&quot;Listeners[5]&quot;, observer.getListeners().iterator().hasNext());</span>
+<span class="fc" id="L70">    }</span>
+
+    /**
+     * Test toString().
+     */
+    public void testToString() {
+<span class="fc" id="L76">        File file = new File(&quot;/foo&quot;);</span>
+<span class="fc" id="L77">        FileAlterationObserver observer = null;</span>
+
+<span class="fc" id="L79">        observer = new FileAlterationObserver(file);</span>
+<span class="fc" id="L80">        assertEquals(&quot;FileAlterationObserver[file='&quot; + file.getPath() +  &quot;', listeners=0]&quot;,</span>
+<span class="fc" id="L81">                observer.toString());</span>
+  
+<span class="fc" id="L83">        observer = new FileAlterationObserver(file, CanReadFileFilter.CAN_READ);</span>
+<span class="fc" id="L84">        assertEquals(&quot;FileAlterationObserver[file='&quot; + file.getPath() +  &quot;', CanReadFileFilter, listeners=0]&quot;,</span>
+<span class="fc" id="L85">                observer.toString());</span>
+
+<span class="fc" id="L87">        assertEquals(file, observer.getDirectory());</span>
+<span class="fc" id="L88">  }</span>
+
+    /**
+     * Test checkAndNotify() method
+     */
+    public void testDirectory() {
+        try {
+<span class="fc" id="L95">            checkAndNotify();</span>
+<span class="fc" id="L96">            checkCollectionsEmpty(&quot;A&quot;);</span>
+<span class="fc" id="L97">            File testDirA = new File(testDir, &quot;test-dir-A&quot;);</span>
+<span class="fc" id="L98">            File testDirB = new File(testDir, &quot;test-dir-B&quot;);</span>
+<span class="fc" id="L99">            File testDirC = new File(testDir, &quot;test-dir-C&quot;);</span>
+<span class="fc" id="L100">            testDirA.mkdir();</span>
+<span class="fc" id="L101">            testDirB.mkdir();</span>
+<span class="fc" id="L102">            testDirC.mkdir();</span>
+<span class="fc" id="L103">            File testDirAFile1 = touch(new File(testDirA, &quot;A-file1.java&quot;));</span>
+<span class="fc" id="L104">            File testDirAFile2 = touch(new File(testDirA, &quot;A-file2.txt&quot;)); // filter should ignore this</span>
+<span class="fc" id="L105">            File testDirAFile3 = touch(new File(testDirA, &quot;A-file3.java&quot;));</span>
+<span class="fc" id="L106">            File testDirAFile4 = touch(new File(testDirA, &quot;A-file4.java&quot;));</span>
+<span class="fc" id="L107">            File testDirBFile1 = touch(new File(testDirB, &quot;B-file1.java&quot;));</span>
+ 
+<span class="fc" id="L109">            checkAndNotify();</span>
+<span class="fc" id="L110">            checkCollectionSizes(&quot;B&quot;, 3, 0, 0, 4, 0, 0);</span>
+<span class="fc" id="L111">            assertTrue(&quot;B testDirA&quot;,   listener.getCreatedDirectories().contains(testDirA));</span>
+<span class="fc" id="L112">            assertTrue(&quot;B testDirB&quot;,   listener.getCreatedDirectories().contains(testDirB));</span>
+<span class="fc" id="L113">            assertTrue(&quot;B testDirC&quot;,   listener.getCreatedDirectories().contains(testDirC));</span>
+<span class="fc" id="L114">            assertTrue(&quot;B testDirAFile1&quot;, listener.getCreatedFiles().contains(testDirAFile1));</span>
+<span class="fc" id="L115">            assertFalse(&quot;B testDirAFile2&quot;, listener.getCreatedFiles().contains(testDirAFile2));</span>
+<span class="fc" id="L116">            assertTrue(&quot;B testDirAFile3&quot;, listener.getCreatedFiles().contains(testDirAFile3));</span>
+<span class="fc" id="L117">            assertTrue(&quot;B testDirAFile4&quot;, listener.getCreatedFiles().contains(testDirAFile4));</span>
+<span class="fc" id="L118">            assertTrue(&quot;B testDirBFile1&quot;, listener.getCreatedFiles().contains(testDirBFile1));</span>
+
+<span class="fc" id="L120">            checkAndNotify();</span>
+<span class="fc" id="L121">            checkCollectionsEmpty(&quot;C&quot;);</span>
+
+<span class="fc" id="L123">            testDirAFile4 = touch(testDirAFile4);</span>
+<span class="fc" id="L124">            FileUtils.deleteDirectory(testDirB);</span>
+<span class="fc" id="L125">            checkAndNotify();</span>
+<span class="fc" id="L126">            checkCollectionSizes(&quot;D&quot;, 0, 0, 1, 0, 1, 1);</span>
+<span class="fc" id="L127">            assertTrue(&quot;D testDirB&quot;,   listener.getDeletedDirectories().contains(testDirB));</span>
+<span class="fc" id="L128">            assertTrue(&quot;D testDirAFile4&quot;, listener.getChangedFiles().contains(testDirAFile4));</span>
+<span class="fc" id="L129">            assertTrue(&quot;D testDirBFile1&quot;, listener.getDeletedFiles().contains(testDirBFile1));</span>
+
+<span class="fc" id="L131">            FileUtils.deleteDirectory(testDir);</span>
+<span class="fc" id="L132">            checkAndNotify();</span>
+<span class="fc" id="L133">            checkCollectionSizes(&quot;E&quot;, 0, 0, 2, 0, 0, 3);</span>
+<span class="fc" id="L134">            assertTrue(&quot;E testDirA&quot;,   listener.getDeletedDirectories().contains(testDirA));</span>
+<span class="fc" id="L135">            assertTrue(&quot;E testDirAFile1&quot;, listener.getDeletedFiles().contains(testDirAFile1));</span>
+<span class="fc" id="L136">            assertFalse(&quot;E testDirAFile2&quot;, listener.getDeletedFiles().contains(testDirAFile2));</span>
+<span class="fc" id="L137">            assertTrue(&quot;E testDirAFile3&quot;, listener.getDeletedFiles().contains(testDirAFile3));</span>
+<span class="fc" id="L138">            assertTrue(&quot;E testDirAFile4&quot;, listener.getDeletedFiles().contains(testDirAFile4));</span>
+            
+<span class="fc" id="L140">            testDir.mkdir();</span>
+<span class="fc" id="L141">            checkAndNotify();</span>
+<span class="fc" id="L142">            checkCollectionsEmpty(&quot;F&quot;);</span>
+
+<span class="fc" id="L144">            checkAndNotify();</span>
+<span class="fc" id="L145">            checkCollectionsEmpty(&quot;G&quot;);</span>
+<span class="nc" id="L146">        } catch (Exception e) {</span>
+<span class="nc" id="L147">            e.printStackTrace();</span>
+<span class="nc" id="L148">            fail(&quot;Threw &quot; + e);</span>
+<span class="fc" id="L149">        }</span>
+<span class="fc" id="L150">    }</span>
+
+    /**
+     * Test checkAndNotify() creating
+     */
+    public void testFileCreate() {
+        try {
+<span class="fc" id="L157">            checkAndNotify();</span>
+<span class="fc" id="L158">            checkCollectionsEmpty(&quot;A&quot;);</span>
+<span class="fc" id="L159">            File testDirA = new File(testDir, &quot;test-dir-A&quot;);</span>
+<span class="fc" id="L160">            testDirA.mkdir();</span>
+<span class="fc" id="L161">            testDir  = touch(testDir);</span>
+<span class="fc" id="L162">            testDirA = touch(testDirA);</span>
+<span class="fc" id="L163">            File testDirAFile1 =       new File(testDirA, &quot;A-file1.java&quot;);</span>
+<span class="fc" id="L164">            File testDirAFile2 = touch(new File(testDirA, &quot;A-file2.java&quot;));</span>
+<span class="fc" id="L165">            File testDirAFile3 =       new File(testDirA, &quot;A-file3.java&quot;);</span>
+<span class="fc" id="L166">            File testDirAFile4 = touch(new File(testDirA, &quot;A-file4.java&quot;));</span>
+<span class="fc" id="L167">            File testDirAFile5 =       new File(testDirA, &quot;A-file5.java&quot;);</span>
+ 
+<span class="fc" id="L169">            checkAndNotify();</span>
+<span class="fc" id="L170">            checkCollectionSizes(&quot;B&quot;, 1, 0, 0, 2, 0, 0);</span>
+<span class="fc" id="L171">            assertFalse(&quot;B testDirAFile1&quot;, listener.getCreatedFiles().contains(testDirAFile1));</span>
+<span class="fc" id="L172">            assertTrue(&quot;B testDirAFile2&quot;,  listener.getCreatedFiles().contains(testDirAFile2));</span>
+<span class="fc" id="L173">            assertFalse(&quot;B testDirAFile3&quot;, listener.getCreatedFiles().contains(testDirAFile3));</span>
+<span class="fc" id="L174">            assertTrue(&quot;B testDirAFile4&quot;,  listener.getCreatedFiles().contains(testDirAFile4));</span>
+<span class="fc" id="L175">            assertFalse(&quot;B testDirAFile5&quot;, listener.getCreatedFiles().contains(testDirAFile5));</span>
+
+<span class="fc" id="L177">            assertFalse(&quot;B testDirAFile1 exists&quot;, testDirAFile1.exists());</span>
+<span class="fc" id="L178">            assertTrue(&quot;B testDirAFile2 exists&quot;,  testDirAFile2.exists());</span>
+<span class="fc" id="L179">            assertFalse(&quot;B testDirAFile3 exists&quot;, testDirAFile3.exists());</span>
+<span class="fc" id="L180">            assertTrue(&quot;B testDirAFile4 exists&quot;,  testDirAFile4.exists());</span>
+<span class="fc" id="L181">            assertFalse(&quot;B testDirAFile5 exists&quot;, testDirAFile5.exists());</span>
+
+<span class="fc" id="L183">            checkAndNotify();</span>
+<span class="fc" id="L184">            checkCollectionsEmpty(&quot;C&quot;);</span>
+
+            // Create file with name &lt; first entry
+<span class="fc" id="L187">            testDirAFile1 = touch(testDirAFile1);</span>
+<span class="fc" id="L188">            testDirA      = touch(testDirA);</span>
+<span class="fc" id="L189">            checkAndNotify();</span>
+<span class="fc" id="L190">            checkCollectionSizes(&quot;D&quot;, 0, 1, 0, 1, 0, 0);</span>
+<span class="fc" id="L191">            assertTrue(&quot;D testDirAFile1 exists&quot;, testDirAFile1.exists());</span>
+<span class="fc" id="L192">            assertTrue(&quot;D testDirAFile1&quot;,  listener.getCreatedFiles().contains(testDirAFile1));</span>
+
+            // Create file with name between 2 entries
+<span class="fc" id="L195">            testDirAFile3 = touch(testDirAFile3);</span>
+<span class="fc" id="L196">            testDirA      = touch(testDirA);</span>
+<span class="fc" id="L197">            checkAndNotify();</span>
+<span class="fc" id="L198">            checkCollectionSizes(&quot;E&quot;, 0, 1, 0, 1, 0, 0);</span>
+<span class="fc" id="L199">            assertTrue(&quot;E testDirAFile3 exists&quot;, testDirAFile3.exists());</span>
+<span class="fc" id="L200">            assertTrue(&quot;E testDirAFile3&quot;,  listener.getCreatedFiles().contains(testDirAFile3));</span>
+
+            // Create file with name &gt; last entry
+<span class="fc" id="L203">            testDirAFile5 = touch(testDirAFile5);</span>
+<span class="fc" id="L204">            testDirA      = touch(testDirA);</span>
+<span class="fc" id="L205">            checkAndNotify();</span>
+<span class="fc" id="L206">            checkCollectionSizes(&quot;F&quot;, 0, 1, 0, 1, 0, 0);</span>
+<span class="fc" id="L207">            assertTrue(&quot;F testDirAFile5 exists&quot;, testDirAFile5.exists());</span>
+<span class="fc" id="L208">            assertTrue(&quot;F testDirAFile5&quot;,  listener.getCreatedFiles().contains(testDirAFile5));</span>
+<span class="nc" id="L209">        } catch (Exception e) {</span>
+<span class="nc" id="L210">            fail(&quot;Threw &quot; + e);</span>
+<span class="fc" id="L211">        }</span>
+<span class="fc" id="L212">    }</span>
+
+    /**
+     * Test checkAndNotify() creating
+     */
+    public void testFileUpdate() {
+        try {
+<span class="fc" id="L219">            checkAndNotify();</span>
+<span class="fc" id="L220">            checkCollectionsEmpty(&quot;A&quot;);</span>
+<span class="fc" id="L221">            File testDirA = new File(testDir, &quot;test-dir-A&quot;);</span>
+<span class="fc" id="L222">            testDirA.mkdir();</span>
+<span class="fc" id="L223">            testDir  = touch(testDir);</span>
+<span class="fc" id="L224">            testDirA = touch(testDirA);</span>
+<span class="fc" id="L225">            File testDirAFile1 = touch(new File(testDirA, &quot;A-file1.java&quot;));</span>
+<span class="fc" id="L226">            File testDirAFile2 = touch(new File(testDirA, &quot;A-file2.java&quot;));</span>
+<span class="fc" id="L227">            File testDirAFile3 = touch(new File(testDirA, &quot;A-file3.java&quot;));</span>
+<span class="fc" id="L228">            File testDirAFile4 = touch(new File(testDirA, &quot;A-file4.java&quot;));</span>
+<span class="fc" id="L229">            File testDirAFile5 = touch(new File(testDirA, &quot;A-file5.java&quot;));</span>
+ 
+<span class="fc" id="L231">            checkAndNotify();</span>
+<span class="fc" id="L232">            checkCollectionSizes(&quot;B&quot;, 1, 0, 0, 5, 0, 0);</span>
+<span class="fc" id="L233">            assertTrue(&quot;B testDirAFile1&quot;, listener.getCreatedFiles().contains(testDirAFile1));</span>
+<span class="fc" id="L234">            assertTrue(&quot;B testDirAFile2&quot;, listener.getCreatedFiles().contains(testDirAFile2));</span>
+<span class="fc" id="L235">            assertTrue(&quot;B testDirAFile3&quot;, listener.getCreatedFiles().contains(testDirAFile3));</span>
+<span class="fc" id="L236">            assertTrue(&quot;B testDirAFile4&quot;, listener.getCreatedFiles().contains(testDirAFile4));</span>
+<span class="fc" id="L237">            assertTrue(&quot;B testDirAFile5&quot;, listener.getCreatedFiles().contains(testDirAFile5));</span>
+
+<span class="fc" id="L239">            assertTrue(&quot;B testDirAFile1 exists&quot;, testDirAFile1.exists());</span>
+<span class="fc" id="L240">            assertTrue(&quot;B testDirAFile2 exists&quot;, testDirAFile2.exists());</span>
+<span class="fc" id="L241">            assertTrue(&quot;B testDirAFile3 exists&quot;, testDirAFile3.exists());</span>
+<span class="fc" id="L242">            assertTrue(&quot;B testDirAFile4 exists&quot;, testDirAFile4.exists());</span>
+<span class="fc" id="L243">            assertTrue(&quot;B testDirAFile5 exists&quot;, testDirAFile5.exists());</span>
+
+<span class="fc" id="L245">            checkAndNotify();</span>
+<span class="fc" id="L246">            checkCollectionsEmpty(&quot;C&quot;);</span>
+
+            // Update first entry
+<span class="fc" id="L249">            testDirAFile1 = touch(testDirAFile1);</span>
+<span class="fc" id="L250">            testDirA      = touch(testDirA);</span>
+<span class="fc" id="L251">            checkAndNotify();</span>
+<span class="fc" id="L252">            checkCollectionSizes(&quot;D&quot;, 0, 1, 0, 0, 1, 0);</span>
+<span class="fc" id="L253">            assertTrue(&quot;D testDirAFile1&quot;,  listener.getChangedFiles().contains(testDirAFile1));</span>
+
+            // Update file with name between 2 entries
+<span class="fc" id="L256">            testDirAFile3 = touch(testDirAFile3);</span>
+<span class="fc" id="L257">            testDirA      = touch(testDirA);</span>
+<span class="fc" id="L258">            checkAndNotify();</span>
+<span class="fc" id="L259">            checkCollectionSizes(&quot;E&quot;, 0, 1, 0, 0, 1, 0);</span>
+<span class="fc" id="L260">            assertTrue(&quot;E testDirAFile3&quot;,  listener.getChangedFiles().contains(testDirAFile3));</span>
+
+            // Update last entry
+<span class="fc" id="L263">            testDirAFile5 = touch(testDirAFile5);</span>
+<span class="fc" id="L264">            testDirA      = touch(testDirA);</span>
+<span class="fc" id="L265">            checkAndNotify();</span>
+<span class="fc" id="L266">            checkCollectionSizes(&quot;F&quot;, 0, 1, 0, 0, 1, 0);</span>
+<span class="fc" id="L267">            assertTrue(&quot;F testDirAFile5&quot;,  listener.getChangedFiles().contains(testDirAFile5));</span>
+<span class="nc" id="L268">        } catch (Exception e) {</span>
+<span class="nc" id="L269">            fail(&quot;Threw &quot; + e);</span>
+<span class="fc" id="L270">        }</span>
+<span class="fc" id="L271">    }</span>
+
+    /**
+     * Test checkAndNotify() deleting
+     */
+    public void testFileDelete() {
+        try {
+<span class="fc" id="L278">            checkAndNotify();</span>
+<span class="fc" id="L279">            checkCollectionsEmpty(&quot;A&quot;);</span>
+<span class="fc" id="L280">            File testDirA = new File(testDir, &quot;test-dir-A&quot;);</span>
+<span class="fc" id="L281">            testDirA.mkdir();</span>
+<span class="fc" id="L282">            testDir  = touch(testDir);</span>
+<span class="fc" id="L283">            testDirA = touch(testDirA);</span>
+<span class="fc" id="L284">            File testDirAFile1 = touch(new File(testDirA, &quot;A-file1.java&quot;));</span>
+<span class="fc" id="L285">            File testDirAFile2 = touch(new File(testDirA, &quot;A-file2.java&quot;));</span>
+<span class="fc" id="L286">            File testDirAFile3 = touch(new File(testDirA, &quot;A-file3.java&quot;));</span>
+<span class="fc" id="L287">            File testDirAFile4 = touch(new File(testDirA, &quot;A-file4.java&quot;));</span>
+<span class="fc" id="L288">            File testDirAFile5 = touch(new File(testDirA, &quot;A-file5.java&quot;));</span>
+
+<span class="fc" id="L290">            assertTrue(&quot;B testDirAFile1 exists&quot;, testDirAFile1.exists());</span>
+<span class="fc" id="L291">            assertTrue(&quot;B testDirAFile2 exists&quot;, testDirAFile2.exists());</span>
+<span class="fc" id="L292">            assertTrue(&quot;B testDirAFile3 exists&quot;, testDirAFile3.exists());</span>
+<span class="fc" id="L293">            assertTrue(&quot;B testDirAFile4 exists&quot;, testDirAFile4.exists());</span>
+<span class="fc" id="L294">            assertTrue(&quot;B testDirAFile5 exists&quot;, testDirAFile5.exists());</span>
+
+<span class="fc" id="L296">            checkAndNotify();</span>
+<span class="fc" id="L297">            checkCollectionSizes(&quot;B&quot;, 1, 0, 0, 5, 0, 0);</span>
+<span class="fc" id="L298">            assertTrue(&quot;B testDirAFile1&quot;, listener.getCreatedFiles().contains(testDirAFile1));</span>
+<span class="fc" id="L299">            assertTrue(&quot;B testDirAFile2&quot;, listener.getCreatedFiles().contains(testDirAFile2));</span>
+<span class="fc" id="L300">            assertTrue(&quot;B testDirAFile3&quot;, listener.getCreatedFiles().contains(testDirAFile3));</span>
+<span class="fc" id="L301">            assertTrue(&quot;B testDirAFile4&quot;, listener.getCreatedFiles().contains(testDirAFile4));</span>
+<span class="fc" id="L302">            assertTrue(&quot;B testDirAFile5&quot;, listener.getCreatedFiles().contains(testDirAFile5));</span>
+
+<span class="fc" id="L304">            checkAndNotify();</span>
+<span class="fc" id="L305">            checkCollectionsEmpty(&quot;C&quot;);</span>
+
+            // Delete first entry
+<span class="fc" id="L308">            FileUtils.deleteQuietly(testDirAFile1);</span>
+<span class="fc" id="L309">            testDirA = touch(testDirA);</span>
+<span class="fc" id="L310">            checkAndNotify();</span>
+<span class="fc" id="L311">            checkCollectionSizes(&quot;D&quot;, 0, 1, 0, 0, 0, 1);</span>
+<span class="fc" id="L312">            assertFalse(&quot;D testDirAFile1 exists&quot;, testDirAFile1.exists());</span>
+<span class="fc" id="L313">            assertTrue(&quot;D testDirAFile1&quot;,  listener.getDeletedFiles().contains(testDirAFile1));</span>
+
+            // Delete file with name between 2 entries
+<span class="fc" id="L316">            FileUtils.deleteQuietly(testDirAFile3);</span>
+<span class="fc" id="L317">            testDirA = touch(testDirA);</span>
+<span class="fc" id="L318">            checkAndNotify();</span>
+<span class="fc" id="L319">            checkCollectionSizes(&quot;E&quot;, 0, 1, 0, 0, 0, 1);</span>
+<span class="fc" id="L320">            assertFalse(&quot;E testDirAFile3 exists&quot;, testDirAFile3.exists());</span>
+<span class="fc" id="L321">            assertTrue(&quot;E testDirAFile3&quot;,  listener.getDeletedFiles().contains(testDirAFile3));</span>
+
+            // Delete last entry
+<span class="fc" id="L324">            FileUtils.deleteQuietly(testDirAFile5);</span>
+<span class="fc" id="L325">            testDirA = touch(testDirA);</span>
+<span class="fc" id="L326">            checkAndNotify();</span>
+<span class="fc" id="L327">            checkCollectionSizes(&quot;F&quot;, 0, 1, 0, 0, 0, 1);</span>
+<span class="fc" id="L328">            assertFalse(&quot;F testDirAFile5 exists&quot;, testDirAFile5.exists());</span>
+<span class="fc" id="L329">            assertTrue(&quot;F testDirAFile5&quot;,  listener.getDeletedFiles().contains(testDirAFile5));</span>
+
+<span class="nc" id="L331">        } catch (Exception e) {</span>
+<span class="nc" id="L332">            fail(&quot;Threw &quot; + e);</span>
+<span class="fc" id="L333">        }</span>
+<span class="fc" id="L334">    }</span>
+
+    /**
+     * Test checkAndNotify() method
+     */
+    public void testObserveSingleFile() {
+        try {
+<span class="fc" id="L341">            File testDirA = new File(testDir, &quot;test-dir-A&quot;);</span>
+<span class="fc" id="L342">            File testDirAFile1 = new File(testDirA, &quot;A-file1.java&quot;);</span>
+<span class="fc" id="L343">            testDirA.mkdir();</span>
+
+<span class="fc" id="L345">            FileFilter nameFilter = FileFilterUtils.nameFileFilter(testDirAFile1.getName());</span>
+<span class="fc" id="L346">            createObserver(testDirA, nameFilter);</span>
+<span class="fc" id="L347">            checkAndNotify();</span>
+<span class="fc" id="L348">            checkCollectionsEmpty(&quot;A&quot;);</span>
+<span class="fc" id="L349">            assertFalse(&quot;A testDirAFile1 exists&quot;, testDirAFile1.exists());</span>
+
+            // Create
+<span class="fc" id="L352">            testDirAFile1 = touch(testDirAFile1);</span>
+<span class="fc" id="L353">            File testDirAFile2 = touch(new File(testDirA, &quot;A-file2.txt&quot;));  /* filter should ignore */</span>
+<span class="fc" id="L354">            File testDirAFile3 = touch(new File(testDirA, &quot;A-file3.java&quot;)); /* filter should ignore */</span>
+<span class="fc" id="L355">            assertTrue(&quot;B testDirAFile1 exists&quot;, testDirAFile1.exists());</span>
+<span class="fc" id="L356">            assertTrue(&quot;B testDirAFile2 exists&quot;, testDirAFile2.exists());</span>
+<span class="fc" id="L357">            assertTrue(&quot;B testDirAFile3 exists&quot;, testDirAFile3.exists());</span>
+<span class="fc" id="L358">            checkAndNotify();</span>
+<span class="fc" id="L359">            checkCollectionSizes(&quot;C&quot;, 0, 0, 0, 1, 0, 0);</span>
+<span class="fc" id="L360">            assertTrue(&quot;C created&quot;, listener.getCreatedFiles().contains(testDirAFile1));</span>
+<span class="fc" id="L361">            assertFalse(&quot;C created&quot;, listener.getCreatedFiles().contains(testDirAFile2));</span>
+<span class="fc" id="L362">            assertFalse(&quot;C created&quot;, listener.getCreatedFiles().contains(testDirAFile3));</span>
+
+            // Modify
+<span class="fc" id="L365">            testDirAFile1 = touch(testDirAFile1);</span>
+<span class="fc" id="L366">            testDirAFile2 = touch(testDirAFile2);</span>
+<span class="fc" id="L367">            testDirAFile3 = touch(testDirAFile3);</span>
+<span class="fc" id="L368">            checkAndNotify();</span>
+<span class="fc" id="L369">            checkCollectionSizes(&quot;D&quot;, 0, 0, 0, 0, 1, 0);</span>
+<span class="fc" id="L370">            assertTrue(&quot;D changed&quot;, listener.getChangedFiles().contains(testDirAFile1));</span>
+<span class="fc" id="L371">            assertFalse(&quot;D changed&quot;, listener.getChangedFiles().contains(testDirAFile2));</span>
+<span class="fc" id="L372">            assertFalse(&quot;D changed&quot;, listener.getChangedFiles().contains(testDirAFile3));</span>
+
+            // Delete
+<span class="fc" id="L375">            FileUtils.deleteQuietly(testDirAFile1);</span>
+<span class="fc" id="L376">            FileUtils.deleteQuietly(testDirAFile2);</span>
+<span class="fc" id="L377">            FileUtils.deleteQuietly(testDirAFile3);</span>
+<span class="fc" id="L378">            assertFalse(&quot;E testDirAFile1 exists&quot;, testDirAFile1.exists());</span>
+<span class="fc" id="L379">            assertFalse(&quot;E testDirAFile2 exists&quot;, testDirAFile2.exists());</span>
+<span class="fc" id="L380">            assertFalse(&quot;E testDirAFile3 exists&quot;, testDirAFile3.exists());</span>
+<span class="fc" id="L381">            checkAndNotify();</span>
+<span class="fc" id="L382">            checkCollectionSizes(&quot;E&quot;, 0, 0, 0, 0, 0, 1);</span>
+<span class="fc" id="L383">            assertTrue(&quot;E deleted&quot;, listener.getDeletedFiles().contains(testDirAFile1));</span>
+<span class="fc" id="L384">            assertFalse(&quot;E deleted&quot;, listener.getDeletedFiles().contains(testDirAFile2));</span>
+<span class="fc" id="L385">            assertFalse(&quot;E deleted&quot;, listener.getDeletedFiles().contains(testDirAFile3));</span>
+
+<span class="nc" id="L387">        } catch (Exception e) {</span>
+<span class="nc" id="L388">            fail(&quot;Threw &quot; + e);</span>
+<span class="fc" id="L389">        }</span>
+<span class="fc" id="L390">    }</span>
+
+    /**
+     * Call {@link FileAlterationObserver#checkAndNotify()}.
+     *
+     * @throws Exception if an error occurs
+     */
+    protected void checkAndNotify() throws Exception {
+<span class="fc" id="L398">        observer.checkAndNotify();</span>
+<span class="fc" id="L399">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.0 (Apr 20, 2019 6:00:46 PM)</div></body></html>

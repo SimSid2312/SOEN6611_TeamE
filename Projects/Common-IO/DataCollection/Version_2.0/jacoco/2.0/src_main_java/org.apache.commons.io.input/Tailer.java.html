@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>Tailer.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.0 (Apr 20, 2019 6:00:46 PM)</a> &gt; <a href="../../index.html" class="el_group">2.0</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.input</a> &gt; <span class="el_source">Tailer.java</span></div><h1>Tailer.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.input;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+
+/**
+ * Simple implementation of the unix &quot;tail -f&quot; functionality.
+ * &lt;p&gt;
+ * Example Usage:
+ * &lt;pre&gt;
+ *      // Simplest invocation using static helper method:
+ *      TailerListener listener = ...
+ *      Tailer tailer = Tailer.create(file, listener, delay);
+ *      
+ *      // Alternative method using executor:
+ *      TailerListener listener = ...
+ *      Tailer tailer = new Tailer(file, listener, delay);
+ *      Executor executor ...
+ *      executor.execute(tailer);
+ *      
+ *      // Alternative method if you want to handle the threading yourself:
+ *      TailerListener listener = ...
+ *      Tailer tailer = new Tailer(file, listener, delay);
+ *      Thread thread = new Thread(tailer);
+ *      thread.setDaemon(true); // optional
+ *      thread.start();
+ *      
+ *      // Remember to stop the tailer when you have done with it:
+ *      tailer.stop();
+ * &lt;/pre&gt;
+ *
+ * @version $Id$
+ * @since Commons IO 2.0
+ */
+public class Tailer implements Runnable {
+
+    /**
+     * The file which will be tailed.
+     */
+    private final File file;
+
+    /**
+     * The amount of time to wait for the file to be updated.
+     */
+    private final long delay;
+
+    /**
+     * Whether to tail from the end or start of file
+     */
+    private final boolean end;
+
+    /**
+     * The listener to notify of events when tailing.
+     */
+    private final TailerListener listener;
+
+    /**
+     * The tailer will run as long as this value is true.
+     */
+<span class="fc" id="L81">    private volatile boolean run = true;</span>
+
+    /**
+     * Creates a Tailer for the given file, starting from the beginning, with the default delay of 1.0s.
+     * @param file The file to follow.
+     * @param listener the TailerListener to use.
+     */
+    public Tailer(File file, TailerListener listener) {
+<span class="nc" id="L89">        this(file, listener, 1000);</span>
+<span class="nc" id="L90">    }</span>
+
+    /**
+     * Creates a Tailer for the given file, starting from the beginning.
+     * @param file the file to follow.
+     * @param listener the TailerListener to use.
+     * @param delay the delay between checks of the file for new content in milliseconds.
+     */
+    public Tailer(File file, TailerListener listener, long delay) {
+<span class="nc" id="L99">        this(file, listener, 1000, false);</span>
+<span class="nc" id="L100">    }</span>
+
+    /**
+     * Creates a Tailer for the given file, with a delay other than the default 1.0s.
+     * @param file the file to follow.
+     * @param listener the TailerListener to use.
+     * @param delay the delay between checks of the file for new content in milliseconds.
+     * @param end Set to true to tail from the end of the file, false to tail from the beginning of the file.
+     */
+<span class="fc" id="L109">    public Tailer(File file, TailerListener listener, long delay, boolean end) {</span>
+
+<span class="fc" id="L111">        this.file = file;</span>
+<span class="fc" id="L112">        this.delay = delay;</span>
+<span class="fc" id="L113">        this.end = end;</span>
+
+        // Save and prepare the listener
+<span class="fc" id="L116">        this.listener = listener;</span>
+<span class="fc" id="L117">        listener.init(this);</span>
+<span class="fc" id="L118">    }</span>
+
+    /**
+     * Creates and starts a Tailer for the given file.
+     * 
+     * @param file the file to follow.
+     * @param listener the TailerListener to use.
+     * @param delay the delay between checks of the file for new content in milliseconds.
+     * @param end Set to true to tail from the end of the file, false to tail from the beginning of the file.
+     * @return The new tailer
+     */
+    public static Tailer create(File file, TailerListener listener, long delay, boolean end) {
+<span class="fc" id="L130">        Tailer tailer = new Tailer(file, listener, delay, end);</span>
+<span class="fc" id="L131">        Thread thread = new Thread(tailer);</span>
+<span class="fc" id="L132">        thread.setDaemon(true);</span>
+<span class="fc" id="L133">        thread.start();</span>
+<span class="fc" id="L134">        return tailer;</span>
+    }
+
+    /**
+     * Creates and starts a Tailer for the given file, starting at the beginning of the file
+     * 
+     * @param file the file to follow.
+     * @param listener the TailerListener to use.
+     * @param delay the delay between checks of the file for new content in milliseconds.
+     * @return The new tailer
+     */
+    public static Tailer create(File file, TailerListener listener, long delay) {
+<span class="nc" id="L146">        return create(file, listener, delay, false);</span>
+    }
+
+    /**
+     * Creates and starts a Tailer for the given file, starting at the beginning of the file
+     * with the default delay of 1.0s
+     * 
+     * @param file the file to follow.
+     * @param listener the TailerListener to use.
+     * @return The new tailer
+     */
+    public static Tailer create(File file, TailerListener listener) {
+<span class="nc" id="L158">        return create(file, listener, 1000, false);</span>
+    }
+
+    /**
+     * Return the file.
+     *
+     * @return the file
+     */
+    public File getFile() {
+<span class="nc" id="L167">        return file;</span>
+    }
+
+    /**
+     * Return the delay.
+     *
+     * @return the delay
+     */
+    public long getDelay() {
+<span class="nc" id="L176">        return delay;</span>
+    }
+
+    /**
+     * Follows changes in the file, calling the TailerListener's handle method for each new line.
+     */
+    public void run() {
+<span class="fc" id="L183">        RandomAccessFile reader = null;</span>
+        try {
+<span class="fc" id="L185">            long last = 0; // The last time the file was checked for changes</span>
+<span class="fc" id="L186">            long position = 0; // position within the file</span>
+            // Open the file
+<span class="fc bfc" id="L188" title="All 4 branches covered.">            while (run &amp;&amp; reader == null) {</span>
+                try {
+<span class="fc" id="L190">                    reader = new RandomAccessFile(file, &quot;r&quot;);</span>
+<span class="fc" id="L191">                } catch (FileNotFoundException e) {</span>
+<span class="fc" id="L192">                    listener.fileNotFound();</span>
+<span class="fc" id="L193">                }</span>
+
+<span class="fc bfc" id="L195" title="All 2 branches covered.">                if (reader == null) {</span>
+                    try {
+<span class="fc" id="L197">                        Thread.sleep(delay);</span>
+<span class="nc" id="L198">                    } catch (InterruptedException e) {</span>
+<span class="pc" id="L199">                    }</span>
+                } else {
+                    // The current position in the file
+<span class="pc bpc" id="L202" title="1 of 2 branches missed.">                    position = end ? file.length() : 0;</span>
+<span class="fc" id="L203">                    last = System.currentTimeMillis();</span>
+<span class="fc" id="L204">                    reader.seek(position);                    </span>
+                }
+            }
+
+
+<span class="fc bfc" id="L209" title="All 2 branches covered.">            while (run) {</span>
+
+                // Check the file length to see if it was rotated
+<span class="fc" id="L212">                long length = file.length();</span>
+
+<span class="fc bfc" id="L214" title="All 2 branches covered.">                if (length &lt; position) {</span>
+
+                    // File was rotated
+<span class="fc" id="L217">                    listener.fileRotated();</span>
+
+                    // Reopen the reader after rotation
+                    try {
+                        // Ensure that the old file is closed iff we re-open it successfully
+<span class="fc" id="L222">                        RandomAccessFile save = reader;</span>
+<span class="fc" id="L223">                        reader = new RandomAccessFile(file, &quot;r&quot;);</span>
+<span class="fc" id="L224">                        position = 0;</span>
+                        // close old file explicitly rather than relying on GC picking up previous RAF
+<span class="fc" id="L226">                        IOUtils.closeQuietly(save);</span>
+<span class="nc" id="L227">                    } catch (FileNotFoundException e) {</span>
+                        // in this case we continue to use the previous reader and position values
+<span class="nc" id="L229">                        listener.fileNotFound();</span>
+<span class="fc" id="L230">                    }</span>
+<span class="nc" id="L231">                    continue;</span>
+                } else {
+
+                    // File was not rotated
+
+                    // See if the file needs to be read again
+<span class="fc bfc" id="L237" title="All 2 branches covered.">                    if (length &gt; position) {</span>
+
+                        // The file has more content than it did last time
+<span class="fc" id="L240">                        last = System.currentTimeMillis();</span>
+<span class="fc" id="L241">                        position = readLines(reader);</span>
+
+<span class="pc bpc" id="L243" title="1 of 2 branches missed.">                    } else if (FileUtils.isFileNewer(file, last)) {</span>
+
+                        /* This can happen if the file is truncated or overwritten
+                         * with the exact same length of information. In cases like
+                         * this, the file position needs to be reset
+                         */
+<span class="nc" id="L249">                        position = 0;</span>
+<span class="nc" id="L250">                        reader.seek(position); // cannot be null here</span>
+
+                        // Now we can read new lines
+<span class="nc" id="L253">                        last = System.currentTimeMillis();</span>
+<span class="nc" id="L254">                        position = readLines(reader);</span>
+                    }
+                }
+                try {
+<span class="fc" id="L258">                    Thread.sleep(delay);</span>
+<span class="fc" id="L259">                } catch (InterruptedException e) {</span>
+<span class="fc" id="L260">                }</span>
+<span class="fc" id="L261">            }</span>
+
+<span class="nc" id="L263">        } catch (Exception e) {</span>
+
+<span class="nc" id="L265">            listener.handle(e);</span>
+
+        } finally {
+<span class="fc" id="L268">            IOUtils.closeQuietly(reader);</span>
+        }
+<span class="fc" id="L270">    }</span>
+
+    /**
+     * Allows the tailer to complete its current loop and return.
+     */
+    public void stop() {
+<span class="fc" id="L276">        this.run = false;</span>
+<span class="fc" id="L277">    }</span>
+
+    /**
+     * Read new lines.
+     *
+     * @param reader The file to read
+     * @return The new position after the lines have been read
+     * @throws java.io.IOException if an I/O error occurs.
+     */
+    private long readLines(RandomAccessFile reader) throws IOException {
+<span class="fc" id="L287">        String line = reader.readLine();</span>
+<span class="fc bfc" id="L288" title="All 2 branches covered.">        while (line != null) {</span>
+<span class="fc" id="L289">            listener.handle(line);</span>
+<span class="fc" id="L290">            line = reader.readLine();</span>
+        }
+<span class="fc" id="L292">        return reader.getFilePointer();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.0 (Apr 20, 2019 6:00:46 PM)</div></body></html>

@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TaggedInputStreamTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.4 (Apr 20, 2019 6:07:50 PM)</a> &gt; <a href="../../index.html" class="el_group">2.4</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.input</a> &gt; <span class="el_source">TaggedInputStreamTest.java</span></div><h1>TaggedInputStreamTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.input;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.UUID;
+
+import junit.framework.TestCase;
+
+import org.apache.commons.io.TaggedIOException;
+
+/**
+ * JUnit Test Case for {@link TaggedInputStream}.
+ */
+<span class="fc" id="L31">public class TaggedInputStreamTest extends TestCase {</span>
+
+    public void testEmptyStream() {
+        try {
+<span class="fc" id="L35">            InputStream stream = new TaggedInputStream(new ClosedInputStream());</span>
+<span class="fc" id="L36">            assertEquals(0, stream.available());</span>
+<span class="fc" id="L37">            assertEquals(-1, stream.read());</span>
+<span class="fc" id="L38">            assertEquals(-1, stream.read(new byte[1]));</span>
+<span class="fc" id="L39">            assertEquals(-1, stream.read(new byte[1], 0, 1));</span>
+<span class="fc" id="L40">            stream.close();</span>
+<span class="pc" id="L41">        } catch (IOException e) {</span>
+<span class="nc" id="L42">            fail(&quot;Unexpected exception thrown&quot;);</span>
+        }
+<span class="fc" id="L44">    }</span>
+
+    public void testNormalStream() {
+        try {
+<span class="fc" id="L48">            InputStream stream = new TaggedInputStream(</span>
+<span class="fc" id="L49">                    new ByteArrayInputStream(new byte[] { 'a', 'b', 'c' }));</span>
+<span class="fc" id="L50">            assertEquals(3, stream.available());</span>
+<span class="fc" id="L51">            assertEquals('a', stream.read());</span>
+<span class="fc" id="L52">            byte[] buffer = new byte[1];</span>
+<span class="fc" id="L53">            assertEquals(1, stream.read(buffer));</span>
+<span class="fc" id="L54">            assertEquals('b', buffer[0]);</span>
+<span class="fc" id="L55">            assertEquals(1, stream.read(buffer, 0, 1));</span>
+<span class="fc" id="L56">            assertEquals('c', buffer[0]);</span>
+<span class="fc" id="L57">            assertEquals(-1, stream.read());</span>
+<span class="fc" id="L58">            stream.close();</span>
+<span class="pc" id="L59">        } catch (IOException e) {</span>
+<span class="nc" id="L60">            fail(&quot;Unexpected exception thrown&quot;);</span>
+        }
+<span class="fc" id="L62">    }</span>
+
+    public void testBrokenStream() {
+<span class="fc" id="L65">        IOException exception = new IOException(&quot;test exception&quot;);</span>
+<span class="fc" id="L66">        TaggedInputStream stream =</span>
+<span class="fc" id="L67">            new TaggedInputStream(new BrokenInputStream(exception));</span>
+
+        // Test the available() method
+        try {
+<span class="nc" id="L71">            stream.available();</span>
+<span class="nc" id="L72">            fail(&quot;Expected exception not thrown.&quot;);</span>
+<span class="pc" id="L73">        } catch (IOException e) {</span>
+<span class="fc" id="L74">            assertTrue(stream.isCauseOf(e));</span>
+            try {
+<span class="nc" id="L76">                stream.throwIfCauseOf(e);</span>
+<span class="nc" id="L77">                fail(&quot;Expected exception not thrown.&quot;);</span>
+<span class="pc" id="L78">            } catch (IOException e2) {</span>
+<span class="fc" id="L79">                assertEquals(exception, e2);</span>
+            }
+        }
+
+        // Test the read() method
+        try {
+<span class="nc" id="L85">            stream.read();</span>
+<span class="nc" id="L86">            fail(&quot;Expected exception not thrown.&quot;);</span>
+<span class="pc" id="L87">        } catch (IOException e) {</span>
+<span class="fc" id="L88">            assertTrue(stream.isCauseOf(e));</span>
+            try {
+<span class="nc" id="L90">                stream.throwIfCauseOf(e);</span>
+<span class="nc" id="L91">                fail(&quot;Expected exception not thrown.&quot;);</span>
+<span class="pc" id="L92">            } catch (IOException e2) {</span>
+<span class="fc" id="L93">                assertEquals(exception, e2);</span>
+            }
+        }
+
+        // Test the close() method
+        try {
+<span class="nc" id="L99">            stream.close();</span>
+<span class="nc" id="L100">            fail(&quot;Expected exception not thrown.&quot;);</span>
+<span class="pc" id="L101">        } catch (IOException e) {</span>
+<span class="fc" id="L102">            assertTrue(stream.isCauseOf(e));</span>
+            try {
+<span class="nc" id="L104">                stream.throwIfCauseOf(e);</span>
+<span class="nc" id="L105">                fail(&quot;Expected exception not thrown.&quot;);</span>
+<span class="pc" id="L106">            } catch (IOException e2) {</span>
+<span class="fc" id="L107">                assertEquals(exception, e2);</span>
+            }
+        }
+<span class="fc" id="L110">    }</span>
+
+    public void testOtherException() {
+<span class="fc" id="L113">        IOException exception = new IOException(&quot;test exception&quot;);</span>
+<span class="fc" id="L114">        InputStream closed = new ClosedInputStream();</span>
+<span class="fc" id="L115">        TaggedInputStream stream = new TaggedInputStream(closed);</span>
+
+<span class="fc" id="L117">        assertFalse(stream.isCauseOf(exception));</span>
+<span class="fc" id="L118">        assertFalse(stream.isCauseOf(</span>
+<span class="fc" id="L119">                new TaggedIOException(exception, UUID.randomUUID())));</span>
+
+        try {
+<span class="fc" id="L122">            stream.throwIfCauseOf(exception);</span>
+<span class="pc" id="L123">        } catch (IOException e) {</span>
+<span class="nc" id="L124">            fail(&quot;Unexpected exception thrown&quot;);</span>
+        }
+
+        try {
+<span class="fc" id="L128">            stream.throwIfCauseOf(</span>
+<span class="fc" id="L129">                    new TaggedIOException(exception, UUID.randomUUID()));</span>
+<span class="pc" id="L130">        } catch (IOException e) {</span>
+<span class="nc" id="L131">            fail(&quot;Unexpected exception thrown&quot;);</span>
+        }
+<span class="fc" id="L133">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.4 (Apr 20, 2019 6:07:50 PM)</div></body></html>

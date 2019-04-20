@@ -1,0 +1,454 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>CharSequenceInputStreamTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-io (Apr 20, 2019 6:11:46 PM)</a> &gt; <a href="../../index.html" class="el_group">commons-io</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.input</a> &gt; <span class="el_source">CharSequenceInputStreamTest.java</span></div><h1>CharSequenceInputStreamTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.input;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.util.Random;
+import java.util.Set;
+
+import org.apache.commons.io.Charsets;
+import org.junit.Ignore;
+import org.junit.Test;
+
+<span class="fc" id="L35">public class CharSequenceInputStreamTest {</span>
+
+    private static final String ALPHABET = &quot;ABCDEFGHIJKLMNOPQRSTUVWXYZ&quot;;
+    private static final String LARGE_TEST_STRING;
+
+    private static final String TEST_STRING = &quot;\u00e0 peine arriv\u00e9s nous entr\u00e2mes dans sa chambre&quot;;
+
+    static {
+<span class="fc" id="L43">        final StringBuilder buffer = new StringBuilder();</span>
+<span class="fc bfc" id="L44" title="All 2 branches covered.">        for (int i = 0; i &lt; 100; i++) {</span>
+<span class="fc" id="L45">            buffer.append(TEST_STRING);</span>
+        }
+<span class="fc" id="L47">        LARGE_TEST_STRING = buffer.toString();</span>
+<span class="fc" id="L48">    }</span>
+
+<span class="fc" id="L50">    private final Random random = new Random();</span>
+
+    private Set&lt;String&gt; getRequiredCharsetNames() {
+<span class="fc" id="L53">        return Charsets.requiredCharsets().keySet();</span>
+    }
+
+    private void testBufferedRead(final String testString, final String charsetName) throws IOException {
+<span class="fc" id="L57">        final byte[] expected = testString.getBytes(charsetName);</span>
+<span class="fc" id="L58">        final InputStream in = new CharSequenceInputStream(testString, charsetName, 512);</span>
+        try {
+<span class="fc" id="L60">            final byte[] buffer = new byte[128];</span>
+<span class="fc" id="L61">            int offset = 0;</span>
+            while (true) {
+<span class="fc" id="L63">                int bufferOffset = random.nextInt(64);</span>
+<span class="fc" id="L64">                final int bufferLength = random.nextInt(64);</span>
+<span class="fc" id="L65">                int read = in.read(buffer, bufferOffset, bufferLength);</span>
+<span class="fc bfc" id="L66" title="All 2 branches covered.">                if (read == -1) {</span>
+<span class="fc" id="L67">                    assertEquals(&quot;EOF: offset should equal length for charset &quot; + charsetName, expected.length, offset);</span>
+<span class="fc" id="L68">                    break;</span>
+                } else {
+<span class="pc bpc" id="L70" title="1 of 2 branches missed.">                    assertTrue(&quot;Read &quot; + read + &quot; &lt;= &quot; + bufferLength, read &lt;= bufferLength);</span>
+<span class="fc bfc" id="L71" title="All 2 branches covered.">                    while (read &gt; 0) {</span>
+<span class="pc bpc" id="L72" title="1 of 2 branches missed.">                        assertTrue(&quot;offset for &quot; + charsetName +&quot; &quot; + offset + &quot; &lt; &quot; + expected.length, offset &lt; expected.length);</span>
+<span class="fc" id="L73">                        assertEquals(&quot;bytes should agree for &quot; + charsetName, expected[offset], buffer[bufferOffset]);</span>
+<span class="fc" id="L74">                        offset++;</span>
+<span class="fc" id="L75">                        bufferOffset++;</span>
+<span class="fc" id="L76">                        read--;</span>
+                    }
+                }
+<span class="fc" id="L79">            }</span>
+        } finally {
+<span class="fc" id="L81">            in.close();</span>
+        }
+<span class="fc" id="L83">    }</span>
+
+//    Unfortunately checking canEncode does not seem to work for all charsets:
+//    testBufferedRead_AvailableCharset(org.apache.commons.io.input.CharSequenceInputStreamTest)  Time elapsed: 0.682 sec  &lt;&lt;&lt; ERROR!
+//    java.lang.UnsupportedOperationException: null
+//        at java.nio.CharBuffer.array(CharBuffer.java:940)
+//        at sun.nio.cs.ext.COMPOUND_TEXT_Encoder.encodeLoop(COMPOUND_TEXT_Encoder.java:75)
+//        at java.nio.charset.CharsetEncoder.encode(CharsetEncoder.java:544)
+//        at org.apache.commons.io.input.CharSequenceInputStream.fillBuffer(CharSequenceInputStream.java:111)
+    @Test
+    public void testBufferedRead_AvailableCharset() throws IOException {
+<span class="fc bfc" id="L94" title="All 2 branches covered.">        for (final String csName : Charset.availableCharsets().keySet()) {</span>
+            // prevent java.lang.UnsupportedOperationException at sun.nio.cs.ext.ISO2022_CN.newEncoder.
+<span class="fc bfc" id="L96" title="All 2 branches covered.">            if (isAvailabilityTestableForCharset(csName)) {</span>
+<span class="fc" id="L97">                testBufferedRead(TEST_STRING, csName);</span>
+            }
+<span class="fc" id="L99">        }</span>
+<span class="fc" id="L100">    }</span>
+
+    @Test
+    public void testBufferedRead_RequiredCharset() throws IOException {
+<span class="fc bfc" id="L104" title="All 2 branches covered.">        for (final String csName : getRequiredCharsetNames()) {</span>
+<span class="fc" id="L105">            testBufferedRead(TEST_STRING, csName);</span>
+<span class="fc" id="L106">        }</span>
+<span class="fc" id="L107">    }</span>
+
+    @Test
+    public void testBufferedRead_UTF8() throws IOException {
+<span class="fc" id="L111">        testBufferedRead(TEST_STRING, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L112">    }</span>
+
+    private void testCharsetMismatchInfiniteLoop(final String csName) throws IOException {
+        // Input is UTF-8 bytes: 0xE0 0xB2 0xA0
+<span class="fc" id="L116">        final char[] inputChars = new char[] { (char) 0xE0, (char) 0xB2, (char) 0xA0 };</span>
+<span class="fc" id="L117">        final Charset charset = Charset.forName(csName); // infinite loop for US-ASCII, UTF-8 OK</span>
+<span class="fc" id="L118">        final InputStream stream = new CharSequenceInputStream(new String(inputChars), charset, 512);</span>
+        try {
+<span class="fc bfc" id="L120" title="All 2 branches covered.">            while (stream.read() != -1) {</span>
+            }
+        } finally {
+<span class="fc" id="L123">            stream.close();</span>
+        }
+<span class="fc" id="L125">    }</span>
+
+    @Test
+    public void testCharsetMismatchInfiniteLoop_RequiredCharsets() throws IOException {
+<span class="fc bfc" id="L129" title="All 2 branches covered.">        for (final String csName : getRequiredCharsetNames()) {</span>
+<span class="fc" id="L130">            testCharsetMismatchInfiniteLoop(csName);</span>
+<span class="fc" id="L131">        }</span>
+<span class="fc" id="L132">    }</span>
+
+    // Test is broken if readFirst &gt; 0
+    // This is because the initial read fills the buffer from the CharSequence
+    // so data1 gets the first buffer full; data2 will get the next buffer full
+    private void testIO_356(final int bufferSize, final int dataSize, final int readFirst, final String csName) throws Exception {
+<span class="fc" id="L138">        final CharSequenceInputStream is = new CharSequenceInputStream(ALPHABET, csName, bufferSize);</span>
+
+<span class="fc bfc" id="L140" title="All 2 branches covered.">        for (int i = 0; i &lt; readFirst; i++) {</span>
+<span class="fc" id="L141">            final int ch = is.read();</span>
+<span class="pc bpc" id="L142" title="1 of 2 branches missed.">            assertFalse(ch == -1);</span>
+        }
+
+<span class="fc" id="L145">        is.mark(dataSize);</span>
+
+<span class="fc" id="L147">        final byte[] data1 = new byte[dataSize];</span>
+<span class="fc" id="L148">        final int readCount1 = is.read(data1);</span>
+<span class="fc" id="L149">        assertEquals(dataSize, readCount1);</span>
+
+<span class="fc" id="L151">        is.reset(); // should allow data to be re-read</span>
+
+<span class="fc" id="L153">        final byte[] data2 = new byte[dataSize];</span>
+<span class="fc" id="L154">        final int readCount2 = is.read(data2);</span>
+<span class="fc" id="L155">        assertEquals(dataSize, readCount2);</span>
+
+<span class="fc" id="L157">        is.close();</span>
+
+        // data buffers should be identical
+<span class="fc" id="L160">        assertArrayEquals(&quot;bufferSize=&quot; + bufferSize + &quot; dataSize=&quot; + dataSize, data1, data2);</span>
+<span class="fc" id="L161">    }</span>
+
+    @Test
+    public void testIO_356_B10_D10_S0_UTF16() throws Exception {
+<span class="fc" id="L165">        testIO_356(10, 10, 0, &quot;UTF-16&quot;);</span>
+<span class="fc" id="L166">    }</span>
+
+    @Test
+    public void testIO_356_B10_D10_S0_UTF8() throws Exception {
+<span class="fc" id="L170">        testIO_356(10, 10, 0, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L171">    }</span>
+
+    @Test
+    public void testIO_356_B10_D10_S1_UTF8() throws Exception {
+<span class="fc" id="L175">        testIO_356(10, 10, 1, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L176">    }</span>
+
+    @Test
+    public void testIO_356_B10_D10_S2_UTF8() throws Exception {
+<span class="fc" id="L180">        testIO_356(10, 10, 2, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L181">    }</span>
+
+    @Test
+    public void testIO_356_B10_D13_S0_UTF8() throws Exception {
+<span class="fc" id="L185">        testIO_356(10, 13, 0, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L186">    }</span>
+
+    @Test
+    public void testIO_356_B10_D13_S1_UTF8() throws Exception {
+<span class="fc" id="L190">        testIO_356(10, 13, 1, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L191">    }</span>
+
+    @Test
+    public void testIO_356_B10_D20_S0_UTF8() throws Exception {
+<span class="fc" id="L195">        testIO_356(10, 20, 0, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L196">    }</span>
+
+    private void testIO_356_Loop(final String csName, final int maxBytesPerChar) throws Exception {
+<span class="fc bfc" id="L199" title="All 2 branches covered.">        for (int bufferSize = maxBytesPerChar; bufferSize &lt;= 10; bufferSize++) {</span>
+<span class="fc bfc" id="L200" title="All 2 branches covered.">            for (int dataSize = 1; dataSize &lt;= 20; dataSize++) {</span>
+<span class="fc" id="L201">                testIO_356(bufferSize, dataSize, 0, csName);</span>
+            }
+        }
+<span class="fc" id="L204">    }</span>
+
+    @Test
+    public void testIO_356_Loop_UTF16() throws Exception {
+<span class="fc" id="L208">        testIO_356_Loop(&quot;UTF-16&quot;, 4);</span>
+<span class="fc" id="L209">    }</span>
+
+    @Test
+    public void testIO_356_Loop_UTF8() throws Exception {
+<span class="fc" id="L213">        testIO_356_Loop(&quot;UTF-8&quot;, 4);</span>
+<span class="fc" id="L214">    }</span>
+
+    @Test
+    public void testLargeBufferedRead_RequiredCharsets() throws IOException {
+<span class="fc bfc" id="L218" title="All 2 branches covered.">        for (final String csName : getRequiredCharsetNames()) {</span>
+<span class="fc" id="L219">            testBufferedRead(LARGE_TEST_STRING, csName);</span>
+<span class="fc" id="L220">        }</span>
+<span class="fc" id="L221">    }</span>
+
+    @Test
+    public void testLargeBufferedRead_UTF8() throws IOException {
+<span class="fc" id="L225">        testBufferedRead(LARGE_TEST_STRING, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L226">    }</span>
+
+    @Test
+    public void testLargeSingleByteRead_RequiredCharsets() throws IOException {
+<span class="fc bfc" id="L230" title="All 2 branches covered.">        for (final String csName : getRequiredCharsetNames()) {</span>
+<span class="fc" id="L231">            testSingleByteRead(LARGE_TEST_STRING, csName);</span>
+<span class="fc" id="L232">        }</span>
+<span class="fc" id="L233">    }</span>
+
+    @Test
+    public void testLargeSingleByteRead_UTF8() throws IOException {
+<span class="fc" id="L237">        testSingleByteRead(LARGE_TEST_STRING, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L238">    }</span>
+
+    // This test is broken for charsets that don't create a single byte for each char
+    private void testMarkReset(final String csName) throws Exception {
+<span class="fc" id="L242">        final InputStream r = new CharSequenceInputStream(&quot;test&quot;, csName);</span>
+        try {
+<span class="fc" id="L244">            assertEquals(2, r.skip(2));</span>
+<span class="fc" id="L245">            r.mark(0);</span>
+<span class="fc" id="L246">            assertEquals(csName, 's', r.read());</span>
+<span class="fc" id="L247">            assertEquals(csName, 't', r.read());</span>
+<span class="fc" id="L248">            assertEquals(csName, -1, r.read());</span>
+<span class="fc" id="L249">            r.reset();</span>
+<span class="fc" id="L250">            assertEquals(csName, 's', r.read());</span>
+<span class="fc" id="L251">            assertEquals(csName, 't', r.read());</span>
+<span class="fc" id="L252">            assertEquals(csName, -1, r.read());</span>
+<span class="fc" id="L253">            r.reset();</span>
+<span class="fc" id="L254">            r.reset();</span>
+        } finally {
+<span class="fc" id="L256">            r.close();</span>
+        }
+<span class="fc" id="L258">    }</span>
+
+    @Test
+    @Ignore // Test broken for charsets that create multiple bytes for a single char
+    public void testMarkReset_RequiredCharsets() throws Exception {
+<span class="nc bnc" id="L263" title="All 2 branches missed.">        for (final String csName : getRequiredCharsetNames()) {</span>
+<span class="nc" id="L264">            testMarkReset(csName);</span>
+<span class="nc" id="L265">        }</span>
+<span class="nc" id="L266">    }</span>
+
+    @Test
+    public void testMarkReset_USASCII() throws Exception {
+<span class="fc" id="L270">        testMarkReset(&quot;US-ASCII&quot;);</span>
+<span class="fc" id="L271">    }</span>
+
+    @Test
+    public void testMarkReset_UTF8() throws Exception {
+<span class="fc" id="L275">        testMarkReset(&quot;UTF-8&quot;);</span>
+<span class="fc" id="L276">    }</span>
+
+    @Test
+    public void testMarkSupported() throws Exception {
+<span class="fc" id="L280">        final InputStream r = new CharSequenceInputStream(&quot;test&quot;, &quot;UTF-8&quot;);</span>
+        try {
+<span class="fc" id="L282">            assertTrue(r.markSupported());</span>
+        } finally {
+<span class="fc" id="L284">            r.close();</span>
+        }
+<span class="fc" id="L286">    }</span>
+
+    private void testReadZero(final String csName) throws Exception {
+<span class="fc" id="L289">        final InputStream r = new CharSequenceInputStream(&quot;test&quot;, csName);</span>
+        try {
+<span class="fc" id="L291">            final byte[] bytes = new byte[30];</span>
+<span class="fc" id="L292">            assertEquals(0, r.read(bytes, 0, 0));</span>
+        } finally {
+<span class="fc" id="L294">            r.close();</span>
+        }
+<span class="fc" id="L296">    }</span>
+
+    @Test
+    public void testReadZero_EmptyString() throws Exception {
+<span class="fc" id="L300">        final InputStream r = new CharSequenceInputStream(&quot;&quot;, &quot;UTF-8&quot;);</span>
+        try {
+<span class="fc" id="L302">            final byte[] bytes = new byte[30];</span>
+<span class="fc" id="L303">            assertEquals(0, r.read(bytes, 0, 0));</span>
+        } finally {
+<span class="fc" id="L305">            r.close();</span>
+        }
+<span class="fc" id="L307">    }</span>
+
+    @Test
+    public void testReadZero_RequiredCharsets() throws Exception {
+<span class="fc bfc" id="L311" title="All 2 branches covered.">        for (final String csName : getRequiredCharsetNames()) {</span>
+<span class="fc" id="L312">            testReadZero(csName);</span>
+<span class="fc" id="L313">        }</span>
+<span class="fc" id="L314">    }</span>
+
+    private void testSingleByteRead(final String testString, final String charsetName) throws IOException {
+<span class="fc" id="L317">        final byte[] bytes = testString.getBytes(charsetName);</span>
+<span class="fc" id="L318">        final InputStream in = new CharSequenceInputStream(testString, charsetName, 512);</span>
+        try {
+<span class="fc bfc" id="L320" title="All 2 branches covered.">            for (final byte b : bytes) {</span>
+<span class="fc" id="L321">                final int read = in.read();</span>
+<span class="pc bpc" id="L322" title="1 of 2 branches missed.">                assertTrue(&quot;read &quot; + read + &quot; &gt;=0 &quot;, read &gt;= 0);</span>
+<span class="pc bpc" id="L323" title="1 of 2 branches missed.">                assertTrue(&quot;read &quot; + read + &quot; &lt;= 255&quot;, read &lt;= 255);</span>
+<span class="fc" id="L324">                assertEquals(&quot;Should agree with input&quot;, b, (byte) read);</span>
+            }
+<span class="fc" id="L326">            assertEquals(-1, in.read());</span>
+        } finally {
+<span class="fc" id="L328">            in.close();</span>
+        }
+<span class="fc" id="L330">    }</span>
+
+    @Test
+    public void testSingleByteRead_RequiredCharsets() throws IOException {
+<span class="fc bfc" id="L334" title="All 2 branches covered.">        for (final String csName : getRequiredCharsetNames()) {</span>
+<span class="fc" id="L335">            testSingleByteRead(TEST_STRING, csName);</span>
+<span class="fc" id="L336">        }</span>
+<span class="fc" id="L337">    }</span>
+
+    @Test
+    public void testSingleByteRead_UTF16() throws IOException {
+<span class="fc" id="L341">        testSingleByteRead(TEST_STRING, &quot;UTF-16&quot;);</span>
+<span class="fc" id="L342">    }</span>
+
+    @Test
+    public void testSingleByteRead_UTF8() throws IOException {
+<span class="fc" id="L346">        testSingleByteRead(TEST_STRING, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L347">    }</span>
+
+    // This is broken for charsets that don't map each char to a byte
+    private void testSkip(final String csName) throws Exception {
+<span class="fc" id="L351">        final InputStream r = new CharSequenceInputStream(&quot;test&quot;, csName);</span>
+        try {
+<span class="fc" id="L353">            assertEquals(1, r.skip(1));</span>
+<span class="fc" id="L354">            assertEquals(2, r.skip(2));</span>
+<span class="fc" id="L355">            assertEquals(csName, 't', r.read());</span>
+<span class="fc" id="L356">            r.skip(100);</span>
+<span class="fc" id="L357">            assertEquals(csName, -1, r.read());</span>
+        } finally {
+<span class="fc" id="L359">            r.close();</span>
+        }
+<span class="fc" id="L361">    }</span>
+
+    @Test
+    @Ignore // test is broken for charsets that generate multiple bytes per char.
+    public void testSkip_RequiredCharsets() throws Exception {
+<span class="nc bnc" id="L366" title="All 2 branches missed.">        for (final String csName : getRequiredCharsetNames()) {</span>
+<span class="nc" id="L367">            testSkip(csName);</span>
+<span class="nc" id="L368">        }</span>
+<span class="nc" id="L369">    }</span>
+
+    @Test
+    public void testSkip_USASCII() throws Exception {
+<span class="fc" id="L373">        testSkip(&quot;US-ASCII&quot;);</span>
+<span class="fc" id="L374">    }</span>
+
+    @Test
+    public void testSkip_UTF8() throws Exception {
+<span class="fc" id="L378">        testSkip(&quot;UTF-8&quot;);</span>
+<span class="fc" id="L379">    }</span>
+
+    private int checkAvail(InputStream is, int min) throws Exception {
+<span class="fc" id="L382">        int available = is.available();</span>
+<span class="pc bpc" id="L383" title="1 of 2 branches missed.">        assertTrue(&quot;avail should be &gt;= &quot; + min + &quot;, but was &quot; + available, available &gt;= min);</span>
+<span class="fc" id="L384">        return available;</span>
+    }
+
+    private void testAvailableSkip(final String csName) throws Exception {
+<span class="fc" id="L388">        final String input = &quot;test&quot;;</span>
+<span class="fc" id="L389">        final InputStream r = new CharSequenceInputStream(input, csName);</span>
+        try {
+<span class="fc" id="L391">            int available = checkAvail(r, input.length());</span>
+<span class="fc" id="L392">            assertEquals(available - 1, r.skip(available-1)); // skip all but one</span>
+<span class="fc" id="L393">            available = checkAvail(r, 1);</span>
+<span class="fc" id="L394">            assertEquals(1, r.skip(1));</span>
+<span class="fc" id="L395">            available = checkAvail(r, 0);</span>
+        } finally {
+<span class="fc" id="L397">            r.close();</span>
+        }
+<span class="fc" id="L399">    }</span>
+
+    private void testAvailableRead(final String csName) throws Exception {
+<span class="fc" id="L402">        final String input = &quot;test&quot;;</span>
+<span class="fc" id="L403">        final InputStream r = new CharSequenceInputStream(input, csName);</span>
+        try {
+<span class="fc" id="L405">            int available = checkAvail(r, input.length());</span>
+<span class="fc" id="L406">            byte buff[] = new byte[available];</span>
+<span class="fc" id="L407">            assertEquals(available - 1, r.skip(available-1)); // skip all but one</span>
+<span class="fc" id="L408">            available = checkAvail(r, 1);</span>
+<span class="fc" id="L409">            buff = new byte[available];</span>
+<span class="fc" id="L410">            assertEquals(available, r.read(buff, 0, available));</span>
+        } finally {
+<span class="fc" id="L412">            r.close();</span>
+        }
+<span class="fc" id="L414">    }</span>
+
+    @Test
+    public void testAvailable() throws Exception {
+<span class="fc bfc" id="L418" title="All 2 branches covered.">        for (final String csName : Charset.availableCharsets().keySet()) {</span>
+            // prevent java.lang.UnsupportedOperationException at sun.nio.cs.ext.ISO2022_CN.newEncoder.
+            // also try and avoid the following Effor on Continuum
+//            java.lang.UnsupportedOperationException: null
+//            at java.nio.CharBuffer.array(CharBuffer.java:940)
+//            at sun.nio.cs.ext.COMPOUND_TEXT_Encoder.encodeLoop(COMPOUND_TEXT_Encoder.java:75)
+//            at java.nio.charset.CharsetEncoder.encode(CharsetEncoder.java:544)
+//            at org.apache.commons.io.input.CharSequenceInputStream.fillBuffer(CharSequenceInputStream.java:120)
+//            at org.apache.commons.io.input.CharSequenceInputStream.read(CharSequenceInputStream.java:151)
+//            at org.apache.commons.io.input.CharSequenceInputStreamTest.testAvailableRead(CharSequenceInputStreamTest.java:412)
+//            at org.apache.commons.io.input.CharSequenceInputStreamTest.testAvailable(CharSequenceInputStreamTest.java:424)
+
+            try {
+<span class="fc bfc" id="L431" title="All 2 branches covered.">                if (isAvailabilityTestableForCharset(csName)) {</span>
+<span class="fc" id="L432">                    testAvailableSkip(csName);</span>
+<span class="fc" id="L433">                    testAvailableRead(csName);</span>
+                }
+<span class="nc" id="L435">            } catch (UnsupportedOperationException e){</span>
+<span class="nc" id="L436">                fail(&quot;Operation not supported for &quot; + csName);</span>
+<span class="fc" id="L437">            }</span>
+<span class="fc" id="L438">        }</span>
+<span class="fc" id="L439">    }</span>
+
+    private boolean isAvailabilityTestableForCharset(final String csName) {
+<span class="fc bfc" id="L442" title="All 2 branches covered.">        return Charset.forName(csName).canEncode()</span>
+<span class="pc bpc" id="L443" title="1 of 4 branches missed.">                &amp;&amp; !&quot;COMPOUND_TEXT&quot;.equalsIgnoreCase(csName) &amp;&amp; !&quot;x-COMPOUND_TEXT&quot;.equalsIgnoreCase(csName)</span>
+<span class="fc bfc" id="L444" title="All 2 branches covered.">                &amp;&amp; !isOddBallLegacyCharsetThatDoesNotSupportFrenchCharacters(csName);</span>
+    }
+
+    private boolean isOddBallLegacyCharsetThatDoesNotSupportFrenchCharacters(String csName) {
+<span class="pc bpc" id="L448" title="1 of 2 branches missed.">        return &quot;x-IBM1388&quot;.equalsIgnoreCase(csName) ||</span>
+<span class="pc bpc" id="L449" title="1 of 2 branches missed.">                &quot;ISO-2022-CN&quot;.equalsIgnoreCase(csName) ||</span>
+<span class="fc bfc" id="L450" title="All 2 branches covered.">                &quot;ISO-2022-JP&quot;.equalsIgnoreCase(csName) ||</span>
+<span class="fc bfc" id="L451" title="All 2 branches covered.">                &quot;Shift_JIS&quot;.equalsIgnoreCase(csName);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>commons-io (Apr 20, 2019 6:11:46 PM)</div></body></html>

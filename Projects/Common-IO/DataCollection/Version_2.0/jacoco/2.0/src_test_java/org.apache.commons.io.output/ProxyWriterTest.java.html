@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ProxyWriterTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.0 (Apr 20, 2019 6:00:46 PM)</a> &gt; <a href="../../index.html" class="el_group">2.0</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.output</a> &gt; <span class="el_source">ProxyWriterTest.java</span></div><h1>ProxyWriterTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.output;
+
+import junit.framework.TestCase;
+
+/**
+ * Test {@link ProxyWriter}. 
+ *
+ * @version $Revision$
+ */
+public class ProxyWriterTest extends TestCase {
+
+    public ProxyWriterTest(String name) {
+<span class="fc" id="L29">        super(name);</span>
+<span class="fc" id="L30">    }</span>
+
+    /** Test Appending a CharSequence */
+    public void testAppendCharSequence() {
+<span class="fc" id="L34">        StringBuilderWriter writer = new StringBuilderWriter();</span>
+<span class="fc" id="L35">        ProxyWriter proxy = new ProxyWriter(writer);</span>
+        try {
+<span class="fc" id="L37">            proxy.append(&quot;ABC&quot;);</span>
+<span class="nc" id="L38">        } catch(Exception e) {</span>
+<span class="nc" id="L39">            fail(&quot;Appending CharSequence threw &quot; + e);</span>
+<span class="fc" id="L40">        }</span>
+<span class="fc" id="L41">        assertEquals(&quot;ABC&quot;, writer.toString());</span>
+        
+<span class="fc" id="L43">    }</span>
+
+    /** Test Writing a String */
+    public void testWriteString() {
+<span class="fc" id="L47">        StringBuilderWriter writer = new StringBuilderWriter();</span>
+<span class="fc" id="L48">        ProxyWriter proxy = new ProxyWriter(writer);</span>
+        try {
+<span class="fc" id="L50">            proxy.write(&quot;ABC&quot;);</span>
+<span class="nc" id="L51">        } catch(Exception e) {</span>
+<span class="nc" id="L52">            fail(&quot;Writing String threw &quot; + e);</span>
+<span class="fc" id="L53">        }</span>
+<span class="fc" id="L54">        assertEquals(&quot;ABC&quot;, writer.toString());</span>
+        
+<span class="fc" id="L56">    }</span>
+
+    /** Test Writing a Partial String */
+    public void testWriteStringPartial() {
+<span class="fc" id="L60">        StringBuilderWriter writer = new StringBuilderWriter();</span>
+<span class="fc" id="L61">        ProxyWriter proxy = new ProxyWriter(writer);</span>
+        try {
+<span class="fc" id="L63">            proxy.write(&quot;ABC&quot;, 1, 2);</span>
+<span class="nc" id="L64">        } catch(Exception e) {</span>
+<span class="nc" id="L65">            fail(&quot;Writing String threw &quot; + e);</span>
+<span class="fc" id="L66">        }</span>
+<span class="fc" id="L67">        assertEquals(&quot;BC&quot;, writer.toString());</span>
+        
+<span class="fc" id="L69">    }</span>
+
+    /** Test Writing a Char array */
+    public void testWriteCharArray() {
+<span class="fc" id="L73">        StringBuilderWriter writer = new StringBuilderWriter();</span>
+<span class="fc" id="L74">        ProxyWriter proxy = new ProxyWriter(writer);</span>
+        try {
+<span class="fc" id="L76">            proxy.write(new char[] {'A', 'B', 'C'});</span>
+<span class="nc" id="L77">        } catch(Exception e) {</span>
+<span class="nc" id="L78">            fail(&quot;Writing char[] threw &quot; + e);</span>
+<span class="fc" id="L79">        }</span>
+<span class="fc" id="L80">        assertEquals(&quot;ABC&quot;, writer.toString());</span>
+        
+<span class="fc" id="L82">    }</span>
+
+    /** Test Writing a Partial Char array */
+    public void testWriteCharArrayPartial() {
+<span class="fc" id="L86">        StringBuilderWriter writer = new StringBuilderWriter();</span>
+<span class="fc" id="L87">        ProxyWriter proxy = new ProxyWriter(writer);</span>
+        try {
+<span class="fc" id="L89">            proxy.write(new char[] {'A', 'B', 'C'}, 1, 2);</span>
+<span class="nc" id="L90">        } catch(Exception e) {</span>
+<span class="nc" id="L91">            fail(&quot;Writing char[] threw &quot; + e);</span>
+<span class="fc" id="L92">        }</span>
+<span class="fc" id="L93">        assertEquals(&quot;BC&quot;, writer.toString());</span>
+        
+<span class="fc" id="L95">    }</span>
+    
+    /** Test writing Null String */
+    public void testNullString() {
+
+<span class="fc" id="L100">        ProxyWriter proxy = new ProxyWriter(new NullWriter());</span>
+
+        try {
+<span class="fc" id="L103">            proxy.write((String)null);</span>
+<span class="nc" id="L104">        } catch(Exception e) {</span>
+<span class="nc" id="L105">            fail(&quot;Writing null String threw &quot; + e);</span>
+<span class="fc" id="L106">        }</span>
+
+        try {
+<span class="fc" id="L109">            proxy.write((String)null, 0, 0);</span>
+<span class="nc" id="L110">        } catch(Exception e) {</span>
+<span class="nc" id="L111">            fail(&quot;Writing null String threw &quot; + e);</span>
+<span class="fc" id="L112">        }</span>
+<span class="fc" id="L113">    }</span>
+
+    /** Test writing Null Char array */
+    public void testNullCharArray() {
+
+<span class="fc" id="L118">        ProxyWriter proxy = new ProxyWriter(new NullWriter());</span>
+
+        try {
+<span class="fc" id="L121">            proxy.write((char[])null);</span>
+<span class="nc" id="L122">        } catch(Exception e) {</span>
+<span class="nc" id="L123">            fail(&quot;Writing null char[] threw &quot; + e);</span>
+<span class="fc" id="L124">        }</span>
+
+        try {
+<span class="fc" id="L127">            proxy.write((char[])null, 0, 0);</span>
+<span class="nc" id="L128">        } catch(Exception e) {</span>
+<span class="nc" id="L129">            fail(&quot;Writing null char[] threw &quot; + e);</span>
+<span class="fc" id="L130">        }</span>
+<span class="fc" id="L131">    }</span>
+
+    /** Test appending Null CharSequence */
+    public void testNullCharSequencec() {
+
+<span class="fc" id="L136">        ProxyWriter proxy = new ProxyWriter(new NullWriter());</span>
+
+        try {
+<span class="fc" id="L139">            proxy.append((String)null);</span>
+<span class="nc" id="L140">        } catch(Exception e) {</span>
+<span class="nc" id="L141">            fail(&quot;Appending null CharSequence threw &quot; + e);</span>
+<span class="fc" id="L142">        }</span>
+<span class="fc" id="L143">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.0 (Apr 20, 2019 6:00:46 PM)</div></body></html>

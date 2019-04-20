@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ExtensionFileComparatorTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-io (Apr 20, 2019 6:11:46 PM)</a> &gt; <a href="../../index.html" class="el_group">commons-io</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.comparator</a> &gt; <span class="el_source">ExtensionFileComparatorTest.java</span></div><h1>ExtensionFileComparatorTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.comparator;
+
+import org.junit.Before;
+import org.junit.Test;
+
+import java.io.File;
+import java.util.Comparator;
+
+import static org.junit.Assert.assertTrue;
+
+/**
+ * Test case for {@link ExtensionFileComparator}.
+ */
+<span class="fc" id="L30">public class ExtensionFileComparatorTest extends ComparatorAbstractTestCase {</span>
+
+
+    @Before
+    public void setUp() throws Exception {
+<span class="fc" id="L35">        comparator = (AbstractFileComparator) ExtensionFileComparator.EXTENSION_COMPARATOR;</span>
+<span class="fc" id="L36">        reverse = ExtensionFileComparator.EXTENSION_REVERSE;</span>
+<span class="fc" id="L37">        equalFile1 = new File(&quot;abc.foo&quot;);</span>
+<span class="fc" id="L38">        equalFile2 = new File(&quot;def.foo&quot;);</span>
+<span class="fc" id="L39">        lessFile   = new File(&quot;abc.abc&quot;);</span>
+<span class="fc" id="L40">        moreFile   = new File(&quot;abc.xyz&quot;);</span>
+<span class="fc" id="L41">    }</span>
+
+    /** Test case sensitivity */
+    @Test
+    public void testCaseSensitivity() {
+<span class="fc" id="L46">        final File file3 = new File(&quot;abc.FOO&quot;);</span>
+<span class="fc" id="L47">        final Comparator&lt;File&gt; sensitive = new ExtensionFileComparator(null); /* test null as well */</span>
+<span class="pc bpc" id="L48" title="1 of 2 branches missed.">        assertTrue(&quot;sensitive file1 &amp; file2 = 0&quot;, sensitive.compare(equalFile1, equalFile2) == 0);</span>
+<span class="pc bpc" id="L49" title="1 of 2 branches missed.">        assertTrue(&quot;sensitive file1 &amp; file3 &gt; 0&quot;, sensitive.compare(equalFile1, file3) &gt; 0);</span>
+<span class="pc bpc" id="L50" title="1 of 2 branches missed.">        assertTrue(&quot;sensitive file1 &amp; less  &gt; 0&quot;, sensitive.compare(equalFile1, lessFile) &gt; 0);</span>
+
+<span class="fc" id="L52">        final Comparator&lt;File&gt; insensitive = ExtensionFileComparator.EXTENSION_INSENSITIVE_COMPARATOR;</span>
+<span class="pc bpc" id="L53" title="1 of 2 branches missed.">        assertTrue(&quot;insensitive file1 &amp; file2 = 0&quot;, insensitive.compare(equalFile1, equalFile2) == 0);</span>
+<span class="pc bpc" id="L54" title="1 of 2 branches missed.">        assertTrue(&quot;insensitive file1 &amp; file3 = 0&quot;, insensitive.compare(equalFile1, file3) == 0);</span>
+<span class="pc bpc" id="L55" title="1 of 2 branches missed.">        assertTrue(&quot;insensitive file1 &amp; file4 &gt; 0&quot;, insensitive.compare(equalFile1, lessFile) &gt; 0);</span>
+<span class="pc bpc" id="L56" title="1 of 2 branches missed.">        assertTrue(&quot;insensitive file3 &amp; less  &gt; 0&quot;, insensitive.compare(file3, lessFile) &gt; 0);</span>
+<span class="fc" id="L57">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>commons-io (Apr 20, 2019 6:11:46 PM)</div></body></html>

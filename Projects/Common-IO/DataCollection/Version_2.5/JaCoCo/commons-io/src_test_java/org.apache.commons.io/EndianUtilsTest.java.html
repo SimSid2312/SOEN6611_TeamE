@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>EndianUtilsTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-io (Apr 20, 2019 6:11:46 PM)</a> &gt; <a href="../../index.html" class="el_group">commons-io</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io</a> &gt; <span class="el_source">EndianUtilsTest.java</span></div><h1>EndianUtilsTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io;
+
+import org.junit.Test;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
+import java.io.IOException;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
+/**
+ * @version $Id$
+ */
+<span class="fc" id="L32">public class EndianUtilsTest  {</span>
+
+    @Test
+    public void testCtor() {
+<span class="fc" id="L36">        new EndianUtils();</span>
+        // Constructor does not blow up.
+<span class="fc" id="L38">    }</span>
+
+    @Test
+    public void testEOFException() throws IOException {
+<span class="fc" id="L42">        final ByteArrayInputStream input = new ByteArrayInputStream(new byte[] {});</span>
+        try {
+<span class="nc" id="L44">            EndianUtils.readSwappedDouble(input);</span>
+<span class="nc" id="L45">            fail(&quot;Expected EOFException&quot;);</span>
+<span class="fc" id="L46">        } catch (final EOFException e) {</span>
+            // expected
+<span class="nc" id="L48">        }</span>
+<span class="fc" id="L49">    }</span>
+
+    @Test
+    public void testSwapShort() {
+<span class="fc" id="L53">        assertEquals( (short) 0, EndianUtils.swapShort( (short) 0 ) );</span>
+<span class="fc" id="L54">        assertEquals( (short) 0x0201, EndianUtils.swapShort( (short) 0x0102 ) );</span>
+<span class="fc" id="L55">        assertEquals( (short) 0xffff, EndianUtils.swapShort( (short) 0xffff ) );</span>
+<span class="fc" id="L56">        assertEquals( (short) 0x0102, EndianUtils.swapShort( (short) 0x0201 ) );</span>
+<span class="fc" id="L57">    }</span>
+
+    @Test
+    public void testSwapInteger() {
+<span class="fc" id="L61">        assertEquals( 0, EndianUtils.swapInteger( 0 ) );</span>
+<span class="fc" id="L62">        assertEquals( 0x04030201, EndianUtils.swapInteger( 0x01020304 ) );</span>
+<span class="fc" id="L63">        assertEquals( 0x01000000, EndianUtils.swapInteger( 0x00000001 ) );</span>
+<span class="fc" id="L64">        assertEquals( 0x00000001, EndianUtils.swapInteger( 0x01000000 ) );</span>
+<span class="fc" id="L65">        assertEquals( 0x11111111, EndianUtils.swapInteger( 0x11111111 ) );</span>
+<span class="fc" id="L66">        assertEquals( 0xabcdef10, EndianUtils.swapInteger( 0x10efcdab ) );</span>
+<span class="fc" id="L67">        assertEquals( 0xab, EndianUtils.swapInteger( 0xab000000 ) );</span>
+<span class="fc" id="L68">    }</span>
+
+    @Test
+    public void testSwapLong() {
+<span class="fc" id="L72">        assertEquals( 0, EndianUtils.swapLong( 0 ) );</span>
+<span class="fc" id="L73">        assertEquals( 0x0807060504030201L, EndianUtils.swapLong( 0x0102030405060708L ) );</span>
+<span class="fc" id="L74">        assertEquals( 0xffffffffffffffffL, EndianUtils.swapLong( 0xffffffffffffffffL ) );</span>
+<span class="fc" id="L75">        assertEquals( 0xab, EndianUtils.swapLong( 0xab00000000000000L ) );</span>
+<span class="fc" id="L76">    }</span>
+
+    @Test
+    public void testSwapFloat() {
+<span class="fc" id="L80">        assertEquals( 0.0f, EndianUtils.swapFloat( 0.0f ), 0.0 );</span>
+<span class="fc" id="L81">        final float f1 = Float.intBitsToFloat( 0x01020304 );</span>
+<span class="fc" id="L82">        final float f2 = Float.intBitsToFloat( 0x04030201 );</span>
+<span class="fc" id="L83">        assertEquals( f2, EndianUtils.swapFloat( f1 ), 0.0 );</span>
+<span class="fc" id="L84">    }</span>
+
+    @Test
+    public void testSwapDouble() {
+<span class="fc" id="L88">        assertEquals( 0.0, EndianUtils.swapDouble( 0.0 ), 0.0 );</span>
+<span class="fc" id="L89">        final double d1 = Double.longBitsToDouble( 0x0102030405060708L );</span>
+<span class="fc" id="L90">        final double d2 = Double.longBitsToDouble( 0x0807060504030201L );</span>
+<span class="fc" id="L91">        assertEquals( d2, EndianUtils.swapDouble( d1 ), 0.0 );</span>
+<span class="fc" id="L92">    }</span>
+
+    /**
+     * Tests all swapXxxx methods for symmetry when going from one endian
+     * to another and back again.
+     */
+    @Test
+    public void testSymmetry() {
+<span class="fc" id="L100">        assertEquals( (short) 0x0102, EndianUtils.swapShort( EndianUtils.swapShort( (short) 0x0102 ) ) );</span>
+<span class="fc" id="L101">        assertEquals( 0x01020304, EndianUtils.swapInteger( EndianUtils.swapInteger( 0x01020304 ) ) );</span>
+<span class="fc" id="L102">        assertEquals( 0x0102030405060708L, EndianUtils.swapLong( EndianUtils.swapLong( 0x0102030405060708L ) ) );</span>
+<span class="fc" id="L103">        final float f1 = Float.intBitsToFloat( 0x01020304 );</span>
+<span class="fc" id="L104">        assertEquals( f1, EndianUtils.swapFloat( EndianUtils.swapFloat( f1 ) ), 0.0 );</span>
+<span class="fc" id="L105">        final double d1 = Double.longBitsToDouble( 0x0102030405060708L );</span>
+<span class="fc" id="L106">        assertEquals( d1, EndianUtils.swapDouble( EndianUtils.swapDouble( d1 ) ), 0.0 );</span>
+<span class="fc" id="L107">    }</span>
+
+    @Test
+    public void testReadSwappedShort() throws IOException {
+<span class="fc" id="L111">        final byte[] bytes = new byte[] { 0x02, 0x01 };</span>
+<span class="fc" id="L112">        assertEquals( 0x0102, EndianUtils.readSwappedShort( bytes, 0 ) );</span>
+
+<span class="fc" id="L114">        final ByteArrayInputStream input = new ByteArrayInputStream(bytes);</span>
+<span class="fc" id="L115">        assertEquals( 0x0102, EndianUtils.readSwappedShort( input ) );</span>
+<span class="fc" id="L116">    }</span>
+
+    @Test
+    public void testWriteSwappedShort() throws IOException {
+<span class="fc" id="L120">        byte[] bytes = new byte[2];</span>
+<span class="fc" id="L121">        EndianUtils.writeSwappedShort( bytes, 0, (short) 0x0102 );</span>
+<span class="fc" id="L122">        assertEquals( 0x02, bytes[0] );</span>
+<span class="fc" id="L123">        assertEquals( 0x01, bytes[1] );</span>
+
+<span class="fc" id="L125">        final ByteArrayOutputStream baos = new ByteArrayOutputStream(2);</span>
+<span class="fc" id="L126">        EndianUtils.writeSwappedShort( baos, (short) 0x0102 );</span>
+<span class="fc" id="L127">        bytes = baos.toByteArray();</span>
+<span class="fc" id="L128">        assertEquals( 0x02, bytes[0] );</span>
+<span class="fc" id="L129">        assertEquals( 0x01, bytes[1] );</span>
+<span class="fc" id="L130">    }</span>
+
+    @Test
+    public void testReadSwappedUnsignedShort() throws IOException {
+<span class="fc" id="L134">        final byte[] bytes = new byte[] { 0x02, 0x01 };</span>
+<span class="fc" id="L135">        assertEquals( 0x00000102, EndianUtils.readSwappedUnsignedShort( bytes, 0 ) );</span>
+
+<span class="fc" id="L137">        final ByteArrayInputStream input = new ByteArrayInputStream(bytes);</span>
+<span class="fc" id="L138">        assertEquals( 0x00000102, EndianUtils.readSwappedUnsignedShort( input ) );</span>
+<span class="fc" id="L139">    }</span>
+
+    @Test
+    public void testReadSwappedInteger() throws IOException {
+<span class="fc" id="L143">        final byte[] bytes = new byte[] { 0x04, 0x03, 0x02, 0x01 };</span>
+<span class="fc" id="L144">        assertEquals( 0x01020304, EndianUtils.readSwappedInteger( bytes, 0 ) );</span>
+
+<span class="fc" id="L146">        final ByteArrayInputStream input = new ByteArrayInputStream(bytes);</span>
+<span class="fc" id="L147">        assertEquals( 0x01020304, EndianUtils.readSwappedInteger( input ) );</span>
+<span class="fc" id="L148">    }</span>
+
+    @Test
+    public void testWriteSwappedInteger() throws IOException {
+<span class="fc" id="L152">        byte[] bytes = new byte[4];</span>
+<span class="fc" id="L153">        EndianUtils.writeSwappedInteger( bytes, 0, 0x01020304 );</span>
+<span class="fc" id="L154">        assertEquals( 0x04, bytes[0] );</span>
+<span class="fc" id="L155">        assertEquals( 0x03, bytes[1] );</span>
+<span class="fc" id="L156">        assertEquals( 0x02, bytes[2] );</span>
+<span class="fc" id="L157">        assertEquals( 0x01, bytes[3] );</span>
+
+<span class="fc" id="L159">        final ByteArrayOutputStream baos = new ByteArrayOutputStream(4);</span>
+<span class="fc" id="L160">        EndianUtils.writeSwappedInteger( baos, 0x01020304 );</span>
+<span class="fc" id="L161">        bytes = baos.toByteArray();</span>
+<span class="fc" id="L162">        assertEquals( 0x04, bytes[0] );</span>
+<span class="fc" id="L163">        assertEquals( 0x03, bytes[1] );</span>
+<span class="fc" id="L164">        assertEquals( 0x02, bytes[2] );</span>
+<span class="fc" id="L165">        assertEquals( 0x01, bytes[3] );</span>
+<span class="fc" id="L166">    }</span>
+
+    @Test
+    public void testReadSwappedUnsignedInteger() throws IOException {
+<span class="fc" id="L170">        final byte[] bytes = new byte[] { 0x04, 0x03, 0x02, 0x01 };</span>
+<span class="fc" id="L171">        assertEquals( 0x0000000001020304L, EndianUtils.readSwappedUnsignedInteger( bytes, 0 ) );</span>
+
+<span class="fc" id="L173">        final ByteArrayInputStream input = new ByteArrayInputStream(bytes);</span>
+<span class="fc" id="L174">        assertEquals( 0x0000000001020304L, EndianUtils.readSwappedUnsignedInteger( input ) );</span>
+<span class="fc" id="L175">    }</span>
+
+    @Test
+    public void testReadSwappedLong() throws IOException {
+<span class="fc" id="L179">        final byte[] bytes = new byte[] { 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01 };</span>
+<span class="fc" id="L180">        assertEquals( 0x0102030405060708L, EndianUtils.readSwappedLong( bytes, 0 ) );</span>
+
+<span class="fc" id="L182">        final ByteArrayInputStream input = new ByteArrayInputStream(bytes);</span>
+<span class="fc" id="L183">        assertEquals( 0x0102030405060708L, EndianUtils.readSwappedLong( input ) );</span>
+<span class="fc" id="L184">    }</span>
+
+    @Test
+    public void testWriteSwappedLong() throws IOException {
+<span class="fc" id="L188">        byte[] bytes = new byte[8];</span>
+<span class="fc" id="L189">        EndianUtils.writeSwappedLong( bytes, 0, 0x0102030405060708L );</span>
+<span class="fc" id="L190">        assertEquals( 0x08, bytes[0] );</span>
+<span class="fc" id="L191">        assertEquals( 0x07, bytes[1] );</span>
+<span class="fc" id="L192">        assertEquals( 0x06, bytes[2] );</span>
+<span class="fc" id="L193">        assertEquals( 0x05, bytes[3] );</span>
+<span class="fc" id="L194">        assertEquals( 0x04, bytes[4] );</span>
+<span class="fc" id="L195">        assertEquals( 0x03, bytes[5] );</span>
+<span class="fc" id="L196">        assertEquals( 0x02, bytes[6] );</span>
+<span class="fc" id="L197">        assertEquals( 0x01, bytes[7] );</span>
+
+<span class="fc" id="L199">        final ByteArrayOutputStream baos = new ByteArrayOutputStream(8);</span>
+<span class="fc" id="L200">        EndianUtils.writeSwappedLong( baos, 0x0102030405060708L );</span>
+<span class="fc" id="L201">        bytes = baos.toByteArray();</span>
+<span class="fc" id="L202">        assertEquals( 0x08, bytes[0] );</span>
+<span class="fc" id="L203">        assertEquals( 0x07, bytes[1] );</span>
+<span class="fc" id="L204">        assertEquals( 0x06, bytes[2] );</span>
+<span class="fc" id="L205">        assertEquals( 0x05, bytes[3] );</span>
+<span class="fc" id="L206">        assertEquals( 0x04, bytes[4] );</span>
+<span class="fc" id="L207">        assertEquals( 0x03, bytes[5] );</span>
+<span class="fc" id="L208">        assertEquals( 0x02, bytes[6] );</span>
+<span class="fc" id="L209">        assertEquals( 0x01, bytes[7] );</span>
+<span class="fc" id="L210">    }</span>
+
+    @Test
+    public void testReadSwappedFloat() throws IOException {
+<span class="fc" id="L214">        final byte[] bytes = new byte[] { 0x04, 0x03, 0x02, 0x01 };</span>
+<span class="fc" id="L215">        final float f1 = Float.intBitsToFloat( 0x01020304 );</span>
+<span class="fc" id="L216">        final float f2 = EndianUtils.readSwappedFloat( bytes, 0 );</span>
+<span class="fc" id="L217">        assertEquals( f1, f2, 0.0 );</span>
+
+<span class="fc" id="L219">        final ByteArrayInputStream input = new ByteArrayInputStream(bytes);</span>
+<span class="fc" id="L220">        assertEquals( f1, EndianUtils.readSwappedFloat( input ), 0.0 );</span>
+<span class="fc" id="L221">    }</span>
+
+    @Test
+    public void testWriteSwappedFloat() throws IOException {
+<span class="fc" id="L225">        byte[] bytes = new byte[4];</span>
+<span class="fc" id="L226">        final float f1 = Float.intBitsToFloat( 0x01020304 );</span>
+<span class="fc" id="L227">        EndianUtils.writeSwappedFloat( bytes, 0, f1 );</span>
+<span class="fc" id="L228">        assertEquals( 0x04, bytes[0] );</span>
+<span class="fc" id="L229">        assertEquals( 0x03, bytes[1] );</span>
+<span class="fc" id="L230">        assertEquals( 0x02, bytes[2] );</span>
+<span class="fc" id="L231">        assertEquals( 0x01, bytes[3] );</span>
+
+<span class="fc" id="L233">        final ByteArrayOutputStream baos = new ByteArrayOutputStream(4);</span>
+<span class="fc" id="L234">        EndianUtils.writeSwappedFloat( baos, f1 );</span>
+<span class="fc" id="L235">        bytes = baos.toByteArray();</span>
+<span class="fc" id="L236">        assertEquals( 0x04, bytes[0] );</span>
+<span class="fc" id="L237">        assertEquals( 0x03, bytes[1] );</span>
+<span class="fc" id="L238">        assertEquals( 0x02, bytes[2] );</span>
+<span class="fc" id="L239">        assertEquals( 0x01, bytes[3] );</span>
+<span class="fc" id="L240">    }</span>
+
+    @Test
+    public void testReadSwappedDouble() throws IOException {
+<span class="fc" id="L244">        final byte[] bytes = new byte[] { 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01 };</span>
+<span class="fc" id="L245">        final double d1 = Double.longBitsToDouble( 0x0102030405060708L );</span>
+<span class="fc" id="L246">        final double d2 = EndianUtils.readSwappedDouble( bytes, 0 );</span>
+<span class="fc" id="L247">        assertEquals( d1, d2, 0.0 );</span>
+
+<span class="fc" id="L249">        final ByteArrayInputStream input = new ByteArrayInputStream(bytes);</span>
+<span class="fc" id="L250">        assertEquals( d1, EndianUtils.readSwappedDouble( input ), 0.0 );</span>
+<span class="fc" id="L251">    }</span>
+
+    @Test
+    public void testWriteSwappedDouble() throws IOException {
+<span class="fc" id="L255">        byte[] bytes = new byte[8];</span>
+<span class="fc" id="L256">        final double d1 = Double.longBitsToDouble( 0x0102030405060708L );</span>
+<span class="fc" id="L257">        EndianUtils.writeSwappedDouble( bytes, 0, d1 );</span>
+<span class="fc" id="L258">        assertEquals( 0x08, bytes[0] );</span>
+<span class="fc" id="L259">        assertEquals( 0x07, bytes[1] );</span>
+<span class="fc" id="L260">        assertEquals( 0x06, bytes[2] );</span>
+<span class="fc" id="L261">        assertEquals( 0x05, bytes[3] );</span>
+<span class="fc" id="L262">        assertEquals( 0x04, bytes[4] );</span>
+<span class="fc" id="L263">        assertEquals( 0x03, bytes[5] );</span>
+<span class="fc" id="L264">        assertEquals( 0x02, bytes[6] );</span>
+<span class="fc" id="L265">        assertEquals( 0x01, bytes[7] );</span>
+
+<span class="fc" id="L267">        final ByteArrayOutputStream baos = new ByteArrayOutputStream(8);</span>
+<span class="fc" id="L268">        EndianUtils.writeSwappedDouble( baos, d1 );</span>
+<span class="fc" id="L269">        bytes = baos.toByteArray();</span>
+<span class="fc" id="L270">        assertEquals( 0x08, bytes[0] );</span>
+<span class="fc" id="L271">        assertEquals( 0x07, bytes[1] );</span>
+<span class="fc" id="L272">        assertEquals( 0x06, bytes[2] );</span>
+<span class="fc" id="L273">        assertEquals( 0x05, bytes[3] );</span>
+<span class="fc" id="L274">        assertEquals( 0x04, bytes[4] );</span>
+<span class="fc" id="L275">        assertEquals( 0x03, bytes[5] );</span>
+<span class="fc" id="L276">        assertEquals( 0x02, bytes[6] );</span>
+<span class="fc" id="L277">        assertEquals( 0x01, bytes[7] );</span>
+<span class="fc" id="L278">    }</span>
+
+    // tests #IO-101
+    @Test
+    public void testSymmetryOfLong() {
+
+<span class="fc" id="L284">        final double[] tests = new double[] {34.345, -345.5645, 545.12, 10.043, 7.123456789123};</span>
+<span class="fc bfc" id="L285" title="All 2 branches covered.">        for (final double test : tests) {</span>
+
+            // testing the real problem
+<span class="fc" id="L288">            byte[] buffer = new byte[8];</span>
+<span class="fc" id="L289">            final long ln1 = Double.doubleToLongBits( test );</span>
+<span class="fc" id="L290">            EndianUtils.writeSwappedLong(buffer, 0, ln1);</span>
+<span class="fc" id="L291">            final long ln2 = EndianUtils.readSwappedLong(buffer, 0);</span>
+<span class="fc" id="L292">            assertEquals( ln1, ln2 );</span>
+
+            // testing the bug report
+<span class="fc" id="L295">            buffer = new byte[8];</span>
+<span class="fc" id="L296">            EndianUtils.writeSwappedDouble(buffer, 0, test);</span>
+<span class="fc" id="L297">            final double val = EndianUtils.readSwappedDouble(buffer, 0);</span>
+<span class="fc" id="L298">            assertEquals( test, val, 0 );</span>
+        }
+<span class="fc" id="L300">    }</span>
+
+    // tests #IO-117
+    @Test
+    public void testUnsignedOverrun() throws Exception {
+<span class="fc" id="L305">        final byte[] target = new byte[] { 0, 0, 0, (byte)0x80 };</span>
+<span class="fc" id="L306">        final long expected = 0x80000000L;</span>
+
+<span class="fc" id="L308">        long actual = EndianUtils.readSwappedUnsignedInteger(target, 0);</span>
+<span class="fc" id="L309">        assertEquals(&quot;readSwappedUnsignedInteger(byte[], int) was incorrect&quot;, expected, actual);</span>
+
+<span class="fc" id="L311">        final ByteArrayInputStream in = new ByteArrayInputStream(target);</span>
+<span class="fc" id="L312">        actual = EndianUtils.readSwappedUnsignedInteger(in);</span>
+<span class="fc" id="L313">        assertEquals(&quot;readSwappedUnsignedInteger(InputStream) was incorrect&quot;, expected, actual);</span>
+<span class="fc" id="L314">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>commons-io (Apr 20, 2019 6:11:46 PM)</div></body></html>

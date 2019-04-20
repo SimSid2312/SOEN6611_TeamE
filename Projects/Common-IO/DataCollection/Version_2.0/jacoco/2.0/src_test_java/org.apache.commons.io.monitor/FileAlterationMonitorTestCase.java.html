@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileAlterationMonitorTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.0 (Apr 20, 2019 6:00:46 PM)</a> &gt; <a href="../../index.html" class="el_group">2.0</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.monitor</a> &gt; <span class="el_source">FileAlterationMonitorTestCase.java</span></div><h1>FileAlterationMonitorTestCase.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.monitor;
+
+import java.io.File;
+import java.util.Collection;
+import java.util.Iterator;
+
+/**
+ * {@link FileAlterationMonitor} Test Case.
+ */
+public class FileAlterationMonitorTestCase extends AbstractMonitorTestCase {
+
+    /**
+     * Construct a new test case.
+     *
+     * @param name The name of the test
+     */
+    public FileAlterationMonitorTestCase(String name) {
+<span class="fc" id="L34">        super(name);</span>
+<span class="fc" id="L35">        testDirName = &quot;test-monitor&quot;;</span>
+<span class="fc" id="L36">    }</span>
+
+    @Override
+    protected void setUp() throws Exception {
+<span class="fc" id="L40">        listener = new CollectionFileListener(false);</span>
+<span class="fc" id="L41">        super.setUp();</span>
+<span class="fc" id="L42">    }</span>
+
+    /**
+     * Test default constructor.
+     */
+    public void testDefaultConstructor() {
+<span class="fc" id="L48">        FileAlterationMonitor monitor = new FileAlterationMonitor();</span>
+<span class="fc" id="L49">        assertEquals(&quot;Interval&quot;, 10000, monitor.getInterval());</span>
+<span class="fc" id="L50">    }</span>
+
+    /**
+     * Test add/remove observers.
+     */
+    public void testAddRemoveObservers() {
+<span class="fc" id="L56">        FileAlterationObserver[] observers = null;</span>
+<span class="fc" id="L57">        FileAlterationMonitor monitor = null;</span>
+        
+        // Null Observers
+<span class="fc" id="L60">        monitor = new FileAlterationMonitor(123, observers);</span>
+<span class="fc" id="L61">        assertEquals(&quot;Interval&quot;, 123, monitor.getInterval());</span>
+<span class="fc" id="L62">        assertFalse(&quot;Observers[1]&quot;, monitor.getObservers().iterator().hasNext());</span>
+
+        // Null Observer
+<span class="fc" id="L65">        observers = new FileAlterationObserver[1]; // observer is null</span>
+<span class="fc" id="L66">        monitor = new FileAlterationMonitor(456, observers);</span>
+<span class="fc" id="L67">        assertFalse(&quot;Observers[2]&quot;, monitor.getObservers().iterator().hasNext());</span>
+
+        // Null Observer
+<span class="fc" id="L70">        monitor.addObserver(null);</span>
+<span class="fc" id="L71">        assertFalse(&quot;Observers[3]&quot;, monitor.getObservers().iterator().hasNext());</span>
+<span class="fc" id="L72">        monitor.removeObserver(null);</span>
+
+        // Add Observer
+<span class="fc" id="L75">        FileAlterationObserver observer = new FileAlterationObserver(&quot;foo&quot;);</span>
+<span class="fc" id="L76">        monitor.addObserver(observer);</span>
+<span class="fc" id="L77">        Iterator&lt;FileAlterationObserver&gt; it = monitor.getObservers().iterator();</span>
+<span class="fc" id="L78">        assertTrue(&quot;Observers[4]&quot;, it.hasNext());</span>
+<span class="fc" id="L79">        assertEquals(&quot;Added&quot;, observer, it.next());</span>
+<span class="fc" id="L80">        assertFalse(&quot;Observers[5]&quot;, it.hasNext());</span>
+
+        // Remove Observer
+<span class="fc" id="L83">        monitor.removeObserver(observer);</span>
+<span class="fc" id="L84">        assertFalse(&quot;Observers[6]&quot;, monitor.getObservers().iterator().hasNext());</span>
+<span class="fc" id="L85">    }</span>
+
+    /**
+     * Test checkAndNotify() method
+     */
+    public void testMonitor() {
+        try {
+<span class="fc" id="L92">            long interval = 100;</span>
+<span class="fc" id="L93">            FileAlterationMonitor monitor = new FileAlterationMonitor(interval, observer);</span>
+<span class="fc" id="L94">            assertEquals(&quot;Interval&quot;, interval, monitor.getInterval());</span>
+<span class="fc" id="L95">            monitor.start();</span>
+
+            try {
+<span class="nc" id="L98">                monitor.start(); // try and start again</span>
+<span class="fc" id="L99">            } catch (IllegalStateException e) {</span>
+                // expected result, monitor already running
+<span class="nc" id="L101">            }</span>
+
+            // Create a File
+<span class="fc" id="L104">            checkCollectionsEmpty(&quot;A&quot;);</span>
+<span class="fc" id="L105">            File file1 = touch(new File(testDir, &quot;file1.java&quot;));</span>
+<span class="fc" id="L106">            checkFile(&quot;Create&quot;, file1, listener.getCreatedFiles());</span>
+<span class="fc" id="L107">            listener.clear();</span>
+
+            // Update a file
+<span class="fc" id="L110">            checkCollectionsEmpty(&quot;B&quot;);</span>
+<span class="fc" id="L111">            file1 = touch(file1);</span>
+<span class="fc" id="L112">            checkFile(&quot;Update&quot;, file1, listener.getChangedFiles());</span>
+<span class="fc" id="L113">            listener.clear();</span>
+
+            // Delete a file
+<span class="fc" id="L116">            checkCollectionsEmpty(&quot;C&quot;);</span>
+<span class="fc" id="L117">            file1.delete();</span>
+<span class="fc" id="L118">            checkFile(&quot;Delete&quot;, file1, listener.getDeletedFiles());</span>
+<span class="fc" id="L119">            listener.clear();</span>
+
+            // Stop monitoring
+<span class="fc" id="L122">            monitor.stop();</span>
+
+            try {
+<span class="nc" id="L125">                monitor.stop(); // try and stop again</span>
+<span class="fc" id="L126">            } catch (IllegalStateException e) {</span>
+                // expected result, monitor already stopped
+<span class="nc" id="L128">            }</span>
+<span class="nc" id="L129">        } catch (Exception e) {</span>
+<span class="nc" id="L130">            e.printStackTrace();</span>
+<span class="nc" id="L131">            fail(&quot;Threw &quot; + e);</span>
+<span class="fc" id="L132">        }</span>
+<span class="fc" id="L133">    }</span>
+
+    /**
+     * Check all the File Collections have the expected sizes.
+     */
+    private void checkFile(String label, File file, Collection&lt;File&gt; files) {
+<span class="pc bpc" id="L139" title="1 of 2 branches missed.">        for (int i = 0; i &lt; 20; i++) {</span>
+<span class="fc bfc" id="L140" title="All 2 branches covered.">            if (files.contains(file)) {</span>
+<span class="fc" id="L141">                return; // found, test passes</span>
+            }
+<span class="fc" id="L143">            sleepHandleInterruped(pauseTime);</span>
+        }
+<span class="nc" id="L145">        fail(label + &quot; &quot; + file + &quot; not found&quot;);</span>
+<span class="nc" id="L146">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.0 (Apr 20, 2019 6:00:46 PM)</div></body></html>

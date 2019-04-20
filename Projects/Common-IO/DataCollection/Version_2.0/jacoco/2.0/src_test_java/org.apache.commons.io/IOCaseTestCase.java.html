@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>IOCaseTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.0 (Apr 20, 2019 6:00:46 PM)</a> &gt; <a href="../../index.html" class="el_group">2.0</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io</a> &gt; <span class="el_source">IOCaseTestCase.java</span></div><h1>IOCaseTestCase.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
+import org.apache.commons.io.testtools.FileBasedTestCase;
+
+/**
+ * This is used to test IOCase for correctness.
+ *
+ * @author Stephen Colebourne
+ * @version $Id$
+ */
+public class IOCaseTestCase extends FileBasedTestCase {
+
+<span class="pc bpc" id="L35" title="1 of 2 branches missed.">    private static final boolean WINDOWS = (File.separatorChar == '\\');</span>
+
+    public IOCaseTestCase(String name) {
+<span class="fc" id="L38">        super(name);</span>
+<span class="fc" id="L39">    }</span>
+
+    @Override
+    protected void setUp() throws Exception {
+
+<span class="fc" id="L44">    }</span>
+
+    @Override
+    protected void tearDown() throws Exception {
+<span class="fc" id="L48">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void test_forName() throws Exception {
+<span class="fc" id="L52">        assertEquals(IOCase.SENSITIVE, IOCase.forName(&quot;Sensitive&quot;));</span>
+<span class="fc" id="L53">        assertEquals(IOCase.INSENSITIVE, IOCase.forName(&quot;Insensitive&quot;));</span>
+<span class="fc" id="L54">        assertEquals(IOCase.SYSTEM, IOCase.forName(&quot;System&quot;));</span>
+        try {
+<span class="nc" id="L56">            IOCase.forName(&quot;Blah&quot;);</span>
+<span class="nc" id="L57">            fail();</span>
+<span class="pc" id="L58">        } catch (IllegalArgumentException ex) {}</span>
+        try {
+<span class="nc" id="L60">            IOCase.forName(null);</span>
+<span class="nc" id="L61">            fail();</span>
+<span class="pc" id="L62">        } catch (IllegalArgumentException ex) {}</span>
+<span class="fc" id="L63">    }</span>
+
+    public void test_serialization() throws Exception {
+<span class="fc" id="L66">        assertSame(IOCase.SENSITIVE, serialize(IOCase.SENSITIVE));</span>
+<span class="fc" id="L67">        assertSame(IOCase.INSENSITIVE, serialize(IOCase.INSENSITIVE));</span>
+<span class="fc" id="L68">        assertSame(IOCase.SYSTEM, serialize(IOCase.SYSTEM));</span>
+<span class="fc" id="L69">    }</span>
+
+    public void test_getName() throws Exception {
+<span class="fc" id="L72">        assertEquals(&quot;Sensitive&quot;, IOCase.SENSITIVE.getName());</span>
+<span class="fc" id="L73">        assertEquals(&quot;Insensitive&quot;, IOCase.INSENSITIVE.getName());</span>
+<span class="fc" id="L74">        assertEquals(&quot;System&quot;, IOCase.SYSTEM.getName());</span>
+<span class="fc" id="L75">    }</span>
+
+    public void test_toString() throws Exception {
+<span class="fc" id="L78">        assertEquals(&quot;Sensitive&quot;, IOCase.SENSITIVE.toString());</span>
+<span class="fc" id="L79">        assertEquals(&quot;Insensitive&quot;, IOCase.INSENSITIVE.toString());</span>
+<span class="fc" id="L80">        assertEquals(&quot;System&quot;, IOCase.SYSTEM.toString());</span>
+<span class="fc" id="L81">    }</span>
+
+    public void test_isCaseSensitive() throws Exception {
+<span class="fc" id="L84">        assertEquals(true, IOCase.SENSITIVE.isCaseSensitive());</span>
+<span class="fc" id="L85">        assertEquals(false, IOCase.INSENSITIVE.isCaseSensitive());</span>
+<span class="pc bpc" id="L86" title="1 of 2 branches missed.">        assertEquals(!WINDOWS, IOCase.SYSTEM.isCaseSensitive());</span>
+<span class="fc" id="L87">    }</span>
+    //-----------------------------------------------------------------------
+    public void test_checkCompare_functionality() throws Exception {
+<span class="pc bpc" id="L90" title="1 of 2 branches missed.">        assertTrue(IOCase.SENSITIVE.checkCompareTo(&quot;ABC&quot;, &quot;&quot;) &gt; 0);</span>
+<span class="pc bpc" id="L91" title="1 of 2 branches missed.">        assertTrue(IOCase.SENSITIVE.checkCompareTo(&quot;&quot;, &quot;ABC&quot;) &lt; 0);</span>
+<span class="pc bpc" id="L92" title="1 of 2 branches missed.">        assertTrue(IOCase.SENSITIVE.checkCompareTo(&quot;ABC&quot;, &quot;DEF&quot;) &lt; 0);</span>
+<span class="pc bpc" id="L93" title="1 of 2 branches missed.">        assertTrue(IOCase.SENSITIVE.checkCompareTo(&quot;DEF&quot;, &quot;ABC&quot;) &gt; 0);</span>
+<span class="fc" id="L94">        assertEquals(0, IOCase.SENSITIVE.checkCompareTo(&quot;ABC&quot;, &quot;ABC&quot;));</span>
+<span class="fc" id="L95">        assertEquals(0, IOCase.SENSITIVE.checkCompareTo(&quot;&quot;, &quot;&quot;));</span>
+        
+        try {
+<span class="nc" id="L98">            IOCase.SENSITIVE.checkCompareTo(&quot;ABC&quot;, null);</span>
+<span class="nc" id="L99">            fail();</span>
+<span class="pc" id="L100">        } catch (NullPointerException ex) {}</span>
+        try {
+<span class="nc" id="L102">            IOCase.SENSITIVE.checkCompareTo(null, &quot;ABC&quot;);</span>
+<span class="nc" id="L103">            fail();</span>
+<span class="pc" id="L104">        } catch (NullPointerException ex) {}</span>
+        try {
+<span class="nc" id="L106">            IOCase.SENSITIVE.checkCompareTo(null, null);</span>
+<span class="nc" id="L107">            fail();</span>
+<span class="pc" id="L108">        } catch (NullPointerException ex) {}</span>
+<span class="fc" id="L109">    }</span>
+
+    public void test_checkCompare_case() throws Exception {
+<span class="fc" id="L112">        assertEquals(0, IOCase.SENSITIVE.checkCompareTo(&quot;ABC&quot;, &quot;ABC&quot;));</span>
+<span class="pc bpc" id="L113" title="1 of 2 branches missed.">        assertTrue(IOCase.SENSITIVE.checkCompareTo(&quot;ABC&quot;, &quot;abc&quot;) &lt; 0);</span>
+<span class="pc bpc" id="L114" title="1 of 2 branches missed.">        assertTrue(IOCase.SENSITIVE.checkCompareTo(&quot;abc&quot;, &quot;ABC&quot;) &gt; 0);</span>
+        
+<span class="fc" id="L116">        assertEquals(0, IOCase.INSENSITIVE.checkCompareTo(&quot;ABC&quot;, &quot;ABC&quot;));</span>
+<span class="fc" id="L117">        assertEquals(0, IOCase.INSENSITIVE.checkCompareTo(&quot;ABC&quot;, &quot;abc&quot;));</span>
+<span class="fc" id="L118">        assertEquals(0, IOCase.INSENSITIVE.checkCompareTo(&quot;abc&quot;, &quot;ABC&quot;));</span>
+
+<span class="fc" id="L120">        assertEquals(0, IOCase.SYSTEM.checkCompareTo(&quot;ABC&quot;, &quot;ABC&quot;));</span>
+<span class="pc bpc" id="L121" title="1 of 2 branches missed.">        assertEquals(WINDOWS, IOCase.SYSTEM.checkCompareTo(&quot;ABC&quot;, &quot;abc&quot;) == 0);</span>
+<span class="pc bpc" id="L122" title="1 of 2 branches missed.">        assertEquals(WINDOWS, IOCase.SYSTEM.checkCompareTo(&quot;abc&quot;, &quot;ABC&quot;) == 0);</span>
+<span class="fc" id="L123">    }</span>
+
+
+    //-----------------------------------------------------------------------
+    public void test_checkEquals_functionality() throws Exception {
+<span class="fc" id="L128">        assertEquals(false, IOCase.SENSITIVE.checkEquals(&quot;ABC&quot;, &quot;&quot;));</span>
+<span class="fc" id="L129">        assertEquals(false, IOCase.SENSITIVE.checkEquals(&quot;ABC&quot;, &quot;A&quot;));</span>
+<span class="fc" id="L130">        assertEquals(false, IOCase.SENSITIVE.checkEquals(&quot;ABC&quot;, &quot;AB&quot;));</span>
+<span class="fc" id="L131">        assertEquals(true, IOCase.SENSITIVE.checkEquals(&quot;ABC&quot;, &quot;ABC&quot;));</span>
+<span class="fc" id="L132">        assertEquals(false, IOCase.SENSITIVE.checkEquals(&quot;ABC&quot;, &quot;BC&quot;));</span>
+<span class="fc" id="L133">        assertEquals(false, IOCase.SENSITIVE.checkEquals(&quot;ABC&quot;, &quot;C&quot;));</span>
+<span class="fc" id="L134">        assertEquals(false, IOCase.SENSITIVE.checkEquals(&quot;ABC&quot;, &quot;ABCD&quot;));</span>
+<span class="fc" id="L135">        assertEquals(false, IOCase.SENSITIVE.checkEquals(&quot;&quot;, &quot;ABC&quot;));</span>
+<span class="fc" id="L136">        assertEquals(true, IOCase.SENSITIVE.checkEquals(&quot;&quot;, &quot;&quot;));</span>
+        
+        try {
+<span class="nc" id="L139">            IOCase.SENSITIVE.checkEquals(&quot;ABC&quot;, null);</span>
+<span class="nc" id="L140">            fail();</span>
+<span class="pc" id="L141">        } catch (NullPointerException ex) {}</span>
+        try {
+<span class="nc" id="L143">            IOCase.SENSITIVE.checkEquals(null, &quot;ABC&quot;);</span>
+<span class="nc" id="L144">            fail();</span>
+<span class="pc" id="L145">        } catch (NullPointerException ex) {}</span>
+        try {
+<span class="nc" id="L147">            IOCase.SENSITIVE.checkEquals(null, null);</span>
+<span class="nc" id="L148">            fail();</span>
+<span class="pc" id="L149">        } catch (NullPointerException ex) {}</span>
+<span class="fc" id="L150">    }</span>
+
+    public void test_checkEquals_case() throws Exception {
+<span class="fc" id="L153">        assertEquals(true, IOCase.SENSITIVE.checkEquals(&quot;ABC&quot;, &quot;ABC&quot;));</span>
+<span class="fc" id="L154">        assertEquals(false, IOCase.SENSITIVE.checkEquals(&quot;ABC&quot;, &quot;Abc&quot;));</span>
+        
+<span class="fc" id="L156">        assertEquals(true, IOCase.INSENSITIVE.checkEquals(&quot;ABC&quot;, &quot;ABC&quot;));</span>
+<span class="fc" id="L157">        assertEquals(true, IOCase.INSENSITIVE.checkEquals(&quot;ABC&quot;, &quot;Abc&quot;));</span>
+        
+<span class="fc" id="L159">        assertEquals(true, IOCase.SYSTEM.checkEquals(&quot;ABC&quot;, &quot;ABC&quot;));</span>
+<span class="fc" id="L160">        assertEquals(WINDOWS, IOCase.SYSTEM.checkEquals(&quot;ABC&quot;, &quot;Abc&quot;));</span>
+<span class="fc" id="L161">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void test_checkStartsWith_functionality() throws Exception {
+<span class="fc" id="L165">        assertEquals(true, IOCase.SENSITIVE.checkStartsWith(&quot;ABC&quot;, &quot;&quot;));</span>
+<span class="fc" id="L166">        assertEquals(true, IOCase.SENSITIVE.checkStartsWith(&quot;ABC&quot;, &quot;A&quot;));</span>
+<span class="fc" id="L167">        assertEquals(true, IOCase.SENSITIVE.checkStartsWith(&quot;ABC&quot;, &quot;AB&quot;));</span>
+<span class="fc" id="L168">        assertEquals(true, IOCase.SENSITIVE.checkStartsWith(&quot;ABC&quot;, &quot;ABC&quot;));</span>
+<span class="fc" id="L169">        assertEquals(false, IOCase.SENSITIVE.checkStartsWith(&quot;ABC&quot;, &quot;BC&quot;));</span>
+<span class="fc" id="L170">        assertEquals(false, IOCase.SENSITIVE.checkStartsWith(&quot;ABC&quot;, &quot;C&quot;));</span>
+<span class="fc" id="L171">        assertEquals(false, IOCase.SENSITIVE.checkStartsWith(&quot;ABC&quot;, &quot;ABCD&quot;));</span>
+<span class="fc" id="L172">        assertEquals(false, IOCase.SENSITIVE.checkStartsWith(&quot;&quot;, &quot;ABC&quot;));</span>
+<span class="fc" id="L173">        assertEquals(true, IOCase.SENSITIVE.checkStartsWith(&quot;&quot;, &quot;&quot;));</span>
+        
+        try {
+<span class="nc" id="L176">            IOCase.SENSITIVE.checkStartsWith(&quot;ABC&quot;, null);</span>
+<span class="nc" id="L177">            fail();</span>
+<span class="pc" id="L178">        } catch (NullPointerException ex) {}</span>
+        try {
+<span class="nc" id="L180">            IOCase.SENSITIVE.checkStartsWith(null, &quot;ABC&quot;);</span>
+<span class="nc" id="L181">            fail();</span>
+<span class="pc" id="L182">        } catch (NullPointerException ex) {}</span>
+        try {
+<span class="nc" id="L184">            IOCase.SENSITIVE.checkStartsWith(null, null);</span>
+<span class="nc" id="L185">            fail();</span>
+<span class="pc" id="L186">        } catch (NullPointerException ex) {}</span>
+<span class="fc" id="L187">    }</span>
+
+    public void test_checkStartsWith_case() throws Exception {
+<span class="fc" id="L190">        assertEquals(true, IOCase.SENSITIVE.checkStartsWith(&quot;ABC&quot;, &quot;AB&quot;));</span>
+<span class="fc" id="L191">        assertEquals(false, IOCase.SENSITIVE.checkStartsWith(&quot;ABC&quot;, &quot;Ab&quot;));</span>
+        
+<span class="fc" id="L193">        assertEquals(true, IOCase.INSENSITIVE.checkStartsWith(&quot;ABC&quot;, &quot;AB&quot;));</span>
+<span class="fc" id="L194">        assertEquals(true, IOCase.INSENSITIVE.checkStartsWith(&quot;ABC&quot;, &quot;Ab&quot;));</span>
+        
+<span class="fc" id="L196">        assertEquals(true, IOCase.SYSTEM.checkStartsWith(&quot;ABC&quot;, &quot;AB&quot;));</span>
+<span class="fc" id="L197">        assertEquals(WINDOWS, IOCase.SYSTEM.checkStartsWith(&quot;ABC&quot;, &quot;Ab&quot;));</span>
+<span class="fc" id="L198">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void test_checkEndsWith_functionality() throws Exception {
+<span class="fc" id="L202">        assertEquals(true, IOCase.SENSITIVE.checkEndsWith(&quot;ABC&quot;, &quot;&quot;));</span>
+<span class="fc" id="L203">        assertEquals(false, IOCase.SENSITIVE.checkEndsWith(&quot;ABC&quot;, &quot;A&quot;));</span>
+<span class="fc" id="L204">        assertEquals(false, IOCase.SENSITIVE.checkEndsWith(&quot;ABC&quot;, &quot;AB&quot;));</span>
+<span class="fc" id="L205">        assertEquals(true, IOCase.SENSITIVE.checkEndsWith(&quot;ABC&quot;, &quot;ABC&quot;));</span>
+<span class="fc" id="L206">        assertEquals(true, IOCase.SENSITIVE.checkEndsWith(&quot;ABC&quot;, &quot;BC&quot;));</span>
+<span class="fc" id="L207">        assertEquals(true, IOCase.SENSITIVE.checkEndsWith(&quot;ABC&quot;, &quot;C&quot;));</span>
+<span class="fc" id="L208">        assertEquals(false, IOCase.SENSITIVE.checkEndsWith(&quot;ABC&quot;, &quot;ABCD&quot;));</span>
+<span class="fc" id="L209">        assertEquals(false, IOCase.SENSITIVE.checkEndsWith(&quot;&quot;, &quot;ABC&quot;));</span>
+<span class="fc" id="L210">        assertEquals(true, IOCase.SENSITIVE.checkEndsWith(&quot;&quot;, &quot;&quot;));</span>
+        
+        try {
+<span class="nc" id="L213">            IOCase.SENSITIVE.checkEndsWith(&quot;ABC&quot;, null);</span>
+<span class="nc" id="L214">            fail();</span>
+<span class="pc" id="L215">        } catch (NullPointerException ex) {}</span>
+        try {
+<span class="nc" id="L217">            IOCase.SENSITIVE.checkEndsWith(null, &quot;ABC&quot;);</span>
+<span class="nc" id="L218">            fail();</span>
+<span class="pc" id="L219">        } catch (NullPointerException ex) {}</span>
+        try {
+<span class="nc" id="L221">            IOCase.SENSITIVE.checkEndsWith(null, null);</span>
+<span class="nc" id="L222">            fail();</span>
+<span class="pc" id="L223">        } catch (NullPointerException ex) {}</span>
+<span class="fc" id="L224">    }</span>
+
+    public void test_checkEndsWith_case() throws Exception {
+<span class="fc" id="L227">        assertEquals(true, IOCase.SENSITIVE.checkEndsWith(&quot;ABC&quot;, &quot;BC&quot;));</span>
+<span class="fc" id="L228">        assertEquals(false, IOCase.SENSITIVE.checkEndsWith(&quot;ABC&quot;, &quot;Bc&quot;));</span>
+        
+<span class="fc" id="L230">        assertEquals(true, IOCase.INSENSITIVE.checkEndsWith(&quot;ABC&quot;, &quot;BC&quot;));</span>
+<span class="fc" id="L231">        assertEquals(true, IOCase.INSENSITIVE.checkEndsWith(&quot;ABC&quot;, &quot;Bc&quot;));</span>
+        
+<span class="fc" id="L233">        assertEquals(true, IOCase.SYSTEM.checkEndsWith(&quot;ABC&quot;, &quot;BC&quot;));</span>
+<span class="fc" id="L234">        assertEquals(WINDOWS, IOCase.SYSTEM.checkEndsWith(&quot;ABC&quot;, &quot;Bc&quot;));</span>
+<span class="fc" id="L235">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void test_checkIndexOf_functionality() throws Exception {
+
+        // start
+<span class="fc" id="L241">        assertEquals(0,   IOCase.SENSITIVE.checkIndexOf(&quot;ABCDEFGHIJ&quot;, 0, &quot;A&quot;));</span>
+<span class="fc" id="L242">        assertEquals(-1,  IOCase.SENSITIVE.checkIndexOf(&quot;ABCDEFGHIJ&quot;, 1, &quot;A&quot;));</span>
+<span class="fc" id="L243">        assertEquals(0,   IOCase.SENSITIVE.checkIndexOf(&quot;ABCDEFGHIJ&quot;, 0, &quot;AB&quot;));</span>
+<span class="fc" id="L244">        assertEquals(-1,  IOCase.SENSITIVE.checkIndexOf(&quot;ABCDEFGHIJ&quot;, 1, &quot;AB&quot;));</span>
+<span class="fc" id="L245">        assertEquals(0,   IOCase.SENSITIVE.checkIndexOf(&quot;ABCDEFGHIJ&quot;, 0, &quot;ABC&quot;));</span>
+<span class="fc" id="L246">        assertEquals(-1,  IOCase.SENSITIVE.checkIndexOf(&quot;ABCDEFGHIJ&quot;, 1, &quot;ABC&quot;));</span>
+
+        // middle
+<span class="fc" id="L249">        assertEquals(3,   IOCase.SENSITIVE.checkIndexOf(&quot;ABCDEFGHIJ&quot;, 0, &quot;D&quot;));</span>
+<span class="fc" id="L250">        assertEquals(3,   IOCase.SENSITIVE.checkIndexOf(&quot;ABCDEFGHIJ&quot;, 3, &quot;D&quot;));</span>
+<span class="fc" id="L251">        assertEquals(-1,  IOCase.SENSITIVE.checkIndexOf(&quot;ABCDEFGHIJ&quot;, 4, &quot;D&quot;));</span>
+<span class="fc" id="L252">        assertEquals(3,   IOCase.SENSITIVE.checkIndexOf(&quot;ABCDEFGHIJ&quot;, 0, &quot;DE&quot;));</span>
+<span class="fc" id="L253">        assertEquals(3,   IOCase.SENSITIVE.checkIndexOf(&quot;ABCDEFGHIJ&quot;, 3, &quot;DE&quot;));</span>
+<span class="fc" id="L254">        assertEquals(-1,  IOCase.SENSITIVE.checkIndexOf(&quot;ABCDEFGHIJ&quot;, 4, &quot;DE&quot;));</span>
+<span class="fc" id="L255">        assertEquals(3,   IOCase.SENSITIVE.checkIndexOf(&quot;ABCDEFGHIJ&quot;, 0, &quot;DEF&quot;));</span>
+<span class="fc" id="L256">        assertEquals(3,   IOCase.SENSITIVE.checkIndexOf(&quot;ABCDEFGHIJ&quot;, 3, &quot;DEF&quot;));</span>
+<span class="fc" id="L257">        assertEquals(-1,  IOCase.SENSITIVE.checkIndexOf(&quot;ABCDEFGHIJ&quot;, 4, &quot;DEF&quot;));</span>
+
+        // end
+<span class="fc" id="L260">        assertEquals(9,   IOCase.SENSITIVE.checkIndexOf(&quot;ABCDEFGHIJ&quot;, 0, &quot;J&quot;));</span>
+<span class="fc" id="L261">        assertEquals(9,   IOCase.SENSITIVE.checkIndexOf(&quot;ABCDEFGHIJ&quot;, 8, &quot;J&quot;));</span>
+<span class="fc" id="L262">        assertEquals(9,   IOCase.SENSITIVE.checkIndexOf(&quot;ABCDEFGHIJ&quot;, 9, &quot;J&quot;));</span>
+<span class="fc" id="L263">        assertEquals(8,   IOCase.SENSITIVE.checkIndexOf(&quot;ABCDEFGHIJ&quot;, 0, &quot;IJ&quot;));</span>
+<span class="fc" id="L264">        assertEquals(8,   IOCase.SENSITIVE.checkIndexOf(&quot;ABCDEFGHIJ&quot;, 8, &quot;IJ&quot;));</span>
+<span class="fc" id="L265">        assertEquals(-1,  IOCase.SENSITIVE.checkIndexOf(&quot;ABCDEFGHIJ&quot;, 9, &quot;IJ&quot;));</span>
+<span class="fc" id="L266">        assertEquals(7,   IOCase.SENSITIVE.checkIndexOf(&quot;ABCDEFGHIJ&quot;, 6, &quot;HIJ&quot;));</span>
+<span class="fc" id="L267">        assertEquals(7,   IOCase.SENSITIVE.checkIndexOf(&quot;ABCDEFGHIJ&quot;, 7, &quot;HIJ&quot;));</span>
+<span class="fc" id="L268">        assertEquals(-1,  IOCase.SENSITIVE.checkIndexOf(&quot;ABCDEFGHIJ&quot;, 8, &quot;HIJ&quot;));</span>
+
+        // not found
+<span class="fc" id="L271">        assertEquals(-1,   IOCase.SENSITIVE.checkIndexOf(&quot;ABCDEFGHIJ&quot;, 0, &quot;DED&quot;));</span>
+
+        // too long
+<span class="fc" id="L274">        assertEquals(-1,   IOCase.SENSITIVE.checkIndexOf(&quot;DEF&quot;, 0, &quot;ABCDEFGHIJ&quot;));</span>
+
+        try {
+<span class="nc" id="L277">            IOCase.SENSITIVE.checkIndexOf(&quot;ABC&quot;, 0, null);</span>
+<span class="nc" id="L278">            fail();</span>
+<span class="pc" id="L279">        } catch (NullPointerException ex) {}</span>
+        try {
+<span class="nc" id="L281">            IOCase.SENSITIVE.checkIndexOf(null, 0, &quot;ABC&quot;);</span>
+<span class="nc" id="L282">            fail();</span>
+<span class="pc" id="L283">        } catch (NullPointerException ex) {}</span>
+        try {
+<span class="nc" id="L285">            IOCase.SENSITIVE.checkIndexOf(null, 0, null);</span>
+<span class="nc" id="L286">            fail();</span>
+<span class="pc" id="L287">        } catch (NullPointerException ex) {}</span>
+<span class="fc" id="L288">    }</span>
+
+    public void test_checkIndexOf_case() throws Exception {
+<span class="fc" id="L291">        assertEquals(1,  IOCase.SENSITIVE.checkIndexOf(&quot;ABC&quot;, 0, &quot;BC&quot;));</span>
+<span class="fc" id="L292">        assertEquals(-1, IOCase.SENSITIVE.checkIndexOf(&quot;ABC&quot;, 0, &quot;Bc&quot;));</span>
+        
+<span class="fc" id="L294">        assertEquals(1, IOCase.INSENSITIVE.checkIndexOf(&quot;ABC&quot;, 0, &quot;BC&quot;));</span>
+<span class="fc" id="L295">        assertEquals(1, IOCase.INSENSITIVE.checkIndexOf(&quot;ABC&quot;, 0, &quot;Bc&quot;));</span>
+        
+<span class="fc" id="L297">        assertEquals(1, IOCase.SYSTEM.checkIndexOf(&quot;ABC&quot;, 0, &quot;BC&quot;));</span>
+<span class="pc bpc" id="L298" title="1 of 2 branches missed.">        assertEquals(WINDOWS ? 1 : -1, IOCase.SYSTEM.checkIndexOf(&quot;ABC&quot;, 0, &quot;Bc&quot;));</span>
+<span class="fc" id="L299">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void test_checkRegionMatches_functionality() throws Exception {
+<span class="fc" id="L303">        assertEquals(true, IOCase.SENSITIVE.checkRegionMatches(&quot;ABC&quot;, 0, &quot;&quot;));</span>
+<span class="fc" id="L304">        assertEquals(true, IOCase.SENSITIVE.checkRegionMatches(&quot;ABC&quot;, 0, &quot;A&quot;));</span>
+<span class="fc" id="L305">        assertEquals(true, IOCase.SENSITIVE.checkRegionMatches(&quot;ABC&quot;, 0, &quot;AB&quot;));</span>
+<span class="fc" id="L306">        assertEquals(true, IOCase.SENSITIVE.checkRegionMatches(&quot;ABC&quot;, 0, &quot;ABC&quot;));</span>
+<span class="fc" id="L307">        assertEquals(false, IOCase.SENSITIVE.checkRegionMatches(&quot;ABC&quot;, 0, &quot;BC&quot;));</span>
+<span class="fc" id="L308">        assertEquals(false, IOCase.SENSITIVE.checkRegionMatches(&quot;ABC&quot;, 0, &quot;C&quot;));</span>
+<span class="fc" id="L309">        assertEquals(false, IOCase.SENSITIVE.checkRegionMatches(&quot;ABC&quot;, 0, &quot;ABCD&quot;));</span>
+<span class="fc" id="L310">        assertEquals(false, IOCase.SENSITIVE.checkRegionMatches(&quot;&quot;, 0, &quot;ABC&quot;));</span>
+<span class="fc" id="L311">        assertEquals(true, IOCase.SENSITIVE.checkRegionMatches(&quot;&quot;, 0, &quot;&quot;));</span>
+        
+<span class="fc" id="L313">        assertEquals(true, IOCase.SENSITIVE.checkRegionMatches(&quot;ABC&quot;, 1, &quot;&quot;));</span>
+<span class="fc" id="L314">        assertEquals(false, IOCase.SENSITIVE.checkRegionMatches(&quot;ABC&quot;, 1, &quot;A&quot;));</span>
+<span class="fc" id="L315">        assertEquals(false, IOCase.SENSITIVE.checkRegionMatches(&quot;ABC&quot;, 1, &quot;AB&quot;));</span>
+<span class="fc" id="L316">        assertEquals(false, IOCase.SENSITIVE.checkRegionMatches(&quot;ABC&quot;, 1, &quot;ABC&quot;));</span>
+<span class="fc" id="L317">        assertEquals(true, IOCase.SENSITIVE.checkRegionMatches(&quot;ABC&quot;, 1, &quot;BC&quot;));</span>
+<span class="fc" id="L318">        assertEquals(false, IOCase.SENSITIVE.checkRegionMatches(&quot;ABC&quot;, 1, &quot;C&quot;));</span>
+<span class="fc" id="L319">        assertEquals(false, IOCase.SENSITIVE.checkRegionMatches(&quot;ABC&quot;, 1, &quot;ABCD&quot;));</span>
+<span class="fc" id="L320">        assertEquals(false, IOCase.SENSITIVE.checkRegionMatches(&quot;&quot;, 1, &quot;ABC&quot;));</span>
+<span class="fc" id="L321">        assertEquals(false, IOCase.SENSITIVE.checkRegionMatches(&quot;&quot;, 1, &quot;&quot;));</span>
+        
+        try {
+<span class="nc" id="L324">            IOCase.SENSITIVE.checkRegionMatches(&quot;ABC&quot;, 0, null);</span>
+<span class="nc" id="L325">            fail();</span>
+<span class="pc" id="L326">        } catch (NullPointerException ex) {}</span>
+        try {
+<span class="nc" id="L328">            IOCase.SENSITIVE.checkRegionMatches(null, 0, &quot;ABC&quot;);</span>
+<span class="nc" id="L329">            fail();</span>
+<span class="pc" id="L330">        } catch (NullPointerException ex) {}</span>
+        try {
+<span class="nc" id="L332">            IOCase.SENSITIVE.checkRegionMatches(null, 0, null);</span>
+<span class="nc" id="L333">            fail();</span>
+<span class="pc" id="L334">        } catch (NullPointerException ex) {}</span>
+        try {
+<span class="nc" id="L336">            IOCase.SENSITIVE.checkRegionMatches(&quot;ABC&quot;, 1, null);</span>
+<span class="nc" id="L337">            fail();</span>
+<span class="pc" id="L338">        } catch (NullPointerException ex) {}</span>
+        try {
+<span class="nc" id="L340">            IOCase.SENSITIVE.checkRegionMatches(null, 1, &quot;ABC&quot;);</span>
+<span class="nc" id="L341">            fail();</span>
+<span class="pc" id="L342">        } catch (NullPointerException ex) {}</span>
+        try {
+<span class="nc" id="L344">            IOCase.SENSITIVE.checkRegionMatches(null, 1, null);</span>
+<span class="nc" id="L345">            fail();</span>
+<span class="pc" id="L346">        } catch (NullPointerException ex) {}</span>
+<span class="fc" id="L347">    }</span>
+
+    public void test_checkRegionMatches_case() throws Exception {
+<span class="fc" id="L350">        assertEquals(true, IOCase.SENSITIVE.checkRegionMatches(&quot;ABC&quot;, 0, &quot;AB&quot;));</span>
+<span class="fc" id="L351">        assertEquals(false, IOCase.SENSITIVE.checkRegionMatches(&quot;ABC&quot;, 0, &quot;Ab&quot;));</span>
+        
+<span class="fc" id="L353">        assertEquals(true, IOCase.INSENSITIVE.checkRegionMatches(&quot;ABC&quot;, 0, &quot;AB&quot;));</span>
+<span class="fc" id="L354">        assertEquals(true, IOCase.INSENSITIVE.checkRegionMatches(&quot;ABC&quot;, 0, &quot;Ab&quot;));</span>
+        
+<span class="fc" id="L356">        assertEquals(true, IOCase.SYSTEM.checkRegionMatches(&quot;ABC&quot;, 0, &quot;AB&quot;));</span>
+<span class="fc" id="L357">        assertEquals(WINDOWS, IOCase.SYSTEM.checkRegionMatches(&quot;ABC&quot;, 0, &quot;Ab&quot;));</span>
+<span class="fc" id="L358">    }</span>
+
+    //-----------------------------------------------------------------------
+    private IOCase serialize(IOCase value) throws Exception {
+<span class="fc" id="L362">        ByteArrayOutputStream buf = new ByteArrayOutputStream();</span>
+<span class="fc" id="L363">        ObjectOutputStream out = new ObjectOutputStream(buf);</span>
+<span class="fc" id="L364">        out.writeObject(value);</span>
+<span class="fc" id="L365">        out.flush();</span>
+<span class="fc" id="L366">        out.close();</span>
+
+<span class="fc" id="L368">        ByteArrayInputStream bufin = new ByteArrayInputStream(buf.toByteArray());</span>
+<span class="fc" id="L369">        ObjectInputStream in = new ObjectInputStream(bufin);</span>
+<span class="fc" id="L370">        return (IOCase) in.readObject();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.0 (Apr 20, 2019 6:00:46 PM)</div></body></html>

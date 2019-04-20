@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>HexDumpTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.0 (Apr 20, 2019 6:00:46 PM)</a> &gt; <a href="../../index.html" class="el_group">2.0</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io</a> &gt; <span class="el_source">HexDumpTest.java</span></div><h1>HexDumpTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io;
+
+import java.io.IOException;
+
+import junit.framework.TestCase;
+
+import org.apache.commons.io.output.ByteArrayOutputStream;
+
+
+/**
+ * @author Scott Sanders (sanders at apache dot org)
+ * @author Marc Johnson (mjohnson at apache dot org)
+ * @version $Revision$ $Date$
+ */
+
+public class HexDumpTest extends TestCase {
+
+    /**
+     * Creates new HexDumpTest
+     *
+     * @param name
+     */
+
+    public HexDumpTest(String name) {
+<span class="fc" id="L41">        super(name);</span>
+<span class="fc" id="L42">    }</span>
+
+    private char toHex(int n) {
+<span class="fc" id="L45">        char[] hexChars =</span>
+                {
+                    '0', '1', '2', '3', '4', '5', '6', '7',
+                    '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+                };
+
+<span class="fc" id="L51">        return hexChars[n % 16];</span>
+    }
+
+    /**
+     * test dump method
+     *
+     * @exception IOException
+     */
+
+    public void testDump()
+            throws IOException {
+<span class="fc" id="L62">        byte[] testArray = new byte[256];</span>
+
+<span class="fc bfc" id="L64" title="All 2 branches covered.">        for (int j = 0; j &lt; 256; j++) {</span>
+<span class="fc" id="L65">            testArray[j] = (byte) j;</span>
+        }
+<span class="fc" id="L67">        ByteArrayOutputStream stream = new ByteArrayOutputStream();</span>
+
+<span class="fc" id="L69">        HexDump.dump(testArray, 0, stream, 0);</span>
+<span class="fc" id="L70">        byte[] outputArray = new byte[16 * (73 + HexDump.EOL.length())];</span>
+
+<span class="fc bfc" id="L72" title="All 2 branches covered.">        for (int j = 0; j &lt; 16; j++) {</span>
+<span class="fc" id="L73">            int offset = (73 + HexDump.EOL.length()) * j;</span>
+
+<span class="fc" id="L75">            outputArray[offset++] = (byte) '0';</span>
+<span class="fc" id="L76">            outputArray[offset++] = (byte) '0';</span>
+<span class="fc" id="L77">            outputArray[offset++] = (byte) '0';</span>
+<span class="fc" id="L78">            outputArray[offset++] = (byte) '0';</span>
+<span class="fc" id="L79">            outputArray[offset++] = (byte) '0';</span>
+<span class="fc" id="L80">            outputArray[offset++] = (byte) '0';</span>
+<span class="fc" id="L81">            outputArray[offset++] = (byte) toHex(j);</span>
+<span class="fc" id="L82">            outputArray[offset++] = (byte) '0';</span>
+<span class="fc" id="L83">            outputArray[offset++] = (byte) ' ';</span>
+<span class="fc bfc" id="L84" title="All 2 branches covered.">            for (int k = 0; k &lt; 16; k++) {</span>
+<span class="fc" id="L85">                outputArray[offset++] = (byte) toHex(j);</span>
+<span class="fc" id="L86">                outputArray[offset++] = (byte) toHex(k);</span>
+<span class="fc" id="L87">                outputArray[offset++] = (byte) ' ';</span>
+            }
+<span class="fc bfc" id="L89" title="All 2 branches covered.">            for (int k = 0; k &lt; 16; k++) {</span>
+<span class="fc" id="L90">                outputArray[offset++] = (byte) toAscii((j * 16) + k);</span>
+            }
+<span class="fc" id="L92">            System.arraycopy(HexDump.EOL.getBytes(), 0, outputArray, offset,</span>
+<span class="fc" id="L93">                    HexDump.EOL.getBytes().length);</span>
+        }
+<span class="fc" id="L95">        byte[] actualOutput = stream.toByteArray();</span>
+
+<span class="fc" id="L97">        assertEquals(&quot;array size mismatch&quot;, outputArray.length,</span>
+                actualOutput.length);
+<span class="fc bfc" id="L99" title="All 2 branches covered.">        for (int j = 0; j &lt; outputArray.length; j++) {</span>
+<span class="fc" id="L100">            assertEquals(&quot;array[ &quot; + j + &quot;] mismatch&quot;, outputArray[j],</span>
+                    actualOutput[j]);
+        }
+
+        // verify proper behavior with non-zero offset
+<span class="fc" id="L105">        stream = new ByteArrayOutputStream();</span>
+<span class="fc" id="L106">        HexDump.dump(testArray, 0x10000000, stream, 0);</span>
+<span class="fc" id="L107">        outputArray = new byte[16 * (73 + HexDump.EOL.length())];</span>
+<span class="fc bfc" id="L108" title="All 2 branches covered.">        for (int j = 0; j &lt; 16; j++) {</span>
+<span class="fc" id="L109">            int offset = (73 + HexDump.EOL.length()) * j;</span>
+
+<span class="fc" id="L111">            outputArray[offset++] = (byte) '1';</span>
+<span class="fc" id="L112">            outputArray[offset++] = (byte) '0';</span>
+<span class="fc" id="L113">            outputArray[offset++] = (byte) '0';</span>
+<span class="fc" id="L114">            outputArray[offset++] = (byte) '0';</span>
+<span class="fc" id="L115">            outputArray[offset++] = (byte) '0';</span>
+<span class="fc" id="L116">            outputArray[offset++] = (byte) '0';</span>
+<span class="fc" id="L117">            outputArray[offset++] = (byte) toHex(j);</span>
+<span class="fc" id="L118">            outputArray[offset++] = (byte) '0';</span>
+<span class="fc" id="L119">            outputArray[offset++] = (byte) ' ';</span>
+<span class="fc bfc" id="L120" title="All 2 branches covered.">            for (int k = 0; k &lt; 16; k++) {</span>
+<span class="fc" id="L121">                outputArray[offset++] = (byte) toHex(j);</span>
+<span class="fc" id="L122">                outputArray[offset++] = (byte) toHex(k);</span>
+<span class="fc" id="L123">                outputArray[offset++] = (byte) ' ';</span>
+            }
+<span class="fc bfc" id="L125" title="All 2 branches covered.">            for (int k = 0; k &lt; 16; k++) {</span>
+<span class="fc" id="L126">                outputArray[offset++] = (byte) toAscii((j * 16) + k);</span>
+            }
+<span class="fc" id="L128">            System.arraycopy(HexDump.EOL.getBytes(), 0, outputArray, offset,</span>
+<span class="fc" id="L129">                    HexDump.EOL.getBytes().length);</span>
+        }
+<span class="fc" id="L131">        actualOutput = stream.toByteArray();</span>
+<span class="fc" id="L132">        assertEquals(&quot;array size mismatch&quot;, outputArray.length,</span>
+                actualOutput.length);
+<span class="fc bfc" id="L134" title="All 2 branches covered.">        for (int j = 0; j &lt; outputArray.length; j++) {</span>
+<span class="fc" id="L135">            assertEquals(&quot;array[ &quot; + j + &quot;] mismatch&quot;, outputArray[j],</span>
+                    actualOutput[j]);
+        }
+
+        // verify proper behavior with negative offset
+<span class="fc" id="L140">        stream = new ByteArrayOutputStream();</span>
+<span class="fc" id="L141">        HexDump.dump(testArray, 0xFF000000, stream, 0);</span>
+<span class="fc" id="L142">        outputArray = new byte[16 * (73 + HexDump.EOL.length())];</span>
+<span class="fc bfc" id="L143" title="All 2 branches covered.">        for (int j = 0; j &lt; 16; j++) {</span>
+<span class="fc" id="L144">            int offset = (73 + HexDump.EOL.length()) * j;</span>
+
+<span class="fc" id="L146">            outputArray[offset++] = (byte) 'F';</span>
+<span class="fc" id="L147">            outputArray[offset++] = (byte) 'F';</span>
+<span class="fc" id="L148">            outputArray[offset++] = (byte) '0';</span>
+<span class="fc" id="L149">            outputArray[offset++] = (byte) '0';</span>
+<span class="fc" id="L150">            outputArray[offset++] = (byte) '0';</span>
+<span class="fc" id="L151">            outputArray[offset++] = (byte) '0';</span>
+<span class="fc" id="L152">            outputArray[offset++] = (byte) toHex(j);</span>
+<span class="fc" id="L153">            outputArray[offset++] = (byte) '0';</span>
+<span class="fc" id="L154">            outputArray[offset++] = (byte) ' ';</span>
+<span class="fc bfc" id="L155" title="All 2 branches covered.">            for (int k = 0; k &lt; 16; k++) {</span>
+<span class="fc" id="L156">                outputArray[offset++] = (byte) toHex(j);</span>
+<span class="fc" id="L157">                outputArray[offset++] = (byte) toHex(k);</span>
+<span class="fc" id="L158">                outputArray[offset++] = (byte) ' ';</span>
+            }
+<span class="fc bfc" id="L160" title="All 2 branches covered.">            for (int k = 0; k &lt; 16; k++) {</span>
+<span class="fc" id="L161">                outputArray[offset++] = (byte) toAscii((j * 16) + k);</span>
+            }
+<span class="fc" id="L163">            System.arraycopy(HexDump.EOL.getBytes(), 0, outputArray, offset,</span>
+<span class="fc" id="L164">                    HexDump.EOL.getBytes().length);</span>
+        }
+<span class="fc" id="L166">        actualOutput = stream.toByteArray();</span>
+<span class="fc" id="L167">        assertEquals(&quot;array size mismatch&quot;, outputArray.length,</span>
+                actualOutput.length);
+<span class="fc bfc" id="L169" title="All 2 branches covered.">        for (int j = 0; j &lt; outputArray.length; j++) {</span>
+<span class="fc" id="L170">            assertEquals(&quot;array[ &quot; + j + &quot;] mismatch&quot;, outputArray[j],</span>
+                    actualOutput[j]);
+        }
+
+        // verify proper behavior with non-zero index
+<span class="fc" id="L175">        stream = new ByteArrayOutputStream();</span>
+<span class="fc" id="L176">        HexDump.dump(testArray, 0x10000000, stream, 0x81);</span>
+<span class="fc" id="L177">        outputArray = new byte[(8 * (73 + HexDump.EOL.length())) - 1];</span>
+<span class="fc bfc" id="L178" title="All 2 branches covered.">        for (int j = 0; j &lt; 8; j++) {</span>
+<span class="fc" id="L179">            int offset = (73 + HexDump.EOL.length()) * j;</span>
+
+<span class="fc" id="L181">            outputArray[offset++] = (byte) '1';</span>
+<span class="fc" id="L182">            outputArray[offset++] = (byte) '0';</span>
+<span class="fc" id="L183">            outputArray[offset++] = (byte) '0';</span>
+<span class="fc" id="L184">            outputArray[offset++] = (byte) '0';</span>
+<span class="fc" id="L185">            outputArray[offset++] = (byte) '0';</span>
+<span class="fc" id="L186">            outputArray[offset++] = (byte) '0';</span>
+<span class="fc" id="L187">            outputArray[offset++] = (byte) toHex(j + 8);</span>
+<span class="fc" id="L188">            outputArray[offset++] = (byte) '1';</span>
+<span class="fc" id="L189">            outputArray[offset++] = (byte) ' ';</span>
+<span class="fc bfc" id="L190" title="All 2 branches covered.">            for (int k = 0; k &lt; 16; k++) {</span>
+<span class="fc" id="L191">                int index = 0x81 + (j * 16) + k;</span>
+
+<span class="fc bfc" id="L193" title="All 2 branches covered.">                if (index &lt; 0x100) {</span>
+<span class="fc" id="L194">                    outputArray[offset++] = (byte) toHex(index / 16);</span>
+<span class="fc" id="L195">                    outputArray[offset++] = (byte) toHex(index);</span>
+                } else {
+<span class="fc" id="L197">                    outputArray[offset++] = (byte) ' ';</span>
+<span class="fc" id="L198">                    outputArray[offset++] = (byte) ' ';</span>
+                }
+<span class="fc" id="L200">                outputArray[offset++] = (byte) ' ';</span>
+            }
+<span class="fc bfc" id="L202" title="All 2 branches covered.">            for (int k = 0; k &lt; 16; k++) {</span>
+<span class="fc" id="L203">                int index = 0x81 + (j * 16) + k;</span>
+
+<span class="fc bfc" id="L205" title="All 2 branches covered.">                if (index &lt; 0x100) {</span>
+<span class="fc" id="L206">                    outputArray[offset++] = (byte) toAscii(index);</span>
+                }
+            }
+<span class="fc" id="L209">            System.arraycopy(HexDump.EOL.getBytes(), 0, outputArray, offset,</span>
+<span class="fc" id="L210">                    HexDump.EOL.getBytes().length);</span>
+        }
+<span class="fc" id="L212">        actualOutput = stream.toByteArray();</span>
+<span class="fc" id="L213">        assertEquals(&quot;array size mismatch&quot;, outputArray.length,</span>
+                actualOutput.length);
+<span class="fc bfc" id="L215" title="All 2 branches covered.">        for (int j = 0; j &lt; outputArray.length; j++) {</span>
+<span class="fc" id="L216">            assertEquals(&quot;array[ &quot; + j + &quot;] mismatch&quot;, outputArray[j],</span>
+                    actualOutput[j]);
+        }
+
+        // verify proper behavior with negative index
+        try {
+<span class="nc" id="L222">            HexDump.dump(testArray, 0x10000000, new ByteArrayOutputStream(),</span>
+                    -1);
+<span class="nc" id="L224">            fail(&quot;should have caught ArrayIndexOutOfBoundsException on negative index&quot;);</span>
+<span class="fc" id="L225">        } catch (ArrayIndexOutOfBoundsException ignored_exception) {</span>
+
+            // as expected
+<span class="nc" id="L228">        }</span>
+
+        // verify proper behavior with index that is too large
+        try {
+<span class="nc" id="L232">            HexDump.dump(testArray, 0x10000000, new ByteArrayOutputStream(),</span>
+                    testArray.length);
+<span class="nc" id="L234">            fail(&quot;should have caught ArrayIndexOutOfBoundsException on large index&quot;);</span>
+<span class="fc" id="L235">        } catch (ArrayIndexOutOfBoundsException ignored_exception) {</span>
+
+            // as expected
+<span class="nc" id="L238">        }</span>
+
+        // verify proper behavior with null stream
+        try {
+<span class="nc" id="L242">            HexDump.dump(testArray, 0x10000000, null, 0);</span>
+<span class="nc" id="L243">            fail(&quot;should have caught IllegalArgumentException on negative index&quot;);</span>
+<span class="fc" id="L244">        } catch (IllegalArgumentException ignored_exception) {</span>
+
+            // as expected
+<span class="nc" id="L247">        }</span>
+<span class="fc" id="L248">    }</span>
+
+    private char toAscii(int c) {
+<span class="fc" id="L251">        char rval = '.';</span>
+
+<span class="fc bfc" id="L253" title="All 4 branches covered.">        if ((c &gt;= 32) &amp;&amp; (c &lt;= 126)) {</span>
+<span class="fc" id="L254">            rval = (char) c;</span>
+        }
+<span class="fc" id="L256">        return rval;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.0 (Apr 20, 2019 6:00:46 PM)</div></body></html>

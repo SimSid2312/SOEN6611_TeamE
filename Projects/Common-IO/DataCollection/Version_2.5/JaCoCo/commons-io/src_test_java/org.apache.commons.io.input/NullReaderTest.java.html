@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>NullReaderTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-io (Apr 20, 2019 6:11:46 PM)</a> &gt; <a href="../../index.html" class="el_group">commons-io</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.input</a> &gt; <span class="el_source">NullReaderTest.java</span></div><h1>NullReaderTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.input;
+
+import org.junit.Test;
+
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.Reader;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+/**
+ * JUnit Test Case for {@link NullReader}.
+ *
+ * @version $Id$
+ */
+<span class="fc" id="L35">public class NullReaderTest {</span>
+
+    @Test
+    public void testRead() throws Exception {
+<span class="fc" id="L39">        final int size = 5;</span>
+<span class="fc" id="L40">        final TestNullReader reader = new TestNullReader(size);</span>
+<span class="fc bfc" id="L41" title="All 2 branches covered.">        for (int i = 0; i &lt; size; i++) {</span>
+<span class="fc" id="L42">            assertEquals(&quot;Check Value [&quot; + i + &quot;]&quot;, i, reader.read());</span>
+        }
+
+        // Check End of File
+<span class="fc" id="L46">        assertEquals(&quot;End of File&quot;, -1, reader.read());</span>
+
+        // Test reading after the end of file
+        try {
+<span class="nc" id="L50">            final int result = reader.read();</span>
+<span class="nc" id="L51">            fail(&quot;Should have thrown an IOException, value=[&quot; + result + &quot;]&quot;);</span>
+<span class="fc" id="L52">        } catch (final IOException e) {</span>
+<span class="fc" id="L53">            assertEquals(&quot;Read after end of file&quot;, e.getMessage());</span>
+<span class="nc" id="L54">        }</span>
+
+        // Close - should reset
+<span class="fc" id="L57">        reader.close();</span>
+<span class="fc" id="L58">        assertEquals(&quot;Available after close&quot;, 0, reader.getPosition());</span>
+<span class="fc" id="L59">    }</span>
+
+    @Test
+    public void testReadCharArray() throws Exception {
+<span class="fc" id="L63">        final char[] chars = new char[10];</span>
+<span class="fc" id="L64">        final Reader reader = new TestNullReader(15);</span>
+
+        // Read into array
+<span class="fc" id="L67">        final int count1 = reader.read(chars);</span>
+<span class="fc" id="L68">        assertEquals(&quot;Read 1&quot;, chars.length, count1);</span>
+<span class="fc bfc" id="L69" title="All 2 branches covered.">        for (int i = 0; i &lt; count1; i++) {</span>
+<span class="fc" id="L70">            assertEquals(&quot;Check Chars 1&quot;, i, chars[i]);</span>
+        }
+
+        // Read into array
+<span class="fc" id="L74">        final int count2 = reader.read(chars);</span>
+<span class="fc" id="L75">        assertEquals(&quot;Read 2&quot;, 5, count2);</span>
+<span class="fc bfc" id="L76" title="All 2 branches covered.">        for (int i = 0; i &lt; count2; i++) {</span>
+<span class="fc" id="L77">            assertEquals(&quot;Check Chars 2&quot;, count1 + i, chars[i]);</span>
+        }
+
+        // End of File
+<span class="fc" id="L81">        final int count3 = reader.read(chars);</span>
+<span class="fc" id="L82">        assertEquals(&quot;Read 3 (EOF)&quot;, -1, count3);</span>
+
+        // Test reading after the end of file
+        try {
+<span class="nc" id="L86">            final int count4 = reader.read(chars);</span>
+<span class="nc" id="L87">            fail(&quot;Should have thrown an IOException, value=[&quot; + count4 + &quot;]&quot;);</span>
+<span class="fc" id="L88">        } catch (final IOException e) {</span>
+<span class="fc" id="L89">            assertEquals(&quot;Read after end of file&quot;, e.getMessage());</span>
+<span class="nc" id="L90">        }</span>
+
+        // reset by closing
+<span class="fc" id="L93">        reader.close();</span>
+
+        // Read into array using offset &amp; length
+<span class="fc" id="L96">        final int offset = 2;</span>
+<span class="fc" id="L97">        final int lth    = 4;</span>
+<span class="fc" id="L98">        final int count5 = reader.read(chars, offset, lth);</span>
+<span class="fc" id="L99">        assertEquals(&quot;Read 5&quot;, lth, count5);</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">        for (int i = offset; i &lt; lth; i++) {</span>
+<span class="fc" id="L101">            assertEquals(&quot;Check Chars 3&quot;, i, chars[i]);</span>
+        }
+<span class="fc" id="L103">    }</span>
+
+    @Test
+    public void testEOFException() throws Exception {
+<span class="fc" id="L107">        final Reader reader = new TestNullReader(2, false, true);</span>
+<span class="fc" id="L108">        assertEquals(&quot;Read 1&quot;,  0, reader.read());</span>
+<span class="fc" id="L109">        assertEquals(&quot;Read 2&quot;,  1, reader.read());</span>
+        try {
+<span class="nc" id="L111">            final int result = reader.read();</span>
+<span class="nc" id="L112">            fail(&quot;Should have thrown an EOFException, value=[&quot; + result + &quot;]&quot;);</span>
+<span class="fc" id="L113">        } catch (final EOFException e) {</span>
+            // expected
+<span class="nc" id="L115">        }</span>
+<span class="fc" id="L116">        reader.close();</span>
+<span class="fc" id="L117">    }</span>
+
+    @Test
+    public void testMarkAndReset() throws Exception {
+<span class="fc" id="L121">        int position = 0;</span>
+<span class="fc" id="L122">        final int readlimit = 10;</span>
+<span class="fc" id="L123">        final Reader reader = new TestNullReader(100, true, false);</span>
+
+<span class="fc" id="L125">        assertTrue(&quot;Mark Should be Supported&quot;, reader.markSupported());</span>
+
+        // No Mark
+        try {
+<span class="nc" id="L129">            reader.reset();</span>
+<span class="nc" id="L130">            fail(&quot;Read limit exceeded, expected IOException &quot;);</span>
+<span class="fc" id="L131">        } catch (final IOException e) {</span>
+<span class="fc" id="L132">            assertEquals(&quot;No Mark IOException message&quot;,</span>
+                         &quot;No position has been marked&quot;,
+<span class="fc" id="L134">                         e.getMessage());</span>
+<span class="nc" id="L135">        }</span>
+
+<span class="fc bfc" id="L137" title="All 2 branches covered.">        for (; position &lt; 3; position++) {</span>
+<span class="fc" id="L138">            assertEquals(&quot;Read Before Mark [&quot; + position +&quot;]&quot;,  position, reader.read());</span>
+        }
+
+        // Mark
+<span class="fc" id="L142">        reader.mark(readlimit);</span>
+
+        // Read further
+<span class="fc bfc" id="L145" title="All 2 branches covered.">        for (int i = 0; i &lt; 3; i++) {</span>
+<span class="fc" id="L146">            assertEquals(&quot;Read After Mark [&quot; + i +&quot;]&quot;,  position + i, reader.read());</span>
+        }
+
+        // Reset
+<span class="fc" id="L150">        reader.reset();</span>
+
+        // Read From marked position
+<span class="fc bfc" id="L153" title="All 2 branches covered.">        for (int i = 0; i &lt; readlimit + 1; i++) {</span>
+<span class="fc" id="L154">            assertEquals(&quot;Read After Reset [&quot; + i +&quot;]&quot;,  position + i, reader.read());</span>
+        }
+
+        // Reset after read limit passed
+        try {
+<span class="nc" id="L159">            reader.reset();</span>
+<span class="nc" id="L160">            fail(&quot;Read limit exceeded, expected IOException &quot;);</span>
+<span class="fc" id="L161">        } catch (final IOException e) {</span>
+<span class="fc" id="L162">            assertEquals(&quot;Read limit IOException message&quot;,</span>
+                         &quot;Marked position [&quot; + position
+                         + &quot;] is no longer valid - passed the read limit [&quot;
+                         + readlimit + &quot;]&quot;,
+<span class="fc" id="L166">                         e.getMessage());</span>
+<span class="nc" id="L167">        }</span>
+<span class="fc" id="L168">        reader.close();</span>
+<span class="fc" id="L169">    }</span>
+
+    @Test
+    public void testMarkNotSupported() throws Exception {
+<span class="fc" id="L173">        final Reader reader = new TestNullReader(100, false, true);</span>
+<span class="fc" id="L174">        assertFalse(&quot;Mark Should NOT be Supported&quot;, reader.markSupported());</span>
+
+        try {
+<span class="nc" id="L177">            reader.mark(5);</span>
+<span class="nc" id="L178">            fail(&quot;mark() should throw UnsupportedOperationException&quot;);</span>
+<span class="fc" id="L179">        } catch (final UnsupportedOperationException e) {</span>
+<span class="fc" id="L180">            assertEquals(&quot;mark() error message&quot;,  &quot;Mark not supported&quot;, e.getMessage());</span>
+<span class="nc" id="L181">        }</span>
+
+        try {
+<span class="nc" id="L184">            reader.reset();</span>
+<span class="nc" id="L185">            fail(&quot;reset() should throw UnsupportedOperationException&quot;);</span>
+<span class="fc" id="L186">        } catch (final UnsupportedOperationException e) {</span>
+<span class="fc" id="L187">            assertEquals(&quot;reset() error message&quot;,  &quot;Mark not supported&quot;, e.getMessage());</span>
+<span class="nc" id="L188">        }</span>
+<span class="fc" id="L189">        reader.close();</span>
+<span class="fc" id="L190">    }</span>
+
+    @Test
+    public void testSkip() throws Exception {
+<span class="fc" id="L194">        final Reader reader = new TestNullReader(10, true, false);</span>
+<span class="fc" id="L195">        assertEquals(&quot;Read 1&quot;, 0, reader.read());</span>
+<span class="fc" id="L196">        assertEquals(&quot;Read 2&quot;, 1, reader.read());</span>
+<span class="fc" id="L197">        assertEquals(&quot;Skip 1&quot;, 5, reader.skip(5));</span>
+<span class="fc" id="L198">        assertEquals(&quot;Read 3&quot;, 7, reader.read());</span>
+<span class="fc" id="L199">        assertEquals(&quot;Skip 2&quot;, 2, reader.skip(5)); // only 2 left to skip</span>
+<span class="fc" id="L200">        assertEquals(&quot;Skip 3 (EOF)&quot;, -1, reader.skip(5)); // End of file</span>
+        try {
+<span class="nc" id="L202">            reader.skip(5); //</span>
+<span class="nc" id="L203">            fail(&quot;Expected IOException for skipping after end of file&quot;);</span>
+<span class="fc" id="L204">        } catch (final IOException e) {</span>
+<span class="fc" id="L205">            assertEquals(&quot;Skip after EOF IOException message&quot;,</span>
+                    &quot;Skip after end of file&quot;,
+<span class="fc" id="L207">                    e.getMessage());</span>
+<span class="nc" id="L208">        }</span>
+<span class="fc" id="L209">        reader.close();</span>
+<span class="fc" id="L210">    }</span>
+
+
+    // ------------- Test NullReader implementation -------------
+
+    private static final class TestNullReader extends NullReader {
+        public TestNullReader(final int size) {
+<span class="fc" id="L217">            super(size);</span>
+<span class="fc" id="L218">        }</span>
+        public TestNullReader(final int size, final boolean markSupported, final boolean throwEofException) {
+<span class="fc" id="L220">            super(size, markSupported, throwEofException);</span>
+<span class="fc" id="L221">        }</span>
+        @Override
+        protected int processChar() {
+<span class="fc" id="L224">            return (int)getPosition() - 1;</span>
+        }
+        @Override
+        protected void processChars(final char[] chars, final int offset, final int length) {
+<span class="fc" id="L228">            final int startPos = (int)getPosition() - length;</span>
+<span class="fc bfc" id="L229" title="All 2 branches covered.">            for (int i = offset; i &lt; length; i++) {</span>
+<span class="fc" id="L230">                chars[i] = (char)(startPos + i);</span>
+            }
+<span class="fc" id="L232">        }</span>
+
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>commons-io (Apr 20, 2019 6:11:46 PM)</div></body></html>

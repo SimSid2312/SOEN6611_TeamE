@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ThreadMonitorTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-io (Apr 20, 2019 6:11:46 PM)</a> &gt; <a href="../../index.html" class="el_group">commons-io</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io</a> &gt; <span class="el_source">ThreadMonitorTestCase.java</span></div><h1>ThreadMonitorTestCase.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io;
+
+import org.apache.commons.io.testtools.TestUtils;
+import org.junit.Test;
+
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
+
+/**
+ * Tests for {@link ThreadMonitor}.
+ */
+<span class="fc" id="L28">public class ThreadMonitorTestCase {</span>
+
+    /**
+     * Test timeout.
+     */
+    @Test
+    public void testTimeout() {
+        try {
+<span class="fc" id="L36">            final Thread monitor = ThreadMonitor.start(100);</span>
+<span class="nc" id="L37">            TestUtils.sleep(200);</span>
+<span class="nc" id="L38">            ThreadMonitor.stop(monitor);</span>
+<span class="nc" id="L39">            fail(&quot;Expected InterruptedException&quot;);</span>
+<span class="fc" id="L40">        } catch (final InterruptedException e) {</span>
+            // expected result - timeout
+<span class="nc" id="L42">        }</span>
+<span class="fc" id="L43">    }</span>
+
+    /**
+     * Test task completed before timeout.
+     */
+    @Test
+    public void testCompletedWithoutTimeout() {
+        try {
+<span class="fc" id="L51">            final Thread monitor = ThreadMonitor.start(200);</span>
+<span class="fc" id="L52">            TestUtils.sleep(100);</span>
+<span class="fc" id="L53">            ThreadMonitor.stop(monitor);</span>
+<span class="nc" id="L54">        } catch (final InterruptedException e) {</span>
+<span class="nc" id="L55">            fail(&quot;Timed Out&quot;);</span>
+<span class="fc" id="L56">        }</span>
+<span class="fc" id="L57">    }</span>
+
+    /**
+     * Test No timeout.
+     */
+    @Test
+    public void testNoTimeout() {
+
+        // timeout = -1
+        try {
+<span class="fc" id="L67">            final Thread monitor = ThreadMonitor.start(-1);</span>
+<span class="fc" id="L68">            assertNull(&quot;Timeout -1, Monitor should be null&quot;, monitor);</span>
+<span class="fc" id="L69">            TestUtils.sleep(100);</span>
+<span class="fc" id="L70">            ThreadMonitor.stop(monitor);</span>
+<span class="nc" id="L71">        } catch (final Exception e) {</span>
+<span class="nc" id="L72">            fail(&quot;Timeout -1, threw &quot; + e);</span>
+<span class="fc" id="L73">        }</span>
+
+        // timeout = 0
+        try {
+<span class="fc" id="L77">            final Thread monitor = ThreadMonitor.start(0);</span>
+<span class="fc" id="L78">            assertNull(&quot;Timeout 0, Monitor should be null&quot;, monitor);</span>
+<span class="fc" id="L79">            TestUtils.sleep(100);</span>
+<span class="fc" id="L80">            ThreadMonitor.stop(monitor);</span>
+<span class="nc" id="L81">        } catch (final Exception e) {</span>
+<span class="nc" id="L82">            fail(&quot;Timeout 0, threw &quot; + e);</span>
+<span class="fc" id="L83">        }</span>
+<span class="fc" id="L84">    }</span>
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>commons-io (Apr 20, 2019 6:11:46 PM)</div></body></html>

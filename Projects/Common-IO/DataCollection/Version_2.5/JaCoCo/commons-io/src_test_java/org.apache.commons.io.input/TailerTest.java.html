@@ -1,0 +1,505 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TailerTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-io (Apr 20, 2019 6:11:46 PM)</a> &gt; <a href="../../index.html" class="el_group">commons-io</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.input</a> &gt; <span class="el_source">TailerTest.java</span></div><h1>TailerTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.input;
+
+import java.io.*;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+
+import org.apache.commons.io.Charsets;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.testtools.FileBasedTestCase;
+import org.apache.commons.io.testtools.TestUtils;
+import org.junit.After;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+/**
+ * Tests for {@link Tailer}.
+ *
+ * @version $Id$
+ */
+<span class="fc" id="L47">public class TailerTest extends FileBasedTestCase {</span>
+
+    private Tailer tailer;
+
+    @After
+    public void tearDown() throws Exception {
+<span class="fc bfc" id="L53" title="All 2 branches covered.">        if (tailer != null) {</span>
+<span class="fc" id="L54">            tailer.stop();</span>
+<span class="fc" id="L55">            TestUtils.sleep(1000);</span>
+        }
+<span class="fc" id="L57">        FileUtils.deleteDirectory(getTestDirectory());</span>
+<span class="fc" id="L58">        TestUtils.sleep(1000);</span>
+<span class="fc" id="L59">    }</span>
+
+    @Test
+    public void testLongFile() throws Exception {
+<span class="fc" id="L63">        final long delay = 50;</span>
+
+<span class="fc" id="L65">        final File file = new File(getTestDirectory(), &quot;testLongFile.txt&quot;);</span>
+<span class="fc" id="L66">        createFile(file, 0);</span>
+<span class="fc" id="L67">        final Writer writer = new FileWriter(file, true);</span>
+<span class="fc bfc" id="L68" title="All 2 branches covered.">        for (int i = 0; i &lt; 100000; i++) {</span>
+<span class="fc" id="L69">            writer.write(&quot;LineLineLineLineLineLineLineLineLineLine\n&quot;);</span>
+        }
+<span class="fc" id="L71">        writer.write(&quot;SBTOURIST\n&quot;);</span>
+<span class="fc" id="L72">        IOUtils.closeQuietly(writer);</span>
+
+<span class="fc" id="L74">        final TestTailerListener listener = new TestTailerListener();</span>
+<span class="fc" id="L75">        tailer = new Tailer(file, listener, delay, false);</span>
+
+<span class="fc" id="L77">        final long start = System.currentTimeMillis();</span>
+
+<span class="fc" id="L79">        final Thread thread = new Thread(tailer);</span>
+<span class="fc" id="L80">        thread.start();</span>
+
+<span class="fc" id="L82">        List&lt;String&gt; lines = listener.getLines();</span>
+<span class="fc bfc" id="L83" title="All 4 branches covered.">        while (lines.isEmpty() || !lines.get(lines.size() - 1).equals(&quot;SBTOURIST&quot;)) {</span>
+<span class="fc" id="L84">            lines = listener.getLines();</span>
+        }
+<span class="fc" id="L86">        System.out.println(&quot;Elapsed: &quot; + (System.currentTimeMillis() - start));</span>
+
+<span class="fc" id="L88">        listener.clear();</span>
+<span class="fc" id="L89">    }</span>
+
+    @Test
+    public void testBufferBreak() throws Exception {
+<span class="fc" id="L93">        final long delay = 50;</span>
+
+<span class="fc" id="L95">        final File file = new File(getTestDirectory(), &quot;testBufferBreak.txt&quot;);</span>
+<span class="fc" id="L96">        createFile(file, 0);</span>
+<span class="fc" id="L97">        writeString(file, &quot;SBTOURIST\n&quot;);</span>
+
+<span class="fc" id="L99">        final TestTailerListener listener = new TestTailerListener();</span>
+<span class="fc" id="L100">        tailer = new Tailer(file, listener, delay, false, 1);</span>
+
+<span class="fc" id="L102">        final Thread thread = new Thread(tailer);</span>
+<span class="fc" id="L103">        thread.start();</span>
+
+<span class="fc" id="L105">        List&lt;String&gt; lines = listener.getLines();</span>
+<span class="pc bpc" id="L106" title="1 of 4 branches missed.">        while (lines.isEmpty() || !lines.get(lines.size() - 1).equals(&quot;SBTOURIST&quot;)) {</span>
+<span class="fc" id="L107">            lines = listener.getLines();</span>
+        }
+
+<span class="fc" id="L110">        listener.clear();</span>
+<span class="fc" id="L111">    }</span>
+
+    @SuppressWarnings(&quot;deprecation&quot;) // unavoidable until Java 7
+    @Test
+    public void testMultiByteBreak() throws Exception {
+<span class="fc" id="L116">        System.out.println(&quot;testMultiByteBreak() Default charset: &quot;+Charset.defaultCharset().displayName());</span>
+<span class="fc" id="L117">        final long delay = 50;</span>
+<span class="fc" id="L118">        final File origin = new File(this.getClass().getResource(&quot;/test-file-utf8.bin&quot;).toURI());</span>
+<span class="fc" id="L119">        final File file = new File(getTestDirectory(), &quot;testMultiByteBreak.txt&quot;);</span>
+<span class="fc" id="L120">        createFile(file, 0);</span>
+<span class="fc" id="L121">        final TestTailerListener listener = new TestTailerListener();</span>
+<span class="fc" id="L122">        final String osname = System.getProperty(&quot;os.name&quot;);</span>
+<span class="fc" id="L123">        final boolean isWindows = osname.startsWith(&quot;Windows&quot;);</span>
+        // Need to use UTF-8 to read &amp; write the file otherwise it can be corrupted (depending on the default charset)
+<span class="fc" id="L125">        final Charset charsetUTF8 = Charsets.UTF_8;</span>
+<span class="fc" id="L126">        tailer = new Tailer(file, charsetUTF8, listener, delay, false, isWindows, 4096);</span>
+<span class="fc" id="L127">        final Thread thread = new Thread(tailer);</span>
+<span class="fc" id="L128">        thread.start();</span>
+
+<span class="fc" id="L130">        Writer out = new OutputStreamWriter(new FileOutputStream(file), charsetUTF8);</span>
+<span class="fc" id="L131">        BufferedReader reader = null;</span>
+        try{
+<span class="fc" id="L133">            List&lt;String&gt; lines = new ArrayList&lt;String&gt;();</span>
+<span class="fc" id="L134">            reader = new BufferedReader(new InputStreamReader(new FileInputStream(origin), charsetUTF8));</span>
+            String line;
+<span class="fc bfc" id="L136" title="All 2 branches covered.">            while((line = reader.readLine()) != null){</span>
+<span class="fc" id="L137">                out.write(line);</span>
+<span class="fc" id="L138">                out.write(&quot;\n&quot;);</span>
+<span class="fc" id="L139">                lines.add(line);</span>
+            }
+<span class="fc" id="L141">            out.close(); // ensure data is written</span>
+
+<span class="fc" id="L143">           final long testDelayMillis = delay * 10;</span>
+<span class="fc" id="L144">            TestUtils.sleep(testDelayMillis);</span>
+<span class="fc" id="L145">           List&lt;String&gt; tailerlines = listener.getLines();</span>
+<span class="fc" id="L146">           assertEquals(&quot;line count&quot;,lines.size(),tailerlines.size());</span>
+<span class="fc bfc" id="L147" title="All 2 branches covered.">           for(int i = 0,len = lines.size();i&lt;len;i++){</span>
+<span class="fc" id="L148">               final String expected = lines.get(i);</span>
+<span class="fc" id="L149">               final String actual = tailerlines.get(i);</span>
+<span class="pc bpc" id="L150" title="1 of 2 branches missed.">               if (!expected.equals(actual)) {</span>
+<span class="nc" id="L151">                   fail(&quot;Line: &quot; + i </span>
+<span class="nc" id="L152">                           + &quot;\nExp: (&quot; + expected.length() + &quot;) &quot; + expected </span>
+<span class="nc" id="L153">                           + &quot;\nAct: (&quot; + actual.length() + &quot;) &quot;+ actual);</span>
+               }
+           }
+        }finally{
+<span class="fc" id="L157">            tailer.stop();</span>
+<span class="fc" id="L158">            IOUtils.closeQuietly(reader);</span>
+<span class="fc" id="L159">            IOUtils.closeQuietly(out);</span>
+        }
+<span class="fc" id="L161">    }</span>
+
+    @Test
+    public void testTailerEof() throws Exception {
+        // Create &amp; start the Tailer
+<span class="fc" id="L166">        final long delay = 50;</span>
+<span class="fc" id="L167">        final File file = new File(getTestDirectory(), &quot;tailer2-test.txt&quot;);</span>
+<span class="fc" id="L168">        createFile(file, 0);</span>
+<span class="fc" id="L169">        final TestTailerListener listener = new TestTailerListener();</span>
+<span class="fc" id="L170">        final Tailer tailer = new Tailer(file, listener, delay, false);</span>
+<span class="fc" id="L171">        final Thread thread = new Thread(tailer);</span>
+<span class="fc" id="L172">        thread.start();</span>
+
+        // Write some lines to the file
+<span class="fc" id="L175">        final FileWriter writer = null;</span>
+        try {
+<span class="fc" id="L177">            writeString(file, &quot;Line&quot;);</span>
+
+<span class="fc" id="L179">            TestUtils.sleep(delay * 2);</span>
+<span class="fc" id="L180">            List&lt;String&gt; lines = listener.getLines();</span>
+<span class="fc" id="L181">            assertEquals(&quot;1 line count&quot;, 0, lines.size());</span>
+
+<span class="fc" id="L183">            writeString(file, &quot; one\n&quot;);</span>
+<span class="fc" id="L184">            TestUtils.sleep(delay * 2);</span>
+<span class="fc" id="L185">            lines = listener.getLines();</span>
+
+<span class="fc" id="L187">            assertEquals(&quot;1 line count&quot;, 1, lines.size());</span>
+<span class="fc" id="L188">            assertEquals(&quot;1 line 1&quot;, &quot;Line one&quot;, lines.get(0));</span>
+
+<span class="fc" id="L190">            listener.clear();</span>
+        } finally {
+<span class="fc" id="L192">            tailer.stop();</span>
+<span class="fc" id="L193">            TestUtils.sleep(delay * 2);</span>
+<span class="fc" id="L194">            IOUtils.closeQuietly(writer);</span>
+        }
+<span class="fc" id="L196">    }</span>
+
+    @Test
+    public void testTailer() throws Exception {
+
+        // Create &amp; start the Tailer
+<span class="fc" id="L202">        final long delayMillis = 50;</span>
+<span class="fc" id="L203">        final File file = new File(getTestDirectory(), &quot;tailer1-test.txt&quot;);</span>
+<span class="fc" id="L204">        createFile(file, 0);</span>
+<span class="fc" id="L205">        final TestTailerListener listener = new TestTailerListener();</span>
+<span class="fc" id="L206">        final String osname = System.getProperty(&quot;os.name&quot;);</span>
+<span class="fc" id="L207">        final boolean isWindows = osname.startsWith(&quot;Windows&quot;);</span>
+<span class="fc" id="L208">        tailer = new Tailer(file, listener, delayMillis, false, isWindows);</span>
+<span class="fc" id="L209">        final Thread thread = new Thread(tailer);</span>
+<span class="fc" id="L210">        thread.start();</span>
+
+        // Write some lines to the file
+<span class="fc" id="L213">        write(file, &quot;Line one&quot;, &quot;Line two&quot;);</span>
+<span class="fc" id="L214">        final long testDelayMillis = delayMillis * 10;</span>
+<span class="fc" id="L215">        TestUtils.sleep(testDelayMillis);</span>
+<span class="fc" id="L216">        List&lt;String&gt; lines = listener.getLines();</span>
+<span class="fc" id="L217">        assertEquals(&quot;1 line count&quot;, 2, lines.size());</span>
+<span class="fc" id="L218">        assertEquals(&quot;1 line 1&quot;, &quot;Line one&quot;, lines.get(0));</span>
+<span class="fc" id="L219">        assertEquals(&quot;1 line 2&quot;, &quot;Line two&quot;, lines.get(1));</span>
+<span class="fc" id="L220">        listener.clear();</span>
+
+        // Write another line to the file
+<span class="fc" id="L223">        write(file, &quot;Line three&quot;);</span>
+<span class="fc" id="L224">        TestUtils.sleep(testDelayMillis);</span>
+<span class="fc" id="L225">        lines = listener.getLines();</span>
+<span class="fc" id="L226">        assertEquals(&quot;2 line count&quot;, 1, lines.size());</span>
+<span class="fc" id="L227">        assertEquals(&quot;2 line 3&quot;, &quot;Line three&quot;, lines.get(0));</span>
+<span class="fc" id="L228">        listener.clear();</span>
+
+        // Check file does actually have all the lines
+<span class="fc" id="L231">        lines = FileUtils.readLines(file, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L232">        assertEquals(&quot;3 line count&quot;, 3, lines.size());</span>
+<span class="fc" id="L233">        assertEquals(&quot;3 line 1&quot;, &quot;Line one&quot;, lines.get(0));</span>
+<span class="fc" id="L234">        assertEquals(&quot;3 line 2&quot;, &quot;Line two&quot;, lines.get(1));</span>
+<span class="fc" id="L235">        assertEquals(&quot;3 line 3&quot;, &quot;Line three&quot;, lines.get(2));</span>
+
+        // Delete &amp; re-create
+<span class="fc" id="L238">        file.delete();</span>
+<span class="fc" id="L239">        final boolean exists = file.exists();</span>
+<span class="fc" id="L240">        assertFalse(&quot;File should not exist&quot;, exists);</span>
+<span class="fc" id="L241">        createFile(file, 0);</span>
+<span class="fc" id="L242">        TestUtils.sleep(testDelayMillis);</span>
+
+        // Write another line
+<span class="fc" id="L245">        write(file, &quot;Line four&quot;);</span>
+<span class="fc" id="L246">        TestUtils.sleep(testDelayMillis);</span>
+<span class="fc" id="L247">        lines = listener.getLines();</span>
+<span class="fc" id="L248">        assertEquals(&quot;4 line count&quot;, 1, lines.size());</span>
+<span class="fc" id="L249">        assertEquals(&quot;4 line 3&quot;, &quot;Line four&quot;, lines.get(0));</span>
+<span class="fc" id="L250">        listener.clear();</span>
+
+        // Stop
+<span class="fc" id="L253">        thread.interrupt();</span>
+<span class="fc" id="L254">        TestUtils.sleep(testDelayMillis * 4);</span>
+<span class="fc" id="L255">        write(file, &quot;Line five&quot;);</span>
+<span class="fc" id="L256">        assertEquals(&quot;4 line count&quot;, 0, listener.getLines().size());</span>
+<span class="fc" id="L257">        assertNotNull(&quot;Missing InterruptedException&quot;, listener.exception);</span>
+<span class="fc" id="L258">        assertTrue(&quot;Unexpected Exception: &quot; + listener.exception, listener.exception instanceof InterruptedException);</span>
+<span class="fc" id="L259">        assertEquals(&quot;Expected init to be called&quot;, 1 , listener.initialised);</span>
+<span class="fc" id="L260">        assertEquals(&quot;fileNotFound should not be called&quot;, 0 , listener.notFound);</span>
+<span class="fc" id="L261">        assertEquals(&quot;fileRotated should be be called&quot;, 1 , listener.rotated);</span>
+<span class="fc" id="L262">        tailer.stop();</span>
+<span class="fc" id="L263">        tailer=null;</span>
+
+<span class="fc" id="L265">    }</span>
+
+    @Test
+    public void testTailerEndOfFileReached() throws Exception {
+        // Create &amp; start the Tailer
+<span class="fc" id="L270">        final long delayMillis = 50;</span>
+<span class="fc" id="L271">        final long testDelayMillis = delayMillis * 10;</span>
+<span class="fc" id="L272">        final File file = new File(getTestDirectory(), &quot;tailer-eof-test.txt&quot;);</span>
+<span class="fc" id="L273">        createFile(file, 0);</span>
+<span class="fc" id="L274">        final TestTailerListener listener = new TestTailerListener();</span>
+<span class="fc" id="L275">        final String osname = System.getProperty(&quot;os.name&quot;);</span>
+<span class="fc" id="L276">        final boolean isWindows = osname.startsWith(&quot;Windows&quot;);</span>
+<span class="fc" id="L277">        tailer = new Tailer(file, listener, delayMillis, false, isWindows);</span>
+<span class="fc" id="L278">        final Thread thread = new Thread(tailer);</span>
+<span class="fc" id="L279">        thread.start();</span>
+
+        // write a few lines
+<span class="fc" id="L282">        write(file, &quot;line1&quot;, &quot;line2&quot;, &quot;line3&quot;);</span>
+<span class="fc" id="L283">        TestUtils.sleep(testDelayMillis);</span>
+
+        // write a few lines
+<span class="fc" id="L286">        write(file, &quot;line4&quot;, &quot;line5&quot;, &quot;line6&quot;);</span>
+<span class="fc" id="L287">        TestUtils.sleep(testDelayMillis);</span>
+
+        // write a few lines
+<span class="fc" id="L290">        write(file, &quot;line7&quot;, &quot;line8&quot;, &quot;line9&quot;);</span>
+<span class="fc" id="L291">        TestUtils.sleep(testDelayMillis);</span>
+
+        // May be &gt; 3 times due to underlying OS behaviour wrt streams
+<span class="pc bpc" id="L294" title="1 of 2 branches missed.">        assertTrue(&quot;end of file reached at least 3 times&quot;, listener.reachedEndOfFile &gt;= 3);</span>
+<span class="fc" id="L295">    }</span>
+
+    protected void createFile(final File file, final long size)
+        throws IOException {
+<span class="pc bpc" id="L299" title="1 of 2 branches missed.">        if (!file.getParentFile().exists()) {</span>
+<span class="nc" id="L300">            throw new IOException(&quot;Cannot create file &quot; + file</span>
+                    + &quot; as the parent directory does not exist&quot;);
+        }
+<span class="fc" id="L303">        final BufferedOutputStream output =</span>
+                new BufferedOutputStream(new FileOutputStream(file));
+        try {
+<span class="fc" id="L306">            TestUtils.generateTestData(output, size);</span>
+        } finally {
+<span class="fc" id="L308">            IOUtils.closeQuietly(output);</span>
+        }
+
+        // try to make sure file is found
+        // (to stop continuum occasionally failing)
+<span class="fc" id="L313">        RandomAccessFile reader = null;</span>
+        try {
+<span class="fc bfc" id="L315" title="All 2 branches covered.">            while (reader == null) {</span>
+                try {
+<span class="fc" id="L317">                    reader = new RandomAccessFile(file.getPath(), &quot;r&quot;);</span>
+<span class="nc" id="L318">                } catch (final FileNotFoundException ignore) {</span>
+<span class="fc" id="L319">                }</span>
+                try {
+<span class="fc" id="L321">                    TestUtils.sleep(200L);</span>
+<span class="nc" id="L322">                } catch (final InterruptedException ignore) {</span>
+                    // ignore
+<span class="pc" id="L324">                }</span>
+            }
+        } finally {
+<span class="fc" id="L327">            IOUtils.closeQuietly(reader);</span>
+        }
+<span class="fc" id="L329">    }</span>
+
+    /** Append some lines to a file */
+    private void write(final File file, final String... lines) throws Exception {
+<span class="fc" id="L333">        FileWriter writer = null;</span>
+        try {
+<span class="fc" id="L335">            writer = new FileWriter(file, true);</span>
+<span class="fc bfc" id="L336" title="All 2 branches covered.">            for (final String line : lines) {</span>
+<span class="fc" id="L337">                writer.write(line + &quot;\n&quot;);</span>
+            }
+        } finally {
+<span class="fc" id="L340">            IOUtils.closeQuietly(writer);</span>
+        }
+<span class="fc" id="L342">    }</span>
+
+    /** Append a string to a file */
+    private void writeString(final File file, final String ... strings) throws Exception {
+<span class="fc" id="L346">        FileWriter writer = null;</span>
+        try {
+<span class="fc" id="L348">            writer = new FileWriter(file, true);</span>
+<span class="fc bfc" id="L349" title="All 2 branches covered.">            for (final String string : strings) {</span>
+<span class="fc" id="L350">                writer.write(string);</span>
+            }
+        } finally {
+<span class="fc" id="L353">            IOUtils.closeQuietly(writer);</span>
+        }
+<span class="fc" id="L355">    }</span>
+
+
+    @Test
+    public void testStopWithNoFile() throws Exception {
+<span class="fc" id="L360">        final File file = new File(getTestDirectory(),&quot;nosuchfile&quot;);</span>
+<span class="fc" id="L361">        assertFalse(&quot;nosuchfile should not exist&quot;, file.exists());</span>
+<span class="fc" id="L362">        final TestTailerListener listener = new TestTailerListener();</span>
+<span class="fc" id="L363">        final int delay = 100;</span>
+<span class="fc" id="L364">        final int idle = 50; // allow time for thread to work</span>
+<span class="fc" id="L365">        tailer = Tailer.create(file, listener, delay, false);</span>
+<span class="fc" id="L366">        TestUtils.sleep(idle);</span>
+<span class="fc" id="L367">        tailer.stop();</span>
+<span class="fc" id="L368">        tailer=null;</span>
+<span class="fc" id="L369">        TestUtils.sleep(delay+idle);</span>
+<span class="fc" id="L370">        assertNull(&quot;Should not generate Exception&quot;, listener.exception);</span>
+<span class="fc" id="L371">        assertEquals(&quot;Expected init to be called&quot;, 1 , listener.initialised);</span>
+<span class="pc bpc" id="L372" title="1 of 2 branches missed.">        assertTrue(&quot;fileNotFound should be called&quot;, listener.notFound &gt; 0);</span>
+<span class="fc" id="L373">        assertEquals(&quot;fileRotated should be not be called&quot;, 0 , listener.rotated);</span>
+<span class="fc" id="L374">        assertEquals(&quot;end of file never reached&quot;, 0, listener.reachedEndOfFile);</span>
+<span class="fc" id="L375">    }</span>
+
+    /*
+     * Tests [IO-357][Tailer] InterruptedException while the thead is sleeping is silently ignored.
+     */
+    @Test
+    public void testInterrupt() throws Exception {
+<span class="fc" id="L382">        final File file = new File(getTestDirectory(), &quot;nosuchfile&quot;);</span>
+<span class="fc" id="L383">        assertFalse(&quot;nosuchfile should not exist&quot;, file.exists());</span>
+<span class="fc" id="L384">        final TestTailerListener listener = new TestTailerListener();</span>
+        // Use a long delay to try to make sure the test thread calls interrupt() while the tailer thread is sleeping.
+<span class="fc" id="L386">        final int delay = 1000;</span>
+<span class="fc" id="L387">        final int idle = 50; // allow time for thread to work</span>
+<span class="fc" id="L388">        Tailer tailer = new Tailer(file, listener, delay, false, 4096);</span>
+<span class="fc" id="L389">        final Thread thread = new Thread(tailer);</span>
+<span class="fc" id="L390">        thread.setDaemon(true);</span>
+<span class="fc" id="L391">        thread.start();</span>
+<span class="fc" id="L392">        TestUtils.sleep(idle);</span>
+<span class="fc" id="L393">        thread.interrupt();</span>
+<span class="fc" id="L394">        tailer = null;</span>
+<span class="fc" id="L395">        TestUtils.sleep(delay + idle);</span>
+<span class="fc" id="L396">        assertNotNull(&quot;Missing InterruptedException&quot;, listener.exception);</span>
+<span class="fc" id="L397">        assertTrue(&quot;Unexpected Exception: &quot; + listener.exception, listener.exception instanceof InterruptedException);</span>
+<span class="fc" id="L398">        assertEquals(&quot;Expected init to be called&quot;, 1, listener.initialised);</span>
+<span class="pc bpc" id="L399" title="1 of 2 branches missed.">        assertTrue(&quot;fileNotFound should be called&quot;, listener.notFound &gt; 0);</span>
+<span class="fc" id="L400">        assertEquals(&quot;fileRotated should be not be called&quot;, 0, listener.rotated);</span>
+<span class="fc" id="L401">        assertEquals(&quot;end of file never reached&quot;, 0, listener.reachedEndOfFile);</span>
+<span class="fc" id="L402">    }</span>
+
+    @Test
+    public void testStopWithNoFileUsingExecutor() throws Exception {
+<span class="fc" id="L406">        final File file = new File(getTestDirectory(),&quot;nosuchfile&quot;);</span>
+<span class="fc" id="L407">        assertFalse(&quot;nosuchfile should not exist&quot;, file.exists());</span>
+<span class="fc" id="L408">        final TestTailerListener listener = new TestTailerListener();</span>
+<span class="fc" id="L409">        final int delay = 100;</span>
+<span class="fc" id="L410">        final int idle = 50; // allow time for thread to work</span>
+<span class="fc" id="L411">        tailer = new Tailer(file, listener, delay, false);</span>
+<span class="fc" id="L412">        final Executor exec = new ScheduledThreadPoolExecutor(1);</span>
+<span class="fc" id="L413">        exec.execute(tailer);</span>
+<span class="fc" id="L414">        TestUtils.sleep(idle);</span>
+<span class="fc" id="L415">        tailer.stop();</span>
+<span class="fc" id="L416">        tailer=null;</span>
+<span class="fc" id="L417">        TestUtils.sleep(delay+idle);</span>
+<span class="fc" id="L418">        assertNull(&quot;Should not generate Exception&quot;, listener.exception);</span>
+<span class="fc" id="L419">        assertEquals(&quot;Expected init to be called&quot;, 1 , listener.initialised);</span>
+<span class="pc bpc" id="L420" title="1 of 2 branches missed.">        assertTrue(&quot;fileNotFound should be called&quot;, listener.notFound &gt; 0);</span>
+<span class="fc" id="L421">        assertEquals(&quot;fileRotated should be not be called&quot;, 0 , listener.rotated);</span>
+<span class="fc" id="L422">        assertEquals(&quot;end of file never reached&quot;, 0, listener.reachedEndOfFile);</span>
+<span class="fc" id="L423">    }</span>
+
+    @Test
+    public void testIO335() throws Exception { // test CR behaviour
+        // Create &amp; start the Tailer
+<span class="fc" id="L428">        final long delayMillis = 50;</span>
+<span class="fc" id="L429">        final File file = new File(getTestDirectory(), &quot;tailer-testio334.txt&quot;);</span>
+<span class="fc" id="L430">        createFile(file, 0);</span>
+<span class="fc" id="L431">        final TestTailerListener listener = new TestTailerListener();</span>
+<span class="fc" id="L432">        tailer = new Tailer(file, listener, delayMillis, false);</span>
+<span class="fc" id="L433">        final Thread thread = new Thread(tailer);</span>
+<span class="fc" id="L434">        thread.start();</span>
+
+        // Write some lines to the file
+<span class="fc" id="L437">        writeString(file, &quot;CRLF\r\n&quot;, &quot;LF\n&quot;, &quot;CR\r&quot;, &quot;CRCR\r\r&quot;, &quot;trail&quot;);</span>
+<span class="fc" id="L438">        final long testDelayMillis = delayMillis * 10;</span>
+<span class="fc" id="L439">        TestUtils.sleep(testDelayMillis);</span>
+<span class="fc" id="L440">        final List&lt;String&gt; lines = listener.getLines();</span>
+<span class="fc" id="L441">        assertEquals(&quot;line count&quot;, 4, lines.size());</span>
+<span class="fc" id="L442">        assertEquals(&quot;line 1&quot;, &quot;CRLF&quot;, lines.get(0));</span>
+<span class="fc" id="L443">        assertEquals(&quot;line 2&quot;, &quot;LF&quot;, lines.get(1));</span>
+<span class="fc" id="L444">        assertEquals(&quot;line 3&quot;, &quot;CR&quot;, lines.get(2));</span>
+<span class="fc" id="L445">        assertEquals(&quot;line 4&quot;, &quot;CRCR\r&quot;, lines.get(3));</span>
+
+        // Stop
+<span class="fc" id="L448">        tailer.stop();</span>
+<span class="fc" id="L449">        tailer=null;</span>
+<span class="fc" id="L450">        thread.interrupt();</span>
+<span class="fc" id="L451">        TestUtils.sleep(testDelayMillis);</span>
+<span class="fc" id="L452">    }</span>
+
+    /**
+     * Test {@link TailerListener} implementation.
+     */
+<span class="fc" id="L457">    private static class TestTailerListener extends TailerListenerAdapter {</span>
+
+        // Must be synchronised because it is written by one thread and read by another
+<span class="fc" id="L460">        private final List&lt;String&gt; lines = Collections.synchronizedList(new ArrayList&lt;String&gt;());</span>
+
+<span class="fc" id="L462">        volatile Exception exception = null;</span>
+
+<span class="fc" id="L464">        volatile int notFound = 0;</span>
+
+<span class="fc" id="L466">        volatile int rotated = 0;</span>
+
+<span class="fc" id="L468">        volatile int initialised = 0;</span>
+
+<span class="fc" id="L470">        volatile int reachedEndOfFile = 0;</span>
+
+        public void handle(final String line) {
+<span class="fc" id="L473">            lines.add(line);</span>
+<span class="fc" id="L474">        }</span>
+
+        public List&lt;String&gt; getLines() {
+<span class="fc" id="L477">            return lines;</span>
+        }
+
+        public void clear() {
+<span class="fc" id="L481">            lines.clear();</span>
+<span class="fc" id="L482">        }</span>
+
+        public void handle(final Exception e) {
+<span class="fc" id="L485">            exception = e;</span>
+<span class="fc" id="L486">        }</span>
+
+        public void init(final Tailer tailer) {
+<span class="fc" id="L489">            initialised++; // not atomic, but OK because only updated here.</span>
+<span class="fc" id="L490">        }</span>
+
+        public void fileNotFound() {
+<span class="fc" id="L493">            notFound++; // not atomic, but OK because only updated here.</span>
+<span class="fc" id="L494">        }</span>
+
+        public void fileRotated() {
+<span class="fc" id="L497">            rotated++; // not atomic, but OK because only updated here.</span>
+<span class="fc" id="L498">        }</span>
+
+        public void endOfFileReached() {
+<span class="fc" id="L501">            reachedEndOfFile++; // not atomic, but OK because only updated here.</span>
+<span class="fc" id="L502">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>commons-io (Apr 20, 2019 6:11:46 PM)</div></body></html>

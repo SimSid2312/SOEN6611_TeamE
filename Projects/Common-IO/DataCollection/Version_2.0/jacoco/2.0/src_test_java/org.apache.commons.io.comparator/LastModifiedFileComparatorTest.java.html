@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>LastModifiedFileComparatorTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.0 (Apr 20, 2019 6:00:46 PM)</a> &gt; <a href="../../index.html" class="el_group">2.0</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.comparator</a> &gt; <span class="el_source">LastModifiedFileComparatorTest.java</span></div><h1>LastModifiedFileComparatorTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.comparator;
+
+import java.io.File;
+
+/**
+ * Test case for {@link LastModifiedFileComparator}.
+ */
+public class LastModifiedFileComparatorTest extends ComparatorAbstractTestCase {
+
+    /**
+     * Construct a new test case with the specified name.
+     *
+     * @param name Name of the test
+     */
+    public LastModifiedFileComparatorTest(String name) {
+<span class="fc" id="L32">        super(name);</span>
+<span class="fc" id="L33">    }</span>
+
+    /** @see junit.framework.TestCase#setUp() */
+    @Override
+    protected void setUp() throws Exception {
+<span class="fc" id="L38">        super.setUp();</span>
+<span class="fc" id="L39">        comparator = (AbstractFileComparator)LastModifiedFileComparator.LASTMODIFIED_COMPARATOR;</span>
+<span class="fc" id="L40">        reverse = LastModifiedFileComparator.LASTMODIFIED_REVERSE;</span>
+<span class="fc" id="L41">        File dir = getTestDirectory();</span>
+<span class="fc" id="L42">        File olderFile = new File(dir, &quot;older.txt&quot;);</span>
+<span class="fc" id="L43">        createFile(olderFile, 0);</span>
+
+<span class="fc" id="L45">        File equalFile = new File(dir, &quot;equal.txt&quot;);</span>
+<span class="fc" id="L46">        createFile(equalFile, 0);</span>
+        do {
+            try { 
+<span class="fc" id="L49">                Thread.sleep(300);</span>
+<span class="nc" id="L50">            } catch(InterruptedException ie) {</span>
+                // ignore
+<span class="fc" id="L52">            }</span>
+<span class="fc" id="L53">            equalFile.setLastModified(System.currentTimeMillis());</span>
+<span class="fc bfc" id="L54" title="All 2 branches covered.">        } while( olderFile.lastModified() == equalFile.lastModified() );</span>
+
+<span class="fc" id="L56">        File newerFile = new File(dir, &quot;newer.txt&quot;);</span>
+<span class="fc" id="L57">        createFile(newerFile, 0);</span>
+        do {
+            try { 
+<span class="fc" id="L60">                Thread.sleep(300);</span>
+<span class="nc" id="L61">            } catch(InterruptedException ie) {</span>
+                // ignore
+<span class="fc" id="L63">            }</span>
+<span class="fc" id="L64">            newerFile.setLastModified(System.currentTimeMillis());</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">        } while( equalFile.lastModified() == newerFile.lastModified() );</span>
+<span class="fc" id="L66">        equalFile1 = equalFile;</span>
+<span class="fc" id="L67">        equalFile2 = equalFile;</span>
+<span class="fc" id="L68">        lessFile   = olderFile;</span>
+<span class="fc" id="L69">        moreFile   = newerFile;</span>
+<span class="fc" id="L70">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.0 (Apr 20, 2019 6:00:46 PM)</div></body></html>

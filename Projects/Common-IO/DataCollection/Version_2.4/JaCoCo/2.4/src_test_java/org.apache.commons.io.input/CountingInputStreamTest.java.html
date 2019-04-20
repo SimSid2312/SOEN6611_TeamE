@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>CountingInputStreamTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.4 (Apr 20, 2019 6:07:50 PM)</a> &gt; <a href="../../index.html" class="el_group">2.4</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.input</a> &gt; <span class="el_source">CountingInputStreamTest.java</span></div><h1>CountingInputStreamTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.input;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+
+import junit.framework.TestCase;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.output.NullOutputStream;
+
+/**
+ * Tests the CountingInputStream.
+ *
+ * @version $Id$
+ */
+public class CountingInputStreamTest extends TestCase {
+
+    public CountingInputStreamTest(String name) {
+<span class="fc" id="L36">        super(name);</span>
+<span class="fc" id="L37">    }</span>
+
+    public void testCounting() throws Exception {
+<span class="fc" id="L40">        String text = &quot;A piece of text&quot;;</span>
+<span class="fc" id="L41">        byte[] bytes = text.getBytes();</span>
+<span class="fc" id="L42">        ByteArrayInputStream bais = new ByteArrayInputStream(bytes);</span>
+<span class="fc" id="L43">        CountingInputStream cis = new CountingInputStream(bais);</span>
+
+        // have to declare this larger as we're going to read 
+        // off the end of the stream and input stream seems 
+        // to do bounds checking
+<span class="fc" id="L48">        byte[] result = new byte[21];</span>
+
+<span class="fc" id="L50">        byte[] ba = new byte[5];</span>
+<span class="fc" id="L51">        int found = cis.read(ba);</span>
+<span class="fc" id="L52">        System.arraycopy(ba, 0, result, 0, 5);</span>
+<span class="fc" id="L53">        assertEquals( found, cis.getCount() );</span>
+
+<span class="fc" id="L55">        int value = cis.read();</span>
+<span class="fc" id="L56">        found++; </span>
+<span class="fc" id="L57">        result[5] = (byte)value;</span>
+<span class="fc" id="L58">        assertEquals( found, cis.getCount() );</span>
+
+<span class="fc" id="L60">        found += cis.read(result, 6, 5);</span>
+<span class="fc" id="L61">        assertEquals( found, cis.getCount() );</span>
+
+<span class="fc" id="L63">        found += cis.read(result, 11, 10); // off the end</span>
+<span class="fc" id="L64">        assertEquals( found, cis.getCount() );</span>
+
+        // trim to get rid of the 6 empty values
+<span class="fc" id="L67">        String textResult = new String(result).trim();</span>
+<span class="fc" id="L68">        assertEquals(textResult, text);</span>
+<span class="fc" id="L69">    }</span>
+
+
+    /**
+     * Test for files &gt; 2GB in size - see issue IO-84
+     */
+    public void testLargeFiles_IO84() throws Exception {
+<span class="fc" id="L76">        long size = (long)Integer.MAX_VALUE + (long)1;</span>
+<span class="fc" id="L77">        NullInputStream mock    = new NullInputStream(size);</span>
+<span class="fc" id="L78">        CountingInputStream cis = new CountingInputStream(mock);</span>
+<span class="fc" id="L79">        OutputStream out        = new NullOutputStream();</span>
+
+        // Test integer methods
+<span class="fc" id="L82">        IOUtils.copyLarge(cis, out);</span>
+        try {
+<span class="nc" id="L84">            cis.getCount();</span>
+<span class="nc" id="L85">            fail(&quot;Expected getCount() to throw an ArithmeticException&quot;);</span>
+<span class="pc" id="L86">        } catch (ArithmeticException ae) {</span>
+            // expected result
+        }
+        try {
+<span class="nc" id="L90">            cis.resetCount();</span>
+<span class="nc" id="L91">            fail(&quot;Expected resetCount() to throw an ArithmeticException&quot;);</span>
+<span class="pc" id="L92">        } catch (ArithmeticException ae) {</span>
+            // expected result
+        }
+
+<span class="fc" id="L96">        mock.close();</span>
+
+        // Test long methods
+<span class="fc" id="L99">        IOUtils.copyLarge(cis, out);</span>
+<span class="fc" id="L100">        assertEquals(&quot;getByteCount()&quot;,   size, cis.getByteCount());</span>
+<span class="fc" id="L101">        assertEquals(&quot;resetByteCount()&quot;, size, cis.resetByteCount());</span>
+<span class="fc" id="L102">    }</span>
+
+    public void testResetting() throws Exception {
+<span class="fc" id="L105">        String text = &quot;A piece of text&quot;;</span>
+<span class="fc" id="L106">        byte[] bytes = text.getBytes();</span>
+<span class="fc" id="L107">        ByteArrayInputStream bais = new ByteArrayInputStream(bytes);</span>
+<span class="fc" id="L108">        CountingInputStream cis = new CountingInputStream(bais);</span>
+
+<span class="fc" id="L110">        byte[] result = new byte[bytes.length];</span>
+
+<span class="fc" id="L112">        int found = cis.read(result, 0, 5);</span>
+<span class="fc" id="L113">        assertEquals( found, cis.getCount() );</span>
+
+<span class="fc" id="L115">        int count = cis.resetCount();</span>
+<span class="fc" id="L116">        found = cis.read(result, 6, 5);</span>
+<span class="fc" id="L117">        assertEquals( found, count );</span>
+<span class="fc" id="L118">    }</span>
+    
+    public void testZeroLength1() throws Exception {
+<span class="fc" id="L121">        ByteArrayInputStream bais = new ByteArrayInputStream(new byte[0]);</span>
+<span class="fc" id="L122">        CountingInputStream cis = new CountingInputStream(bais);</span>
+
+<span class="fc" id="L124">        int found = cis.read();</span>
+<span class="fc" id="L125">        assertEquals(-1, found);</span>
+<span class="fc" id="L126">        assertEquals(0, cis.getCount());</span>
+<span class="fc" id="L127">    }</span>
+
+    public void testZeroLength2() throws Exception {
+<span class="fc" id="L130">        ByteArrayInputStream bais = new ByteArrayInputStream(new byte[0]);</span>
+<span class="fc" id="L131">        CountingInputStream cis = new CountingInputStream(bais);</span>
+
+<span class="fc" id="L133">        byte[] result = new byte[10];</span>
+
+<span class="fc" id="L135">        int found = cis.read(result);</span>
+<span class="fc" id="L136">        assertEquals(-1, found);</span>
+<span class="fc" id="L137">        assertEquals(0, cis.getCount());</span>
+<span class="fc" id="L138">    }</span>
+
+    public void testZeroLength3() throws Exception {
+<span class="fc" id="L141">        ByteArrayInputStream bais = new ByteArrayInputStream(new byte[0]);</span>
+<span class="fc" id="L142">        CountingInputStream cis = new CountingInputStream(bais);</span>
+
+<span class="fc" id="L144">        byte[] result = new byte[10];</span>
+
+<span class="fc" id="L146">        int found = cis.read(result, 0, 5);</span>
+<span class="fc" id="L147">        assertEquals(-1, found);</span>
+<span class="fc" id="L148">        assertEquals(0, cis.getCount());</span>
+<span class="fc" id="L149">    }</span>
+
+    public void testEOF1() throws Exception {
+<span class="fc" id="L152">        ByteArrayInputStream bais = new ByteArrayInputStream(new byte[2]);</span>
+<span class="fc" id="L153">        CountingInputStream cis = new CountingInputStream(bais);</span>
+
+<span class="fc" id="L155">        int found = cis.read();</span>
+<span class="fc" id="L156">        assertEquals(0, found);</span>
+<span class="fc" id="L157">        assertEquals(1, cis.getCount());</span>
+<span class="fc" id="L158">        found = cis.read();</span>
+<span class="fc" id="L159">        assertEquals(0, found);</span>
+<span class="fc" id="L160">        assertEquals(2, cis.getCount());</span>
+<span class="fc" id="L161">        found = cis.read();</span>
+<span class="fc" id="L162">        assertEquals(-1, found);</span>
+<span class="fc" id="L163">        assertEquals(2, cis.getCount());</span>
+<span class="fc" id="L164">    }</span>
+
+    public void testEOF2() throws Exception {
+<span class="fc" id="L167">        ByteArrayInputStream bais = new ByteArrayInputStream(new byte[2]);</span>
+<span class="fc" id="L168">        CountingInputStream cis = new CountingInputStream(bais);</span>
+
+<span class="fc" id="L170">        byte[] result = new byte[10];</span>
+
+<span class="fc" id="L172">        int found = cis.read(result);</span>
+<span class="fc" id="L173">        assertEquals(2, found);</span>
+<span class="fc" id="L174">        assertEquals(2, cis.getCount());</span>
+<span class="fc" id="L175">    }</span>
+
+    public void testEOF3() throws Exception {
+<span class="fc" id="L178">        ByteArrayInputStream bais = new ByteArrayInputStream(new byte[2]);</span>
+<span class="fc" id="L179">        CountingInputStream cis = new CountingInputStream(bais);</span>
+
+<span class="fc" id="L181">        byte[] result = new byte[10];</span>
+
+<span class="fc" id="L183">        int found = cis.read(result, 0, 5);</span>
+<span class="fc" id="L184">        assertEquals(2, found);</span>
+<span class="fc" id="L185">        assertEquals(2, cis.getCount());</span>
+<span class="fc" id="L186">    }</span>
+    
+    public void testSkipping() throws IOException {
+<span class="fc" id="L189">        String text = &quot;Hello World!&quot;;</span>
+<span class="fc" id="L190">        byte[] bytes = text.getBytes();</span>
+<span class="fc" id="L191">        ByteArrayInputStream bais = new ByteArrayInputStream(bytes);</span>
+<span class="fc" id="L192">        CountingInputStream cis = new CountingInputStream(bais);</span>
+        
+<span class="fc" id="L194">        assertEquals(6,cis.skip(6));</span>
+<span class="fc" id="L195">        assertEquals(6,cis.getCount());</span>
+<span class="fc" id="L196">        final byte[] result = new byte[6];</span>
+<span class="fc" id="L197">        cis.read(result);</span>
+        
+<span class="fc" id="L199">        assertEquals(&quot;World!&quot;,new String(result));</span>
+<span class="fc" id="L200">        assertEquals(12,cis.getCount());</span>
+<span class="fc" id="L201">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.4 (Apr 20, 2019 6:07:50 PM)</div></body></html>

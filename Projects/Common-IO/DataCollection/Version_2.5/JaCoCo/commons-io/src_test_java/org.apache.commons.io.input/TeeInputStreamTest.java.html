@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TeeInputStreamTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-io (Apr 20, 2019 6:11:46 PM)</a> &gt; <a href="../../index.html" class="el_group">commons-io</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.input</a> &gt; <span class="el_source">TeeInputStreamTest.java</span></div><h1>TeeInputStreamTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.input;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+
+import junit.framework.TestCase;
+import org.junit.Before;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+
+/**
+ * JUnit Test Case for {@link TeeInputStream}.
+ */
+<span class="fc" id="L32">public class TeeInputStreamTest  {</span>
+
+<span class="fc" id="L34">    private final String ASCII = &quot;US-ASCII&quot;;</span>
+
+    private InputStream tee;
+
+    private ByteArrayOutputStream output;
+
+    @Before
+    public void setUp() throws Exception {
+<span class="fc" id="L42">        final InputStream input = new ByteArrayInputStream(&quot;abc&quot;.getBytes(ASCII));</span>
+<span class="fc" id="L43">        output = new ByteArrayOutputStream();</span>
+<span class="fc" id="L44">        tee = new TeeInputStream(input, output);</span>
+<span class="fc" id="L45">    }</span>
+
+    @Test
+    public void testReadNothing() throws Exception {
+<span class="fc" id="L49">        assertEquals(&quot;&quot;, new String(output.toString(ASCII)));</span>
+<span class="fc" id="L50">    }</span>
+
+    @Test
+    public void testReadOneByte() throws Exception {
+<span class="fc" id="L54">        assertEquals('a', tee.read());</span>
+<span class="fc" id="L55">        assertEquals(&quot;a&quot;, new String(output.toString(ASCII)));</span>
+<span class="fc" id="L56">    }</span>
+
+    @Test
+    public void testReadEverything() throws Exception {
+<span class="fc" id="L60">        assertEquals('a', tee.read());</span>
+<span class="fc" id="L61">        assertEquals('b', tee.read());</span>
+<span class="fc" id="L62">        assertEquals('c', tee.read());</span>
+<span class="fc" id="L63">        assertEquals(-1, tee.read());</span>
+<span class="fc" id="L64">        assertEquals(&quot;abc&quot;, new String(output.toString(ASCII)));</span>
+<span class="fc" id="L65">    }</span>
+
+    @Test
+    public void testReadToArray() throws Exception {
+<span class="fc" id="L69">        final byte[] buffer = new byte[8];</span>
+<span class="fc" id="L70">        assertEquals(3, tee.read(buffer));</span>
+<span class="fc" id="L71">        assertEquals('a', buffer[0]);</span>
+<span class="fc" id="L72">        assertEquals('b', buffer[1]);</span>
+<span class="fc" id="L73">        assertEquals('c', buffer[2]);</span>
+<span class="fc" id="L74">        assertEquals(-1, tee.read(buffer));</span>
+<span class="fc" id="L75">        assertEquals(&quot;abc&quot;, new String(output.toString(ASCII)));</span>
+<span class="fc" id="L76">    }</span>
+
+    @Test
+    public void testReadToArrayWithOffset() throws Exception {
+<span class="fc" id="L80">        final byte[] buffer = new byte[8];</span>
+<span class="fc" id="L81">        assertEquals(3, tee.read(buffer, 4, 4));</span>
+<span class="fc" id="L82">        assertEquals('a', buffer[4]);</span>
+<span class="fc" id="L83">        assertEquals('b', buffer[5]);</span>
+<span class="fc" id="L84">        assertEquals('c', buffer[6]);</span>
+<span class="fc" id="L85">        assertEquals(-1, tee.read(buffer, 4, 4));</span>
+<span class="fc" id="L86">        assertEquals(&quot;abc&quot;, new String(output.toString(ASCII)));</span>
+<span class="fc" id="L87">    }</span>
+
+    @Test
+    public void testSkip() throws Exception {
+<span class="fc" id="L91">        assertEquals('a', tee.read());</span>
+<span class="fc" id="L92">        assertEquals(1, tee.skip(1));</span>
+<span class="fc" id="L93">        assertEquals('c', tee.read());</span>
+<span class="fc" id="L94">        assertEquals(-1, tee.read());</span>
+<span class="fc" id="L95">        assertEquals(&quot;ac&quot;, new String(output.toString(ASCII)));</span>
+<span class="fc" id="L96">    }</span>
+
+    @Test
+    public void testMarkReset() throws Exception {
+<span class="fc" id="L100">        assertEquals('a', tee.read());</span>
+<span class="fc" id="L101">        tee.mark(1);</span>
+<span class="fc" id="L102">        assertEquals('b', tee.read());</span>
+<span class="fc" id="L103">        tee.reset();</span>
+<span class="fc" id="L104">        assertEquals('b', tee.read());</span>
+<span class="fc" id="L105">        assertEquals('c', tee.read());</span>
+<span class="fc" id="L106">        assertEquals(-1, tee.read());</span>
+<span class="fc" id="L107">        assertEquals(&quot;abbc&quot;, new String(output.toString(ASCII)));</span>
+<span class="fc" id="L108">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>commons-io (Apr 20, 2019 6:11:46 PM)</div></body></html>

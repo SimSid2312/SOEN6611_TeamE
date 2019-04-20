@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>AbstractMonitorTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-io (Apr 20, 2019 6:11:46 PM)</a> &gt; <a href="../../index.html" class="el_group">commons-io</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.monitor</a> &gt; <span class="el_source">AbstractMonitorTestCase.java</span></div><h1>AbstractMonitorTestCase.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.monitor;
+
+import java.io.File;
+import java.io.FileFilter;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.apache.commons.io.filefilter.HiddenFileFilter;
+import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.io.testtools.TestUtils;
+import org.junit.After;
+import org.junit.Before;
+
+import static org.apache.commons.io.testtools.TestUtils.sleepQuietly;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
+/**
+ * {@link FileAlterationObserver} Test Case.
+ */
+<span class="fc" id="L37">public abstract class AbstractMonitorTestCase  {</span>
+
+    /** File observer */
+    protected FileAlterationObserver observer;
+
+    /** Listener which collects file changes */
+    protected CollectionFileListener listener;
+
+    /** Test diretory name */
+<span class="fc" id="L46">    protected String testDirName = null;</span>
+
+    /** Directory for test files */
+    protected File testDir;
+
+    /** Time in milliseconds to pause in tests */
+<span class="fc" id="L52">    protected long pauseTime = 100L;</span>
+
+    @Before
+    public void setUp() throws Exception {
+<span class="fc" id="L56">        testDir = new File(new File(&quot;.&quot;), testDirName);</span>
+<span class="pc bpc" id="L57" title="1 of 2 branches missed.">        if (testDir.exists()) {</span>
+<span class="nc" id="L58">            FileUtils.cleanDirectory(testDir);</span>
+        } else {
+<span class="fc" id="L60">            testDir.mkdir();</span>
+        }
+
+<span class="fc" id="L63">        final IOFileFilter files = FileFilterUtils.fileFileFilter();</span>
+<span class="fc" id="L64">        final IOFileFilter javaSuffix = FileFilterUtils.suffixFileFilter(&quot;.java&quot;);</span>
+<span class="fc" id="L65">        final IOFileFilter fileFilter = FileFilterUtils.and(files, javaSuffix);</span>
+
+<span class="fc" id="L67">        final IOFileFilter directories = FileFilterUtils.directoryFileFilter();</span>
+<span class="fc" id="L68">        final IOFileFilter visible = HiddenFileFilter.VISIBLE;</span>
+<span class="fc" id="L69">        final IOFileFilter dirFilter = FileFilterUtils.and(directories, visible);</span>
+
+<span class="fc" id="L71">        final IOFileFilter filter = FileFilterUtils.or(dirFilter, fileFilter);</span>
+
+<span class="fc" id="L73">        createObserver(testDir, filter);</span>
+<span class="fc" id="L74">    }</span>
+
+    /**
+     * Create a {@link FileAlterationObserver}.
+     *
+     * @param file The directory to observe
+     * @param fileFilter The file filter to apply
+     */
+    protected void createObserver(final File file, final FileFilter fileFilter) {
+<span class="fc" id="L83">        observer = new FileAlterationObserver(file, fileFilter);</span>
+<span class="fc" id="L84">        observer.addListener(listener);</span>
+<span class="fc" id="L85">        observer.addListener(new FileAlterationListenerAdaptor());</span>
+        try {
+<span class="fc" id="L87">            observer.initialize();</span>
+<span class="nc" id="L88">        } catch (final Exception e) {</span>
+<span class="nc" id="L89">            fail(&quot;Observer init() threw &quot; + e);</span>
+<span class="fc" id="L90">        }</span>
+<span class="fc" id="L91">    }</span>
+
+    @After
+    public void tearDown() throws Exception {
+<span class="fc" id="L95">        FileUtils.deleteDirectory(testDir);</span>
+<span class="fc" id="L96">    }</span>
+
+    /**
+     * Check all the Collections are empty
+     *
+     * @param label the label to use for this check
+     */
+    protected void checkCollectionsEmpty(final String label) {
+<span class="fc" id="L104">        checkCollectionSizes(&quot;EMPTY-&quot; + label, 0, 0, 0, 0, 0, 0);</span>
+<span class="fc" id="L105">    }</span>
+
+    /**
+     * Check all the Collections have the expected sizes.
+     *
+     * @param label the label to use for this check
+     * @param dirCreate expected number of dirs created
+     * @param dirChange expected number of dirs changed
+     * @param dirDelete expected number of dirs deleted
+     * @param fileCreate expected number of files created
+     * @param fileChange expected number of files changed
+     * @param fileDelete expected number of files deleted
+     */
+    protected void checkCollectionSizes(String label, 
+                                        final int dirCreate, 
+                                        final int dirChange, 
+                                        final int dirDelete, 
+                                        final int fileCreate, 
+                                        final int fileChange, 
+                                        final int fileDelete) {
+<span class="fc" id="L125">        label = label + &quot;[&quot; + listener.getCreatedDirectories().size() +</span>
+<span class="fc" id="L126">                        &quot; &quot; + listener.getChangedDirectories().size() +</span>
+<span class="fc" id="L127">                        &quot; &quot; + listener.getDeletedDirectories().size() +</span>
+<span class="fc" id="L128">                        &quot; &quot; + listener.getCreatedFiles().size() +</span>
+<span class="fc" id="L129">                        &quot; &quot; + listener.getChangedFiles().size() +</span>
+<span class="fc" id="L130">                        &quot; &quot; + listener.getDeletedFiles().size() + &quot;]&quot;;</span>
+<span class="fc" id="L131">        assertEquals(label + &quot;: No. of directories created&quot;,  dirCreate,  listener.getCreatedDirectories().size());</span>
+<span class="fc" id="L132">        assertEquals(label + &quot;: No. of directories changed&quot;,  dirChange,  listener.getChangedDirectories().size());</span>
+<span class="fc" id="L133">        assertEquals(label + &quot;: No. of directories deleted&quot;,  dirDelete,  listener.getDeletedDirectories().size());</span>
+<span class="fc" id="L134">        assertEquals(label + &quot;: No. of files created&quot;, fileCreate, listener.getCreatedFiles().size());</span>
+<span class="fc" id="L135">        assertEquals(label + &quot;: No. of files changed&quot;, fileChange, listener.getChangedFiles().size());</span>
+<span class="fc" id="L136">        assertEquals(label + &quot;: No. of files deleted&quot;, fileDelete, listener.getDeletedFiles().size());</span>
+<span class="fc" id="L137">    }</span>
+
+    /**
+     * Either creates a file if it doesn't exist or updates the last modified date/time
+     * if it does.
+     *
+     * @param file The file to touch
+     * @return The file
+     */
+    protected File touch(File file) {
+<span class="fc bfc" id="L147" title="All 2 branches covered.">        final long lastModified = file.exists() ? file.lastModified() : 0;</span>
+        try {
+<span class="fc" id="L149">            FileUtils.touch(file);</span>
+<span class="fc" id="L150">            file = new File(file.getParent(), file.getName());</span>
+<span class="fc bfc" id="L151" title="All 2 branches covered.">            while (lastModified == file.lastModified()) {</span>
+<span class="fc" id="L152">                sleepQuietly(pauseTime);</span>
+<span class="fc" id="L153">                FileUtils.touch(file);</span>
+<span class="fc" id="L154">                file = new File(file.getParent(), file.getName());</span>
+            }
+<span class="nc" id="L156">        } catch (final Exception e) {</span>
+<span class="nc" id="L157">            fail(&quot;Touching &quot; + file + &quot;: &quot; + e);</span>
+<span class="fc" id="L158">        }</span>
+<span class="fc" id="L159">        sleepQuietly(pauseTime);</span>
+<span class="fc" id="L160">        return file;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>commons-io (Apr 20, 2019 6:11:46 PM)</div></body></html>

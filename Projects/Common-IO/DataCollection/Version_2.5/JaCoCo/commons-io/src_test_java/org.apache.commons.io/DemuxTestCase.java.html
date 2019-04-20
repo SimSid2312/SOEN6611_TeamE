@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>DemuxTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-io (Apr 20, 2019 6:11:46 PM)</a> &gt; <a href="../../index.html" class="el_group">commons-io</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io</a> &gt; <span class="el_source">DemuxTestCase.java</span></div><h1>DemuxTestCase.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Random;
+
+import org.apache.commons.io.input.DemuxInputStream;
+import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.apache.commons.io.output.DemuxOutputStream;
+import org.apache.commons.io.testtools.TestUtils;
+import org.junit.Test;
+
+/**
+ * Basic unit tests for the multiplexing streams.
+ */
+<span class="fc" id="L37">public class DemuxTestCase {</span>
+    private static final String T1 = &quot;Thread1&quot;;
+    private static final String T2 = &quot;Thread2&quot;;
+    private static final String T3 = &quot;Thread3&quot;;
+    private static final String T4 = &quot;Thread4&quot;;
+
+    private static final String DATA1 = &quot;Data for thread1&quot;;
+    private static final String DATA2 = &quot;Data for thread2&quot;;
+    private static final String DATA3 = &quot;Data for thread3&quot;;
+    private static final String DATA4 = &quot;Data for thread4&quot;;
+
+<span class="fc" id="L48">    private static final Random c_random = new Random();</span>
+<span class="fc" id="L49">    private final HashMap&lt;String, ByteArrayOutputStream&gt; m_outputMap = new HashMap&lt;String, ByteArrayOutputStream&gt;();</span>
+<span class="fc" id="L50">    private final HashMap&lt;String, Thread&gt; m_threadMap = new HashMap&lt;String, Thread&gt;();</span>
+
+    @SuppressWarnings(&quot;deprecation&quot;) // unavoidable until Java 7
+    private String getOutput(final String threadName) {
+<span class="fc" id="L54">        final ByteArrayOutputStream output =</span>
+<span class="fc" id="L55">                m_outputMap.get(threadName);</span>
+<span class="fc" id="L56">        assertNotNull(&quot;getOutput()&quot;, output);</span>
+
+<span class="fc" id="L58">        return output.toString(Charsets.UTF_8);</span>
+    }
+
+    private String getInput(final String threadName) {
+<span class="fc" id="L62">        final ReaderThread thread = (ReaderThread) m_threadMap.get(threadName);</span>
+<span class="fc" id="L63">        assertNotNull(&quot;getInput()&quot;, thread);</span>
+
+<span class="fc" id="L65">        return thread.getData();</span>
+    }
+
+    private void doStart()
+            throws Exception {
+<span class="fc bfc" id="L70" title="All 2 branches covered.">        for (String name : m_threadMap.keySet()) {</span>
+<span class="fc" id="L71">            final Thread thread = m_threadMap.get(name);</span>
+<span class="fc" id="L72">            thread.start();</span>
+<span class="fc" id="L73">        }</span>
+<span class="fc" id="L74">    }</span>
+
+    private void doJoin()
+            throws Exception {
+<span class="fc bfc" id="L78" title="All 2 branches covered.">        for (String name : m_threadMap.keySet()) {</span>
+<span class="fc" id="L79">            final Thread thread = m_threadMap.get(name);</span>
+<span class="fc" id="L80">            thread.join();</span>
+<span class="fc" id="L81">        }</span>
+<span class="fc" id="L82">    }</span>
+
+    private void startWriter(final String name,
+                             final String data,
+                             final DemuxOutputStream demux)
+            throws Exception {
+<span class="fc" id="L88">        final ByteArrayOutputStream output = new ByteArrayOutputStream();</span>
+<span class="fc" id="L89">        m_outputMap.put(name, output);</span>
+<span class="fc" id="L90">        final WriterThread thread =</span>
+                new WriterThread(name, data, output, demux);
+<span class="fc" id="L92">        m_threadMap.put(name, thread);</span>
+<span class="fc" id="L93">    }</span>
+
+    private void startReader(final String name,
+                             final String data,
+                             final DemuxInputStream demux)
+            throws Exception {
+<span class="fc" id="L99">        final ByteArrayInputStream input = new ByteArrayInputStream(data.getBytes());</span>
+<span class="fc" id="L100">        final ReaderThread thread = new ReaderThread(name, input, demux);</span>
+<span class="fc" id="L101">        m_threadMap.put(name, thread);</span>
+<span class="fc" id="L102">    }</span>
+
+    @Test
+    public void testOutputStream()
+            throws Exception {
+<span class="fc" id="L107">        final DemuxOutputStream output = new DemuxOutputStream();</span>
+<span class="fc" id="L108">        startWriter(T1, DATA1, output);</span>
+<span class="fc" id="L109">        startWriter(T2, DATA2, output);</span>
+<span class="fc" id="L110">        startWriter(T3, DATA3, output);</span>
+<span class="fc" id="L111">        startWriter(T4, DATA4, output);</span>
+
+<span class="fc" id="L113">        doStart();</span>
+<span class="fc" id="L114">        doJoin();</span>
+
+<span class="fc" id="L116">        assertEquals(&quot;Data1&quot;, DATA1, getOutput(T1));</span>
+<span class="fc" id="L117">        assertEquals(&quot;Data2&quot;, DATA2, getOutput(T2));</span>
+<span class="fc" id="L118">        assertEquals(&quot;Data3&quot;, DATA3, getOutput(T3));</span>
+<span class="fc" id="L119">        assertEquals(&quot;Data4&quot;, DATA4, getOutput(T4));</span>
+<span class="fc" id="L120">    }</span>
+
+    @Test
+    public void testInputStream()
+            throws Exception {
+<span class="fc" id="L125">        final DemuxInputStream input = new DemuxInputStream();</span>
+<span class="fc" id="L126">        startReader(T1, DATA1, input);</span>
+<span class="fc" id="L127">        startReader(T2, DATA2, input);</span>
+<span class="fc" id="L128">        startReader(T3, DATA3, input);</span>
+<span class="fc" id="L129">        startReader(T4, DATA4, input);</span>
+
+<span class="fc" id="L131">        doStart();</span>
+<span class="fc" id="L132">        doJoin();</span>
+
+<span class="fc" id="L134">        assertEquals(&quot;Data1&quot;, DATA1, getInput(T1));</span>
+<span class="fc" id="L135">        assertEquals(&quot;Data2&quot;, DATA2, getInput(T2));</span>
+<span class="fc" id="L136">        assertEquals(&quot;Data3&quot;, DATA3, getInput(T3));</span>
+<span class="fc" id="L137">        assertEquals(&quot;Data4&quot;, DATA4, getInput(T4));</span>
+<span class="fc" id="L138">    }</span>
+
+    private static class ReaderThread
+            extends Thread {
+<span class="fc" id="L142">        private final StringBuffer m_buffer = new StringBuffer();</span>
+        private final InputStream m_input;
+        private final DemuxInputStream m_demux;
+
+        ReaderThread(final String name,
+                     final InputStream input,
+                     final DemuxInputStream demux) {
+<span class="fc" id="L149">            super(name);</span>
+<span class="fc" id="L150">            m_input = input;</span>
+<span class="fc" id="L151">            m_demux = demux;</span>
+<span class="fc" id="L152">        }</span>
+
+        public String getData() {
+<span class="fc" id="L155">            return m_buffer.toString();</span>
+        }
+
+        @Override
+        public void run() {
+<span class="fc" id="L160">            m_demux.bindStream(m_input);</span>
+
+            try {
+<span class="fc" id="L163">                int ch = m_demux.read();</span>
+<span class="fc bfc" id="L164" title="All 2 branches covered.">                while (-1 != ch) {</span>
+                    //System.out.println( &quot;Reading: &quot; + (char)ch );
+<span class="fc" id="L166">                    m_buffer.append((char) ch);</span>
+
+<span class="fc" id="L168">                    final int sleepTime = Math.abs(c_random.nextInt() % 10);</span>
+<span class="fc" id="L169">                    TestUtils.sleep(sleepTime);</span>
+<span class="fc" id="L170">                    ch = m_demux.read();</span>
+<span class="fc" id="L171">                }</span>
+<span class="nc" id="L172">            } catch (final Exception e) {</span>
+<span class="nc" id="L173">                e.printStackTrace();</span>
+<span class="fc" id="L174">            }</span>
+<span class="fc" id="L175">        }</span>
+    }
+
+    private static class WriterThread
+            extends Thread {
+        private final byte[] m_data;
+        private final OutputStream m_output;
+        private final DemuxOutputStream m_demux;
+
+        WriterThread(final String name,
+                     final String data,
+                     final OutputStream output,
+                     final DemuxOutputStream demux) {
+<span class="fc" id="L188">            super(name);</span>
+<span class="fc" id="L189">            m_output = output;</span>
+<span class="fc" id="L190">            m_demux = demux;</span>
+<span class="fc" id="L191">            m_data = data.getBytes();</span>
+<span class="fc" id="L192">        }</span>
+
+        @Override
+        public void run() {
+<span class="fc" id="L196">            m_demux.bindStream(m_output);</span>
+<span class="fc bfc" id="L197" title="All 2 branches covered.">            for (final byte element : m_data) {</span>
+                try {
+                    //System.out.println( &quot;Writing: &quot; + (char)m_data[ i ] );
+<span class="fc" id="L200">                    m_demux.write(element);</span>
+<span class="fc" id="L201">                    final int sleepTime = Math.abs(c_random.nextInt() % 10);</span>
+<span class="fc" id="L202">                    TestUtils.sleep(sleepTime);</span>
+<span class="nc" id="L203">                } catch (final Exception e) {</span>
+<span class="nc" id="L204">                    e.printStackTrace();</span>
+<span class="fc" id="L205">                }</span>
+            }
+<span class="fc" id="L207">        }</span>
+    }
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>commons-io (Apr 20, 2019 6:11:46 PM)</div></body></html>

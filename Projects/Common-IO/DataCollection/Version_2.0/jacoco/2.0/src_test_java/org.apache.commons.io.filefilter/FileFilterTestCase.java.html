@@ -1,0 +1,1244 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileFilterTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.0 (Apr 20, 2019 6:00:46 PM)</a> &gt; <a href="../../index.html" class="el_group">2.0</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.filefilter</a> &gt; <span class="el_source">FileFilterTestCase.java</span></div><h1>FileFilterTestCase.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.filefilter;
+
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FilenameFilter;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOCase;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.testtools.FileBasedTestCase;
+
+/**
+ * Used to test FileFilterUtils.
+ */
+public class FileFilterTestCase extends FileBasedTestCase {
+
+    /**
+     * The subversion directory name.
+     */
+    static final String SVN_DIR_NAME = &quot;.svn&quot;;
+    
+<span class="pc bpc" id="L46" title="1 of 2 branches missed.">    private static final boolean WINDOWS = (File.separatorChar == '\\');</span>
+
+    public FileFilterTestCase(String name) {
+<span class="fc" id="L49">        super(name);</span>
+<span class="fc" id="L50">    }</span>
+
+    @Override
+    public void setUp() {
+<span class="fc" id="L54">        getTestDirectory().mkdirs();</span>
+<span class="fc" id="L55">    }</span>
+
+    @Override
+    public void tearDown() throws Exception {
+<span class="fc" id="L59">        FileUtils.deleteDirectory(getTestDirectory());</span>
+<span class="fc" id="L60">    }</span>
+
+    public void assertFiltering(IOFileFilter filter, File file, boolean expected) throws Exception {
+        // Note. This only tests the (File, String) version if the parent of
+        //       the File passed in is not null
+<span class="fc" id="L65">        assertEquals(</span>
+<span class="fc" id="L66">            &quot;Filter(File) &quot; + filter.getClass().getName() + &quot; not &quot; + expected + &quot; for &quot; + file,</span>
+<span class="fc" id="L67">            expected, filter.accept(file));</span>
+
+<span class="fc bfc" id="L69" title="All 4 branches covered.">        if (file != null &amp;&amp; file.getParentFile() != null) {</span>
+<span class="fc" id="L70">            assertEquals(</span>
+<span class="fc" id="L71">                &quot;Filter(File, String) &quot; + filter.getClass().getName() + &quot; not &quot; + expected + &quot; for &quot; + file,</span>
+<span class="fc" id="L72">                expected, filter.accept(file.getParentFile(), file.getName()));</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">        } else if (file == null) {</span>
+<span class="fc" id="L74">            assertEquals(</span>
+<span class="fc" id="L75">                &quot;Filter(File, String) &quot; + filter.getClass().getName() + &quot; not &quot; + expected + &quot; for null&quot;,</span>
+<span class="fc" id="L76">                expected, filter.accept(file));</span>
+        }
+<span class="fc" id="L78">    }</span>
+
+    public void testSuffix() throws Exception {
+<span class="fc" id="L81">        IOFileFilter filter = new SuffixFileFilter(new String[] { &quot;tes&quot;, &quot;est&quot; });</span>
+<span class="fc" id="L82">        File testFile = new File( &quot;test&quot; );</span>
+<span class="fc" id="L83">        File fredFile = new File( &quot;fred&quot; );</span>
+<span class="fc" id="L84">        assertFiltering(filter, new File(&quot;fred.tes&quot;), true);</span>
+<span class="fc" id="L85">        assertFiltering(filter, new File(&quot;fred.est&quot;), true);</span>
+<span class="fc" id="L86">        assertFiltering(filter, new File(&quot;fred.EST&quot;), false); //case-sensitive</span>
+<span class="fc" id="L87">        assertFiltering(filter, new File(&quot;fred.exe&quot;), false);</span>
+
+<span class="fc" id="L89">        filter = FileFilterUtils.or( </span>
+<span class="fc" id="L90">                    FileFilterUtils.suffixFileFilter( &quot;tes&quot; ),</span>
+<span class="fc" id="L91">                    FileFilterUtils.suffixFileFilter( &quot;est&quot; ) );</span>
+<span class="fc" id="L92">        assertFiltering(filter, new File(&quot;fred&quot;), false);</span>
+<span class="fc" id="L93">        assertFiltering(filter, new File(&quot;.tes&quot;), true);</span>
+<span class="fc" id="L94">        assertFiltering(filter, new File(&quot;fred.test&quot;), true);</span>
+
+<span class="fc" id="L96">        filter = new SuffixFileFilter(&quot;est&quot;);</span>
+<span class="fc" id="L97">        assertFiltering(filter, new File(&quot;test&quot;), true);</span>
+<span class="fc" id="L98">        assertFiltering(filter, new File(&quot;fred&quot;), false);</span>
+
+<span class="fc" id="L100">        assertTrue( filter.accept( testFile.getParentFile(), testFile.getName() ) );</span>
+<span class="pc bpc" id="L101" title="1 of 2 branches missed.">        assertTrue( !filter.accept( fredFile.getParentFile(), fredFile.getName() ) );</span>
+
+<span class="fc" id="L103">        List&lt;String&gt; prefixes = Arrays.asList( new String[] { &quot;ood&quot;, &quot;red&quot; } );</span>
+<span class="fc" id="L104">        IOFileFilter listFilter = new SuffixFileFilter( prefixes );</span>
+
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">        assertTrue( !listFilter.accept( testFile.getParentFile(), testFile.getName() ) );</span>
+<span class="fc" id="L107">        assertTrue( listFilter.accept( fredFile.getParentFile(), fredFile.getName() ) );</span>
+
+        try {
+<span class="nc" id="L110">            new SuffixFileFilter((String) null);</span>
+<span class="nc" id="L111">            fail();</span>
+<span class="fc" id="L112">        } catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L113">        }</span>
+
+        try {
+<span class="nc" id="L116">            new SuffixFileFilter((String[]) null);</span>
+<span class="nc" id="L117">            fail();</span>
+<span class="fc" id="L118">        } catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L119">        }</span>
+
+        try {
+<span class="nc" id="L122">            new SuffixFileFilter((List&lt;String&gt;) null);</span>
+<span class="nc" id="L123">            fail();</span>
+<span class="fc" id="L124">        } catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L125">        }</span>
+<span class="fc" id="L126">}</span>
+
+    public void testSuffixCaseInsensitive() throws Exception {
+
+<span class="fc" id="L130">        IOFileFilter filter = new SuffixFileFilter(new String[] { &quot;tes&quot;, &quot;est&quot; }, IOCase.INSENSITIVE);</span>
+<span class="fc" id="L131">        assertFiltering(filter, new File(&quot;foo.tes&quot;), true);</span>
+<span class="fc" id="L132">        assertFiltering(filter, new File(&quot;foo.est&quot;), true);</span>
+<span class="fc" id="L133">        assertFiltering(filter, new File(&quot;foo.EST&quot;), true); //case-sensitive</span>
+<span class="fc" id="L134">        assertFiltering(filter, new File(&quot;foo.TES&quot;), true); //case-sensitive</span>
+<span class="fc" id="L135">        assertFiltering(filter, new File(&quot;foo.exe&quot;), false);</span>
+
+<span class="fc" id="L137">        filter = new SuffixFileFilter(&quot;est&quot;, IOCase.INSENSITIVE);</span>
+<span class="fc" id="L138">        assertFiltering(filter, new File(&quot;test&quot;), true);</span>
+<span class="fc" id="L139">        assertFiltering(filter, new File(&quot;TEST&quot;), true);</span>
+
+<span class="fc" id="L141">        List&lt;String&gt; suffixes = Arrays.asList( new String[] { &quot;tes&quot;, &quot;est&quot; } );</span>
+<span class="fc" id="L142">        filter = new SuffixFileFilter(suffixes, IOCase.INSENSITIVE);</span>
+<span class="fc" id="L143">        assertFiltering(filter, new File(&quot;bar.tes&quot;), true);</span>
+<span class="fc" id="L144">        assertFiltering(filter, new File(&quot;bar.est&quot;), true);</span>
+<span class="fc" id="L145">        assertFiltering(filter, new File(&quot;bar.EST&quot;), true); //case-sensitive</span>
+<span class="fc" id="L146">        assertFiltering(filter, new File(&quot;bar.TES&quot;), true); //case-sensitive</span>
+<span class="fc" id="L147">        assertFiltering(filter, new File(&quot;bar.exe&quot;), false);</span>
+
+        try {
+<span class="nc" id="L150">            new SuffixFileFilter((String) null, IOCase.INSENSITIVE);</span>
+<span class="nc" id="L151">            fail();</span>
+<span class="fc" id="L152">        } catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L153">        }</span>
+
+        try {
+<span class="nc" id="L156">            new SuffixFileFilter((String[]) null, IOCase.INSENSITIVE);</span>
+<span class="nc" id="L157">            fail();</span>
+<span class="fc" id="L158">        } catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L159">        }</span>
+
+        try {
+<span class="nc" id="L162">            new SuffixFileFilter((List&lt;String&gt;) null, IOCase.INSENSITIVE);</span>
+<span class="nc" id="L163">            fail();</span>
+<span class="fc" id="L164">        } catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L165">        }</span>
+        
+        // FileFilterUtils.suffixFileFilter(String, IOCase) tests
+<span class="fc" id="L168">        filter = FileFilterUtils.suffixFileFilter(&quot;est&quot;, IOCase.INSENSITIVE);</span>
+<span class="fc" id="L169">        assertFiltering(filter, new File(&quot;test&quot;), true);</span>
+<span class="fc" id="L170">        assertFiltering(filter, new File(&quot;TEST&quot;), true);</span>
+        
+        try {
+<span class="nc" id="L173">            FileFilterUtils.suffixFileFilter((String) null, IOCase.INSENSITIVE);</span>
+<span class="nc" id="L174">            fail();</span>
+<span class="fc" id="L175">        } catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L176">        }</span>
+<span class="fc" id="L177">    }</span>
+
+    public void testDirectory() throws Exception {
+        // XXX: This test presumes the current working dir is the base dir of the source checkout.
+<span class="fc" id="L181">        IOFileFilter filter = new DirectoryFileFilter();</span>
+
+<span class="fc" id="L183">        assertFiltering(filter, new File(&quot;src/&quot;), true);</span>
+<span class="fc" id="L184">        assertFiltering(filter, new File(&quot;src/main/java/&quot;), true);</span>
+
+<span class="fc" id="L186">        assertFiltering(filter, new File(&quot;pom.xml&quot;), false);</span>
+
+<span class="fc" id="L188">        assertFiltering(filter, new File(&quot;imaginary&quot;), false);</span>
+<span class="fc" id="L189">        assertFiltering(filter, new File(&quot;imaginary/&quot;), false);</span>
+
+<span class="fc" id="L191">        assertFiltering(filter, new File(&quot;LICENSE.txt&quot;), false);</span>
+        
+<span class="fc" id="L193">        assertSame(DirectoryFileFilter.DIRECTORY, DirectoryFileFilter.INSTANCE);</span>
+<span class="fc" id="L194">    }</span>
+
+    public void testFiles() throws Exception {
+        // XXX: This test presumes the current working dir is the base dir of the source checkout.
+<span class="fc" id="L198">        IOFileFilter filter = FileFileFilter.FILE;</span>
+        
+<span class="fc" id="L200">        assertFiltering(filter, new File(&quot;src/&quot;), false);</span>
+<span class="fc" id="L201">        assertFiltering(filter, new File(&quot;src/java/&quot;), false);</span>
+        
+<span class="fc" id="L203">        assertFiltering(filter, new File(&quot;pom.xml&quot;), true);</span>
+        
+<span class="fc" id="L205">        assertFiltering(filter, new File(&quot;imaginary&quot;), false);</span>
+<span class="fc" id="L206">        assertFiltering(filter, new File(&quot;imaginary/&quot;), false);</span>
+        
+<span class="fc" id="L208">        assertFiltering(filter, new File(&quot;LICENSE.txt&quot;), true);</span>
+<span class="fc" id="L209">    }</span>
+
+    public void testPrefix() throws Exception {
+<span class="fc" id="L212">        IOFileFilter filter = new PrefixFileFilter(new String[] { &quot;foo&quot;, &quot;bar&quot; });</span>
+<span class="fc" id="L213">        File testFile = new File( &quot;test&quot; );</span>
+<span class="fc" id="L214">        File fredFile = new File( &quot;fred&quot; );</span>
+
+<span class="fc" id="L216">        assertFiltering(filter, new File(&quot;foo.test&quot;), true);</span>
+<span class="fc" id="L217">        assertFiltering(filter, new File(&quot;FOO.test&quot;), false);  //case-sensitive</span>
+<span class="fc" id="L218">        assertFiltering(filter, new File(&quot;foo&quot;), true);</span>
+<span class="fc" id="L219">        assertFiltering(filter, new File(&quot;bar&quot;), true);</span>
+<span class="fc" id="L220">        assertFiltering(filter, new File(&quot;food/&quot;), true);</span>
+
+<span class="fc" id="L222">        filter = FileFilterUtils.prefixFileFilter( &quot;bar&quot; );</span>
+<span class="fc" id="L223">        assertFiltering(filter, new File(&quot;barred\\&quot;), true);</span>
+<span class="fc" id="L224">        assertFiltering(filter, new File(&quot;test&quot;), false);</span>
+<span class="fc" id="L225">        assertFiltering(filter, new File(&quot;fo_o.test&quot;), false);</span>
+<span class="fc" id="L226">        assertFiltering(filter, new File(&quot;abar.exe&quot;), false);</span>
+
+<span class="fc" id="L228">        filter = new PrefixFileFilter(&quot;tes&quot;);</span>
+<span class="fc" id="L229">        assertFiltering(filter, new File(&quot;test&quot;), true);</span>
+<span class="fc" id="L230">        assertFiltering(filter, new File(&quot;fred&quot;), false);</span>
+
+<span class="fc" id="L232">        assertTrue( filter.accept( testFile.getParentFile(), testFile.getName() ) );</span>
+<span class="pc bpc" id="L233" title="1 of 2 branches missed.">        assertTrue( !filter.accept( fredFile.getParentFile(), fredFile.getName() ) );</span>
+
+<span class="fc" id="L235">        List&lt;String&gt; prefixes = Arrays.asList( new String[] { &quot;foo&quot;, &quot;fre&quot; } );</span>
+<span class="fc" id="L236">        IOFileFilter listFilter = new PrefixFileFilter( prefixes );</span>
+
+<span class="pc bpc" id="L238" title="1 of 2 branches missed.">        assertTrue( !listFilter.accept( testFile.getParentFile(), testFile.getName() ) );</span>
+<span class="fc" id="L239">        assertTrue( listFilter.accept( fredFile.getParentFile(), fredFile.getName() ) );</span>
+        
+        
+        try {
+<span class="nc" id="L243">            new PrefixFileFilter((String) null);</span>
+<span class="nc" id="L244">            fail();</span>
+<span class="fc" id="L245">        } catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L246">        }</span>
+
+        try {
+<span class="nc" id="L249">            new PrefixFileFilter((String[]) null);</span>
+<span class="nc" id="L250">            fail();</span>
+<span class="fc" id="L251">        } catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L252">        }</span>
+
+        try {
+<span class="nc" id="L255">            new PrefixFileFilter((List&lt;String&gt;) null);</span>
+<span class="nc" id="L256">            fail();</span>
+<span class="fc" id="L257">        } catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L258">        }</span>
+<span class="fc" id="L259">    }</span>
+
+    public void testPrefixCaseInsensitive() throws Exception {
+
+<span class="fc" id="L263">        IOFileFilter filter = new PrefixFileFilter(new String[] { &quot;foo&quot;, &quot;bar&quot; }, IOCase.INSENSITIVE);</span>
+<span class="fc" id="L264">        assertFiltering(filter, new File(&quot;foo.test1&quot;), true);</span>
+<span class="fc" id="L265">        assertFiltering(filter, new File(&quot;bar.test1&quot;), true);</span>
+<span class="fc" id="L266">        assertFiltering(filter, new File(&quot;FOO.test1&quot;), true);  //case-sensitive</span>
+<span class="fc" id="L267">        assertFiltering(filter, new File(&quot;BAR.test1&quot;), true);  //case-sensitive</span>
+
+<span class="fc" id="L269">        filter = new PrefixFileFilter(&quot;bar&quot;, IOCase.INSENSITIVE);</span>
+<span class="fc" id="L270">        assertFiltering(filter, new File(&quot;foo.test2&quot;), false);</span>
+<span class="fc" id="L271">        assertFiltering(filter, new File(&quot;bar.test2&quot;), true);</span>
+<span class="fc" id="L272">        assertFiltering(filter, new File(&quot;FOO.test2&quot;), false); //case-sensitive</span>
+<span class="fc" id="L273">        assertFiltering(filter, new File(&quot;BAR.test2&quot;), true);  //case-sensitive</span>
+
+<span class="fc" id="L275">        List&lt;String&gt; prefixes = Arrays.asList( new String[] { &quot;foo&quot;, &quot;bar&quot; } );</span>
+<span class="fc" id="L276">        filter = new PrefixFileFilter(prefixes, IOCase.INSENSITIVE);</span>
+<span class="fc" id="L277">        assertFiltering(filter, new File(&quot;foo.test3&quot;), true);</span>
+<span class="fc" id="L278">        assertFiltering(filter, new File(&quot;bar.test3&quot;), true);</span>
+<span class="fc" id="L279">        assertFiltering(filter, new File(&quot;FOO.test3&quot;), true);  //case-sensitive</span>
+<span class="fc" id="L280">        assertFiltering(filter, new File(&quot;BAR.test3&quot;), true);  //case-sensitive</span>
+
+        try {
+<span class="nc" id="L283">            new PrefixFileFilter((String) null, IOCase.INSENSITIVE);</span>
+<span class="nc" id="L284">            fail();</span>
+<span class="fc" id="L285">        } catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L286">        }</span>
+
+        try {
+<span class="nc" id="L289">            new PrefixFileFilter((String[]) null, IOCase.INSENSITIVE);</span>
+<span class="nc" id="L290">            fail();</span>
+<span class="fc" id="L291">        } catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L292">        }</span>
+
+        try {
+<span class="nc" id="L295">            new PrefixFileFilter((List&lt;String&gt;) null, IOCase.INSENSITIVE);</span>
+<span class="nc" id="L296">            fail();</span>
+<span class="fc" id="L297">        } catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L298">        }</span>
+        
+        // FileFilterUtils.prefixFileFilter(String, IOCase) tests
+<span class="fc" id="L301">        filter = FileFilterUtils.prefixFileFilter(&quot;bar&quot;, IOCase.INSENSITIVE);</span>
+<span class="fc" id="L302">        assertFiltering(filter, new File(&quot;foo.test2&quot;), false);</span>
+<span class="fc" id="L303">        assertFiltering(filter, new File(&quot;bar.test2&quot;), true);</span>
+<span class="fc" id="L304">        assertFiltering(filter, new File(&quot;FOO.test2&quot;), false); //case-sensitive</span>
+<span class="fc" id="L305">        assertFiltering(filter, new File(&quot;BAR.test2&quot;), true);  //case-sensitive</span>
+        
+        try {
+<span class="nc" id="L308">            FileFilterUtils.prefixFileFilter((String) null, IOCase.INSENSITIVE);</span>
+<span class="nc" id="L309">            fail();</span>
+<span class="fc" id="L310">        } catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L311">        }</span>
+<span class="fc" id="L312">    }</span>
+
+    public void testNameFilter() throws Exception {
+<span class="fc" id="L315">        IOFileFilter filter = new NameFileFilter(new String[] { &quot;foo&quot;, &quot;bar&quot; });</span>
+<span class="fc" id="L316">        assertFiltering(filter, new File(&quot;foo&quot;), true);</span>
+<span class="fc" id="L317">        assertFiltering(filter, new File(&quot;bar&quot;), true);</span>
+<span class="fc" id="L318">        assertFiltering(filter, new File(&quot;fred&quot;), false);</span>
+        
+<span class="fc" id="L320">        filter = new NameFileFilter(new String[] { &quot;foo&quot;, &quot;bar&quot; }, IOCase.SENSITIVE);</span>
+<span class="fc" id="L321">        assertFiltering(filter, new File(&quot;foo&quot;), true);</span>
+<span class="fc" id="L322">        assertFiltering(filter, new File(&quot;bar&quot;), true);</span>
+<span class="fc" id="L323">        assertFiltering(filter, new File(&quot;FOO&quot;), false);</span>
+<span class="fc" id="L324">        assertFiltering(filter, new File(&quot;BAR&quot;), false);</span>
+        
+<span class="fc" id="L326">        filter = new NameFileFilter(new String[] { &quot;foo&quot;, &quot;bar&quot; }, IOCase.INSENSITIVE);</span>
+<span class="fc" id="L327">        assertFiltering(filter, new File(&quot;foo&quot;), true);</span>
+<span class="fc" id="L328">        assertFiltering(filter, new File(&quot;bar&quot;), true);</span>
+<span class="fc" id="L329">        assertFiltering(filter, new File(&quot;FOO&quot;), true);</span>
+<span class="fc" id="L330">        assertFiltering(filter, new File(&quot;BAR&quot;), true);</span>
+        
+<span class="fc" id="L332">        filter = new NameFileFilter(new String[] { &quot;foo&quot;, &quot;bar&quot; }, IOCase.SYSTEM);</span>
+<span class="fc" id="L333">        assertFiltering(filter, new File(&quot;foo&quot;), true);</span>
+<span class="fc" id="L334">        assertFiltering(filter, new File(&quot;bar&quot;), true);</span>
+<span class="fc" id="L335">        assertFiltering(filter, new File(&quot;FOO&quot;), WINDOWS);</span>
+<span class="fc" id="L336">        assertFiltering(filter, new File(&quot;BAR&quot;), WINDOWS);</span>
+        
+<span class="fc" id="L338">        filter = new NameFileFilter(new String[] { &quot;foo&quot;, &quot;bar&quot; }, (IOCase) null);</span>
+<span class="fc" id="L339">        assertFiltering(filter, new File(&quot;foo&quot;), true);</span>
+<span class="fc" id="L340">        assertFiltering(filter, new File(&quot;bar&quot;), true);</span>
+<span class="fc" id="L341">        assertFiltering(filter, new File(&quot;FOO&quot;), false);</span>
+<span class="fc" id="L342">        assertFiltering(filter, new File(&quot;BAR&quot;), false);</span>
+
+        // repeat for a List
+<span class="fc" id="L345">        java.util.ArrayList&lt;String&gt; list = new java.util.ArrayList&lt;String&gt;();</span>
+<span class="fc" id="L346">        list.add(&quot;foo&quot;);</span>
+<span class="fc" id="L347">        list.add(&quot;bar&quot;);</span>
+<span class="fc" id="L348">        filter = new NameFileFilter(list);</span>
+<span class="fc" id="L349">        assertFiltering(filter, new File(&quot;foo&quot;), true);</span>
+<span class="fc" id="L350">        assertFiltering(filter, new File(&quot;bar&quot;), true);</span>
+<span class="fc" id="L351">        assertFiltering(filter, new File(&quot;fred&quot;), false);</span>
+
+<span class="fc" id="L353">        filter = new NameFileFilter(&quot;foo&quot;);</span>
+<span class="fc" id="L354">        assertFiltering(filter, new File(&quot;foo&quot;), true);</span>
+<span class="fc" id="L355">        assertFiltering(filter, new File(&quot;FOO&quot;), false); //case-sensitive</span>
+<span class="fc" id="L356">        assertFiltering(filter, new File(&quot;barfoo&quot;), false);</span>
+<span class="fc" id="L357">        assertFiltering(filter, new File(&quot;foobar&quot;), false);</span>
+<span class="fc" id="L358">        assertFiltering(filter, new File(&quot;fred&quot;), false);</span>
+        
+        // FileFilterUtils.nameFileFilter(String, IOCase) tests
+<span class="fc" id="L361">        filter = FileFilterUtils.nameFileFilter(&quot;foo&quot;, IOCase.INSENSITIVE);</span>
+<span class="fc" id="L362">        assertFiltering(filter, new File(&quot;foo&quot;), true);</span>
+<span class="fc" id="L363">        assertFiltering(filter, new File(&quot;FOO&quot;), true); //case-insensitive</span>
+<span class="fc" id="L364">        assertFiltering(filter, new File(&quot;barfoo&quot;), false);</span>
+<span class="fc" id="L365">        assertFiltering(filter, new File(&quot;foobar&quot;), false);</span>
+<span class="fc" id="L366">        assertFiltering(filter, new File(&quot;fred&quot;), false);</span>
+<span class="fc" id="L367">    }</span>
+
+    public void testNameFilterNullArgument() throws Exception {
+<span class="fc" id="L370">        String test = null;</span>
+        try {
+<span class="nc" id="L372">            new NameFileFilter(test);</span>
+<span class="nc" id="L373">            fail( &quot;constructing a NameFileFilter with a null String argument should fail.&quot;);</span>
+<span class="fc" id="L374">        } catch( IllegalArgumentException iae ) {</span>
+<span class="nc" id="L375">        }</span>
+        
+        try {
+<span class="nc" id="L378">            FileFilterUtils.nameFileFilter(test, IOCase.INSENSITIVE);</span>
+<span class="nc" id="L379">            fail( &quot;constructing a NameFileFilter with a null String argument should fail.&quot;);</span>
+<span class="fc" id="L380">        } catch( IllegalArgumentException iae ) {</span>
+<span class="nc" id="L381">        }</span>
+<span class="fc" id="L382">    }</span>
+
+    public void testNameFilterNullArrayArgument() throws Exception {
+<span class="fc" id="L385">        String[] test = null;</span>
+        try {
+<span class="nc" id="L387">            new NameFileFilter(test);</span>
+<span class="nc" id="L388">            fail( &quot;constructing a NameFileFilter with a null String[] argument should fail.&quot;);</span>
+<span class="fc" id="L389">        } catch( IllegalArgumentException iae ) {</span>
+<span class="nc" id="L390">        }</span>
+<span class="fc" id="L391">    }</span>
+
+    public void testNameFilterNullListArgument() throws Exception {
+<span class="fc" id="L394">        List&lt;String&gt; test = null;</span>
+        try {
+<span class="nc" id="L396">            new NameFileFilter(test);</span>
+<span class="nc" id="L397">            fail( &quot;constructing a NameFileFilter with a null List argument should fail.&quot;);</span>
+<span class="fc" id="L398">        } catch( IllegalArgumentException iae ) {</span>
+<span class="nc" id="L399">        }</span>
+<span class="fc" id="L400">    }</span>
+
+    public void testTrue() throws Exception {
+<span class="fc" id="L403">        IOFileFilter filter = FileFilterUtils.trueFileFilter();</span>
+<span class="fc" id="L404">        assertFiltering(filter, new File(&quot;foo.test&quot;), true);</span>
+<span class="fc" id="L405">        assertFiltering(filter, new File(&quot;foo&quot;), true);</span>
+<span class="fc" id="L406">        assertFiltering(filter, null, true);</span>
+<span class="fc" id="L407">        assertSame(TrueFileFilter.TRUE, TrueFileFilter.INSTANCE);</span>
+<span class="fc" id="L408">    }</span>
+
+    public void testFalse() throws Exception {
+<span class="fc" id="L411">        IOFileFilter filter = FileFilterUtils.falseFileFilter();</span>
+<span class="fc" id="L412">        assertFiltering(filter, new File(&quot;foo.test&quot;), false);</span>
+<span class="fc" id="L413">        assertFiltering(filter, new File(&quot;foo&quot;), false);</span>
+<span class="fc" id="L414">        assertFiltering(filter, null, false);</span>
+<span class="fc" id="L415">        assertSame(FalseFileFilter.FALSE, FalseFileFilter.INSTANCE);</span>
+<span class="fc" id="L416">    }</span>
+
+    public void testNot() throws Exception {
+<span class="fc" id="L419">        IOFileFilter filter = FileFilterUtils.notFileFilter(FileFilterUtils.trueFileFilter());</span>
+<span class="fc" id="L420">        assertFiltering(filter, new File(&quot;foo.test&quot;), false);</span>
+<span class="fc" id="L421">        assertFiltering(filter, new File(&quot;foo&quot;), false);</span>
+<span class="fc" id="L422">        assertFiltering(filter, null, false);</span>
+        try {
+<span class="nc" id="L424">            new NotFileFilter(null);</span>
+<span class="nc" id="L425">            fail();</span>
+<span class="fc" id="L426">        } catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L427">        }</span>
+<span class="fc" id="L428">    }</span>
+
+    public void testAnd() throws Exception {
+<span class="fc" id="L431">        IOFileFilter trueFilter = TrueFileFilter.INSTANCE;</span>
+<span class="fc" id="L432">        IOFileFilter falseFilter = FalseFileFilter.INSTANCE;</span>
+<span class="fc" id="L433">        assertFiltering(new AndFileFilter(trueFilter, trueFilter), new File(&quot;foo.test&quot;), true);</span>
+<span class="fc" id="L434">        assertFiltering(new AndFileFilter(trueFilter, falseFilter), new File(&quot;foo.test&quot;), false);</span>
+<span class="fc" id="L435">        assertFiltering(new AndFileFilter(falseFilter, trueFilter), new File(&quot;foo.test&quot;), false);</span>
+<span class="fc" id="L436">        assertFiltering(new AndFileFilter(falseFilter, falseFilter), new File(&quot;foo.test&quot;), false);</span>
+
+<span class="fc" id="L438">        List&lt;IOFileFilter&gt; filters = new ArrayList&lt;IOFileFilter&gt;();</span>
+<span class="fc" id="L439">        assertFiltering( new AndFileFilter( filters ), new File( &quot;test&quot; ), false );</span>
+<span class="fc" id="L440">        assertFiltering( new AndFileFilter(), new File( &quot;test&quot; ), false );</span>
+        
+        try {
+<span class="nc" id="L443">            new AndFileFilter(falseFilter, null);</span>
+<span class="nc" id="L444">            fail();</span>
+<span class="fc" id="L445">        } catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L446">        }</span>
+
+<span class="fc" id="L448">        AndFileFilter f = new AndFileFilter((List&lt;IOFileFilter&gt;) null);</span>
+<span class="fc" id="L449">        assertEquals(true, f.getFileFilters().isEmpty());</span>
+<span class="fc" id="L450">    }</span>
+
+    public void testOr() throws Exception {
+<span class="fc" id="L453">        IOFileFilter trueFilter = TrueFileFilter.INSTANCE;</span>
+<span class="fc" id="L454">        IOFileFilter falseFilter = FalseFileFilter.INSTANCE;</span>
+<span class="fc" id="L455">        File testFile = new File( &quot;foo.test&quot; );</span>
+<span class="fc" id="L456">        assertFiltering(new OrFileFilter(trueFilter, trueFilter), testFile, true);</span>
+<span class="fc" id="L457">        assertFiltering(new OrFileFilter(trueFilter, falseFilter), testFile, true);</span>
+<span class="fc" id="L458">        assertFiltering(new OrFileFilter(falseFilter, trueFilter), testFile, true);</span>
+<span class="fc" id="L459">        assertFiltering(new OrFileFilter(falseFilter, falseFilter), testFile, false);</span>
+<span class="fc" id="L460">        assertFiltering(new OrFileFilter(), testFile, false);</span>
+        
+<span class="fc" id="L462">        List&lt;IOFileFilter&gt; filters = new ArrayList&lt;IOFileFilter&gt;();</span>
+<span class="fc" id="L463">        filters.add( trueFilter );</span>
+<span class="fc" id="L464">        filters.add( falseFilter );</span>
+
+<span class="fc" id="L466">        OrFileFilter orFilter = new OrFileFilter( filters );</span>
+
+<span class="fc" id="L468">        assertFiltering(orFilter, testFile, true);</span>
+<span class="fc" id="L469">        assertEquals( orFilter.getFileFilters(), filters );</span>
+<span class="fc" id="L470">        orFilter.removeFileFilter( trueFilter );</span>
+<span class="fc" id="L471">        assertFiltering(orFilter, testFile, false);</span>
+<span class="fc" id="L472">        orFilter.setFileFilters( filters );</span>
+<span class="fc" id="L473">        assertFiltering(orFilter, testFile, true);</span>
+        
+<span class="fc" id="L475">        assertTrue( orFilter.accept( testFile.getParentFile(), testFile.getName() ) );</span>
+<span class="fc" id="L476">        orFilter.removeFileFilter( trueFilter );</span>
+<span class="pc bpc" id="L477" title="1 of 2 branches missed.">        assertTrue( !orFilter.accept( testFile.getParentFile(), testFile.getName() ) );</span>
+        
+        try {
+<span class="nc" id="L480">            new OrFileFilter(falseFilter, null);</span>
+<span class="nc" id="L481">            fail();</span>
+<span class="fc" id="L482">        } catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L483">        }</span>
+        
+<span class="fc" id="L485">        OrFileFilter f = new OrFileFilter((List&lt;IOFileFilter&gt;) null);</span>
+<span class="fc" id="L486">        assertEquals(true, f.getFileFilters().isEmpty());</span>
+<span class="fc" id="L487">    }</span>
+    public void testFileFilterUtils_and() throws Exception {
+<span class="fc" id="L489">        IOFileFilter trueFilter = TrueFileFilter.INSTANCE;</span>
+<span class="fc" id="L490">        IOFileFilter falseFilter = FalseFileFilter.INSTANCE;</span>
+<span class="fc" id="L491">        assertFiltering(FileFilterUtils.and(trueFilter, trueFilter, trueFilter), new File(&quot;foo.test&quot;), true);</span>
+<span class="fc" id="L492">        assertFiltering(FileFilterUtils.and(trueFilter, falseFilter, trueFilter), new File(&quot;foo.test&quot;), false);</span>
+<span class="fc" id="L493">        assertFiltering(FileFilterUtils.and(falseFilter, trueFilter), new File(&quot;foo.test&quot;), false);</span>
+<span class="fc" id="L494">        assertFiltering(FileFilterUtils.and(falseFilter, falseFilter), new File(&quot;foo.test&quot;), false);</span>
+<span class="fc" id="L495">    }</span>
+
+    public void testFileFilterUtils_or() throws Exception {
+<span class="fc" id="L498">        IOFileFilter trueFilter = TrueFileFilter.INSTANCE;</span>
+<span class="fc" id="L499">        IOFileFilter falseFilter = FalseFileFilter.INSTANCE;</span>
+<span class="fc" id="L500">        File testFile = new File( &quot;foo.test&quot; );</span>
+<span class="fc" id="L501">        assertFiltering(FileFilterUtils.or(trueFilter, trueFilter), testFile, true);</span>
+<span class="fc" id="L502">        assertFiltering(FileFilterUtils.or(trueFilter, trueFilter, falseFilter), testFile, true);</span>
+<span class="fc" id="L503">        assertFiltering(FileFilterUtils.or(falseFilter, trueFilter), testFile, true);</span>
+<span class="fc" id="L504">        assertFiltering(FileFilterUtils.or(falseFilter, falseFilter, falseFilter), testFile, false);</span>
+<span class="fc" id="L505">    }</span>
+
+    @SuppressWarnings(&quot;deprecation&quot;)
+    public void testDeprecatedWildcard() throws Exception {
+<span class="fc" id="L509">        IOFileFilter filter = new WildcardFilter(&quot;*.txt&quot;);</span>
+<span class="fc" id="L510">        List&lt;String&gt; patternList = Arrays.asList( new String[] { &quot;*.txt&quot;, &quot;*.xml&quot;, &quot;*.gif&quot; } );</span>
+<span class="fc" id="L511">        IOFileFilter listFilter = new WildcardFilter( patternList );</span>
+<span class="fc" id="L512">        File txtFile = new File( &quot;test.txt&quot; );</span>
+<span class="fc" id="L513">        File bmpFile = new File( &quot;test.bmp&quot; );</span>
+<span class="fc" id="L514">        File dir = new File( &quot;src/java&quot; );</span>
+        
+<span class="fc" id="L516">        assertFiltering(filter, new File(&quot;log.txt&quot;), true);</span>
+//        assertFiltering(filter, new File(&quot;log.txt.bak&quot;), false);
+
+<span class="fc" id="L519">        filter = new WildcardFilter(&quot;log?.txt&quot;);</span>
+<span class="fc" id="L520">        assertFiltering(filter, new File(&quot;log1.txt&quot;), true);</span>
+<span class="fc" id="L521">        assertFiltering(filter, new File(&quot;log12.txt&quot;), false);</span>
+
+<span class="fc" id="L523">        filter = new WildcardFilter(&quot;open??.????04&quot;);</span>
+<span class="fc" id="L524">        assertFiltering(filter, new File(&quot;openAB.102504&quot;), true);</span>
+<span class="fc" id="L525">        assertFiltering(filter, new File(&quot;openA.102504&quot;), false);</span>
+<span class="fc" id="L526">        assertFiltering(filter, new File(&quot;openXY.123103&quot;), false);</span>
+//        assertFiltering(filter, new File(&quot;openAB.102504.old&quot;), false);
+
+<span class="fc" id="L529">        filter = new WildcardFilter(new String[] {&quot;*.java&quot;, &quot;*.class&quot;});</span>
+<span class="fc" id="L530">        assertFiltering(filter, new File(&quot;Test.java&quot;), true);</span>
+<span class="fc" id="L531">        assertFiltering(filter, new File(&quot;Test.class&quot;), true);</span>
+<span class="fc" id="L532">        assertFiltering(filter, new File(&quot;Test.jsp&quot;), false);</span>
+
+<span class="fc" id="L534">        assertFiltering(listFilter, new File(&quot;Test.txt&quot;), true);</span>
+<span class="fc" id="L535">        assertFiltering(listFilter, new File(&quot;Test.xml&quot;), true);</span>
+<span class="fc" id="L536">        assertFiltering(listFilter, new File(&quot;Test.gif&quot;), true);</span>
+<span class="fc" id="L537">        assertFiltering(listFilter, new File(&quot;Test.bmp&quot;), false);</span>
+
+<span class="fc" id="L539">        assertTrue( listFilter.accept( txtFile ) );</span>
+<span class="pc bpc" id="L540" title="1 of 2 branches missed.">        assertTrue( !listFilter.accept( bmpFile ) );</span>
+<span class="pc bpc" id="L541" title="1 of 2 branches missed.">        assertTrue( !listFilter.accept( dir ) );</span>
+
+<span class="fc" id="L543">        assertTrue( listFilter.accept( txtFile.getParentFile(), txtFile.getName() ) );</span>
+<span class="pc bpc" id="L544" title="1 of 2 branches missed.">        assertTrue( !listFilter.accept( bmpFile.getParentFile(), bmpFile.getName() ) );</span>
+<span class="pc bpc" id="L545" title="1 of 2 branches missed.">        assertTrue( !listFilter.accept( dir.getParentFile(), dir.getName() ) );</span>
+
+        try {
+<span class="nc" id="L548">            new WildcardFilter((String) null);</span>
+<span class="nc" id="L549">            fail();</span>
+<span class="fc" id="L550">        } catch (IllegalArgumentException ex) {</span>
+            // expected
+<span class="nc" id="L552">        }</span>
+
+        try {
+<span class="nc" id="L555">            new WildcardFilter((String[]) null);</span>
+<span class="nc" id="L556">            fail();</span>
+<span class="fc" id="L557">        } catch (IllegalArgumentException ex) {</span>
+            // expected
+<span class="nc" id="L559">        }</span>
+
+        try {
+<span class="nc" id="L562">            new WildcardFilter((List&lt;String&gt;) null);</span>
+<span class="nc" id="L563">            fail();</span>
+<span class="fc" id="L564">        } catch (IllegalArgumentException ex) {</span>
+            // expected
+<span class="nc" id="L566">        }</span>
+<span class="fc" id="L567">    }</span>
+
+    public void testWildcard() throws Exception {
+<span class="fc" id="L570">        IOFileFilter filter = new WildcardFileFilter(&quot;*.txt&quot;);</span>
+<span class="fc" id="L571">        assertFiltering(filter, new File(&quot;log.txt&quot;), true);</span>
+<span class="fc" id="L572">        assertFiltering(filter, new File(&quot;log.TXT&quot;), false);</span>
+        
+<span class="fc" id="L574">        filter = new WildcardFileFilter(&quot;*.txt&quot;, IOCase.SENSITIVE);</span>
+<span class="fc" id="L575">        assertFiltering(filter, new File(&quot;log.txt&quot;), true);</span>
+<span class="fc" id="L576">        assertFiltering(filter, new File(&quot;log.TXT&quot;), false);</span>
+        
+<span class="fc" id="L578">        filter = new WildcardFileFilter(&quot;*.txt&quot;, IOCase.INSENSITIVE);</span>
+<span class="fc" id="L579">        assertFiltering(filter, new File(&quot;log.txt&quot;), true);</span>
+<span class="fc" id="L580">        assertFiltering(filter, new File(&quot;log.TXT&quot;), true);</span>
+        
+<span class="fc" id="L582">        filter = new WildcardFileFilter(&quot;*.txt&quot;, IOCase.SYSTEM);</span>
+<span class="fc" id="L583">        assertFiltering(filter, new File(&quot;log.txt&quot;), true);</span>
+<span class="fc" id="L584">        assertFiltering(filter, new File(&quot;log.TXT&quot;), WINDOWS);</span>
+        
+<span class="fc" id="L586">        filter = new WildcardFileFilter(&quot;*.txt&quot;, (IOCase) null);</span>
+<span class="fc" id="L587">        assertFiltering(filter, new File(&quot;log.txt&quot;), true);</span>
+<span class="fc" id="L588">        assertFiltering(filter, new File(&quot;log.TXT&quot;), false);</span>
+        
+<span class="fc" id="L590">        filter = new WildcardFileFilter(new String[] {&quot;*.java&quot;, &quot;*.class&quot;});</span>
+<span class="fc" id="L591">        assertFiltering(filter, new File(&quot;Test.java&quot;), true);</span>
+<span class="fc" id="L592">        assertFiltering(filter, new File(&quot;Test.class&quot;), true);</span>
+<span class="fc" id="L593">        assertFiltering(filter, new File(&quot;Test.jsp&quot;), false);</span>
+        
+<span class="fc" id="L595">        filter = new WildcardFileFilter(new String[] {&quot;*.java&quot;, &quot;*.class&quot;}, IOCase.SENSITIVE);</span>
+<span class="fc" id="L596">        assertFiltering(filter, new File(&quot;Test.java&quot;), true);</span>
+<span class="fc" id="L597">        assertFiltering(filter, new File(&quot;Test.JAVA&quot;), false);</span>
+        
+<span class="fc" id="L599">        filter = new WildcardFileFilter(new String[] {&quot;*.java&quot;, &quot;*.class&quot;}, IOCase.INSENSITIVE);</span>
+<span class="fc" id="L600">        assertFiltering(filter, new File(&quot;Test.java&quot;), true);</span>
+<span class="fc" id="L601">        assertFiltering(filter, new File(&quot;Test.JAVA&quot;), true);</span>
+        
+<span class="fc" id="L603">        filter = new WildcardFileFilter(new String[] {&quot;*.java&quot;, &quot;*.class&quot;}, IOCase.SYSTEM);</span>
+<span class="fc" id="L604">        assertFiltering(filter, new File(&quot;Test.java&quot;), true);</span>
+<span class="fc" id="L605">        assertFiltering(filter, new File(&quot;Test.JAVA&quot;), WINDOWS);</span>
+        
+<span class="fc" id="L607">        filter = new WildcardFileFilter(new String[] {&quot;*.java&quot;, &quot;*.class&quot;}, (IOCase) null);</span>
+<span class="fc" id="L608">        assertFiltering(filter, new File(&quot;Test.java&quot;), true);</span>
+<span class="fc" id="L609">        assertFiltering(filter, new File(&quot;Test.JAVA&quot;), false);</span>
+        
+<span class="fc" id="L611">        List&lt;String&gt; patternList = Arrays.asList( new String[] { &quot;*.txt&quot;, &quot;*.xml&quot;, &quot;*.gif&quot; } );</span>
+<span class="fc" id="L612">        IOFileFilter listFilter = new WildcardFileFilter( patternList );</span>
+<span class="fc" id="L613">        assertFiltering(listFilter, new File(&quot;Test.txt&quot;), true);</span>
+<span class="fc" id="L614">        assertFiltering(listFilter, new File(&quot;Test.xml&quot;), true);</span>
+<span class="fc" id="L615">        assertFiltering(listFilter, new File(&quot;Test.gif&quot;), true);</span>
+<span class="fc" id="L616">        assertFiltering(listFilter, new File(&quot;Test.bmp&quot;), false);</span>
+        
+<span class="fc" id="L618">        File txtFile = new File( &quot;test.txt&quot; );</span>
+<span class="fc" id="L619">        File bmpFile = new File( &quot;test.bmp&quot; );</span>
+<span class="fc" id="L620">        File dir = new File( &quot;src/java&quot; );</span>
+<span class="fc" id="L621">        assertTrue( listFilter.accept( txtFile ) );</span>
+<span class="pc bpc" id="L622" title="1 of 2 branches missed.">        assertTrue( !listFilter.accept( bmpFile ) );</span>
+<span class="pc bpc" id="L623" title="1 of 2 branches missed.">        assertTrue( !listFilter.accept( dir ) );</span>
+        
+<span class="fc" id="L625">        assertTrue( listFilter.accept( txtFile.getParentFile(), txtFile.getName() ) );</span>
+<span class="pc bpc" id="L626" title="1 of 2 branches missed.">        assertTrue( !listFilter.accept( bmpFile.getParentFile(), bmpFile.getName() ) );</span>
+<span class="pc bpc" id="L627" title="1 of 2 branches missed.">        assertTrue( !listFilter.accept( dir.getParentFile(), dir.getName() ) );</span>
+        
+        try {
+<span class="nc" id="L630">            new WildcardFileFilter((String) null);</span>
+<span class="nc" id="L631">            fail();</span>
+<span class="pc" id="L632">        } catch (IllegalArgumentException ex) {}</span>
+        try {
+<span class="nc" id="L634">            new WildcardFileFilter((String[]) null);</span>
+<span class="nc" id="L635">            fail();</span>
+<span class="pc" id="L636">        } catch (IllegalArgumentException ex) {}</span>
+        try {
+<span class="nc" id="L638">            new WildcardFileFilter((List&lt;String&gt;) null);</span>
+<span class="nc" id="L639">            fail();</span>
+<span class="pc" id="L640">        } catch (IllegalArgumentException ex) {}</span>
+<span class="fc" id="L641">    }</span>
+
+    public void testDelegateFileFilter() throws Exception {
+<span class="fc" id="L644">        OrFileFilter orFilter = new OrFileFilter();</span>
+<span class="fc" id="L645">        File testFile = new File( &quot;test.txt&quot; );</span>
+
+<span class="fc" id="L647">        IOFileFilter filter = new DelegateFileFilter((FileFilter) orFilter);</span>
+<span class="fc" id="L648">        assertFiltering( filter, testFile, false );</span>
+
+<span class="fc" id="L650">        filter = new DelegateFileFilter((FilenameFilter) orFilter);</span>
+<span class="fc" id="L651">        assertFiltering( filter, testFile, false );</span>
+
+        try {
+<span class="nc" id="L654">            new DelegateFileFilter((FileFilter) null);</span>
+<span class="nc" id="L655">            fail();</span>
+<span class="fc" id="L656">        } catch( IllegalArgumentException iae ) {</span>
+<span class="nc" id="L657">        }</span>
+
+        try {
+<span class="nc" id="L660">            new DelegateFileFilter((FilenameFilter) null);</span>
+<span class="nc" id="L661">            fail();</span>
+<span class="fc" id="L662">        } catch( IllegalArgumentException iae ) {</span>
+<span class="nc" id="L663">        }</span>
+
+<span class="fc" id="L665">    }</span>
+
+    public void testMakeCVSAware() throws Exception {
+<span class="fc" id="L668">        IOFileFilter filter1 = FileFilterUtils.makeCVSAware(null);</span>
+<span class="fc" id="L669">        IOFileFilter filter2 = FileFilterUtils.makeCVSAware(FileFilterUtils</span>
+<span class="fc" id="L670">            .nameFileFilter(&quot;test-file1.txt&quot;));</span>
+
+<span class="fc" id="L672">        File file = new File(getTestDirectory(), &quot;CVS&quot;);</span>
+<span class="fc" id="L673">        file.mkdirs();</span>
+<span class="fc" id="L674">        assertFiltering(filter1, file, false);</span>
+<span class="fc" id="L675">        assertFiltering(filter2, file, false);</span>
+<span class="fc" id="L676">        FileUtils.deleteDirectory(file);</span>
+
+<span class="fc" id="L678">        file = new File(getTestDirectory(), &quot;test-file1.txt&quot;);</span>
+<span class="fc" id="L679">        createFile(file, 0);</span>
+<span class="fc" id="L680">        assertFiltering(filter1, file, true);</span>
+<span class="fc" id="L681">        assertFiltering(filter2, file, true);</span>
+
+<span class="fc" id="L683">        file = new File(getTestDirectory(), &quot;test-file2.log&quot;);</span>
+<span class="fc" id="L684">        createFile(file, 0);</span>
+<span class="fc" id="L685">        assertFiltering(filter1, file, true);</span>
+<span class="fc" id="L686">        assertFiltering(filter2, file, false);</span>
+
+<span class="fc" id="L688">        file = new File(getTestDirectory(), &quot;CVS&quot;);</span>
+<span class="fc" id="L689">        createFile(file, 0);</span>
+<span class="fc" id="L690">        assertFiltering(filter1, file, true);</span>
+<span class="fc" id="L691">        assertFiltering(filter2, file, false);</span>
+<span class="fc" id="L692">    }</span>
+         
+    public void testMakeSVNAware() throws Exception {
+<span class="fc" id="L695">        IOFileFilter filter1 = FileFilterUtils.makeSVNAware(null);</span>
+<span class="fc" id="L696">        IOFileFilter filter2 = FileFilterUtils.makeSVNAware(FileFilterUtils</span>
+<span class="fc" id="L697">            .nameFileFilter(&quot;test-file1.txt&quot;));</span>
+
+<span class="fc" id="L699">        File file = new File(getTestDirectory(), SVN_DIR_NAME);</span>
+<span class="fc" id="L700">        file.mkdirs();</span>
+<span class="fc" id="L701">        assertFiltering(filter1, file, false);</span>
+<span class="fc" id="L702">        assertFiltering(filter2, file, false);</span>
+<span class="fc" id="L703">        FileUtils.deleteDirectory(file);</span>
+
+<span class="fc" id="L705">        file = new File(getTestDirectory(), &quot;test-file1.txt&quot;);</span>
+<span class="fc" id="L706">        createFile(file, 0);</span>
+<span class="fc" id="L707">        assertFiltering(filter1, file, true);</span>
+<span class="fc" id="L708">        assertFiltering(filter2, file, true);</span>
+
+<span class="fc" id="L710">        file = new File(getTestDirectory(), &quot;test-file2.log&quot;);</span>
+<span class="fc" id="L711">        createFile(file, 0);</span>
+<span class="fc" id="L712">        assertFiltering(filter1, file, true);</span>
+<span class="fc" id="L713">        assertFiltering(filter2, file, false);</span>
+
+<span class="fc" id="L715">        file = new File(getTestDirectory(), SVN_DIR_NAME);</span>
+<span class="fc" id="L716">        createFile(file, 0);</span>
+<span class="fc" id="L717">        assertFiltering(filter1, file, true);</span>
+<span class="fc" id="L718">        assertFiltering(filter2, file, false);</span>
+<span class="fc" id="L719">    }</span>
+
+    public void testAgeFilter() throws Exception {
+<span class="fc" id="L722">        File oldFile = new File(getTestDirectory(), &quot;old.txt&quot;);</span>
+<span class="fc" id="L723">        File reference = new File(getTestDirectory(), &quot;reference.txt&quot;);</span>
+<span class="fc" id="L724">        File newFile = new File(getTestDirectory(), &quot;new.txt&quot;);</span>
+
+<span class="fc" id="L726">        createFile(oldFile, 0);</span>
+
+        do {
+            try { 
+<span class="fc" id="L730">                Thread.sleep(1000);</span>
+<span class="nc" id="L731">            } catch(InterruptedException ie) {</span>
+                // ignore
+<span class="fc" id="L733">            }</span>
+<span class="fc" id="L734">            createFile(reference, 0);</span>
+<span class="pc bpc" id="L735" title="1 of 2 branches missed.">        } while( oldFile.lastModified() == reference.lastModified() );</span>
+
+<span class="fc" id="L737">        Date date = new Date();</span>
+<span class="fc" id="L738">        long now = date.getTime();</span>
+
+        do {
+            try { 
+<span class="fc" id="L742">                Thread.sleep(1000);</span>
+<span class="nc" id="L743">            } catch(InterruptedException ie) {</span>
+                // ignore
+<span class="fc" id="L745">            }</span>
+<span class="fc" id="L746">            createFile(newFile, 0);</span>
+<span class="pc bpc" id="L747" title="1 of 2 branches missed.">        } while( reference.lastModified() == newFile.lastModified() );</span>
+
+<span class="fc" id="L749">        IOFileFilter filter1 = FileFilterUtils.ageFileFilter(now);</span>
+<span class="fc" id="L750">        IOFileFilter filter2 = FileFilterUtils.ageFileFilter(now, true);</span>
+<span class="fc" id="L751">        IOFileFilter filter3 = FileFilterUtils.ageFileFilter(now, false);</span>
+<span class="fc" id="L752">        IOFileFilter filter4 = FileFilterUtils.ageFileFilter(date);</span>
+<span class="fc" id="L753">        IOFileFilter filter5 = FileFilterUtils.ageFileFilter(date, true);</span>
+<span class="fc" id="L754">        IOFileFilter filter6 = FileFilterUtils.ageFileFilter(date, false);</span>
+<span class="fc" id="L755">        IOFileFilter filter7 = FileFilterUtils.ageFileFilter(reference);</span>
+<span class="fc" id="L756">        IOFileFilter filter8 = FileFilterUtils.ageFileFilter(reference, true);</span>
+<span class="fc" id="L757">        IOFileFilter filter9 = FileFilterUtils.ageFileFilter(reference, false);</span>
+
+<span class="fc" id="L759">        assertFiltering(filter1, oldFile, true);</span>
+<span class="fc" id="L760">        assertFiltering(filter2, oldFile, true);</span>
+<span class="fc" id="L761">        assertFiltering(filter3, oldFile, false);</span>
+<span class="fc" id="L762">        assertFiltering(filter4, oldFile, true);</span>
+<span class="fc" id="L763">        assertFiltering(filter5, oldFile, true);</span>
+<span class="fc" id="L764">        assertFiltering(filter6, oldFile, false);</span>
+<span class="fc" id="L765">        assertFiltering(filter7, oldFile, true);</span>
+<span class="fc" id="L766">        assertFiltering(filter8, oldFile, true);</span>
+<span class="fc" id="L767">        assertFiltering(filter9, oldFile, false);</span>
+<span class="fc" id="L768">        assertFiltering(filter1, newFile, false);</span>
+<span class="fc" id="L769">        assertFiltering(filter2, newFile, false);</span>
+<span class="fc" id="L770">        assertFiltering(filter3, newFile, true);</span>
+<span class="fc" id="L771">        assertFiltering(filter4, newFile, false);</span>
+<span class="fc" id="L772">        assertFiltering(filter5, newFile, false);</span>
+<span class="fc" id="L773">        assertFiltering(filter6, newFile, true);</span>
+<span class="fc" id="L774">        assertFiltering(filter7, newFile, false);</span>
+<span class="fc" id="L775">        assertFiltering(filter8, newFile, false);</span>
+<span class="fc" id="L776">        assertFiltering(filter9, newFile, true);</span>
+<span class="fc" id="L777">    }</span>
+
+    public void testSizeFilter() throws Exception {
+<span class="fc" id="L780">        File smallFile = new File(getTestDirectory(), &quot;small.txt&quot;);</span>
+<span class="fc" id="L781">        createFile(smallFile, 32);</span>
+<span class="fc" id="L782">        File largeFile = new File(getTestDirectory(), &quot;large.txt&quot;);</span>
+<span class="fc" id="L783">        createFile(largeFile, 128);</span>
+<span class="fc" id="L784">        IOFileFilter filter1 = FileFilterUtils.sizeFileFilter(64);</span>
+<span class="fc" id="L785">        IOFileFilter filter2 = FileFilterUtils.sizeFileFilter(64, true);</span>
+<span class="fc" id="L786">        IOFileFilter filter3 = FileFilterUtils.sizeFileFilter(64, false);</span>
+
+<span class="fc" id="L788">        assertFiltering(filter1, smallFile, false);</span>
+<span class="fc" id="L789">        assertFiltering(filter2, smallFile, false);</span>
+<span class="fc" id="L790">        assertFiltering(filter3, smallFile, true);</span>
+<span class="fc" id="L791">        assertFiltering(filter1, largeFile, true);</span>
+<span class="fc" id="L792">        assertFiltering(filter2, largeFile, true);</span>
+<span class="fc" id="L793">        assertFiltering(filter3, largeFile, false);</span>
+
+        // size range tests
+<span class="fc" id="L796">        IOFileFilter filter4 = FileFilterUtils.sizeRangeFileFilter(33, 127);</span>
+<span class="fc" id="L797">        IOFileFilter filter5 = FileFilterUtils.sizeRangeFileFilter(32, 127);</span>
+<span class="fc" id="L798">        IOFileFilter filter6 = FileFilterUtils.sizeRangeFileFilter(33, 128);</span>
+<span class="fc" id="L799">        IOFileFilter filter7 = FileFilterUtils.sizeRangeFileFilter(31, 129);</span>
+<span class="fc" id="L800">        IOFileFilter filter8 = FileFilterUtils.sizeRangeFileFilter(128, 128);</span>
+
+<span class="fc" id="L802">        assertFiltering(filter4, smallFile, false);</span>
+<span class="fc" id="L803">        assertFiltering(filter4, largeFile, false);</span>
+<span class="fc" id="L804">        assertFiltering(filter5, smallFile, true);</span>
+<span class="fc" id="L805">        assertFiltering(filter5, largeFile, false);</span>
+<span class="fc" id="L806">        assertFiltering(filter6, smallFile, false);</span>
+<span class="fc" id="L807">        assertFiltering(filter6, largeFile, true);</span>
+<span class="fc" id="L808">        assertFiltering(filter7, smallFile, true);</span>
+<span class="fc" id="L809">        assertFiltering(filter7, largeFile, true);</span>
+<span class="fc" id="L810">        assertFiltering(filter8, largeFile, true);</span>
+
+        try {
+<span class="nc" id="L813">            FileFilterUtils.sizeFileFilter(-1);</span>
+<span class="nc" id="L814">            fail();</span>
+<span class="fc" id="L815">        } catch (IllegalArgumentException ex) {</span>
+            // expected
+<span class="nc" id="L817">        }</span>
+<span class="fc" id="L818">    }</span>
+
+    public void testHidden() throws Exception {
+<span class="fc" id="L821">        File hiddenDir = new File(SVN_DIR_NAME);</span>
+<span class="pc bpc" id="L822" title="1 of 2 branches missed.">        if (hiddenDir.exists()) {</span>
+<span class="nc" id="L823">            assertFiltering(HiddenFileFilter.HIDDEN,  hiddenDir, hiddenDir.isHidden());</span>
+<span class="nc bnc" id="L824" title="All 2 branches missed.">            assertFiltering(HiddenFileFilter.VISIBLE, hiddenDir, !hiddenDir.isHidden());</span>
+        }
+<span class="fc" id="L826">        assertFiltering(HiddenFileFilter.HIDDEN,  getTestDirectory(), false);</span>
+<span class="fc" id="L827">        assertFiltering(HiddenFileFilter.VISIBLE, getTestDirectory(), true);</span>
+<span class="fc" id="L828">    }</span>
+
+    public void testCanRead() throws Exception {
+<span class="fc" id="L831">        File readOnlyFile = new File(getTestDirectory(), &quot;read-only-file1.txt&quot;);</span>
+<span class="fc" id="L832">        createFile(readOnlyFile, 32);</span>
+<span class="fc" id="L833">        readOnlyFile.setReadOnly();</span>
+<span class="fc" id="L834">        assertFiltering(CanReadFileFilter.CAN_READ,  readOnlyFile, true);</span>
+<span class="fc" id="L835">        assertFiltering(CanReadFileFilter.CANNOT_READ,  readOnlyFile, false);</span>
+<span class="fc" id="L836">        assertFiltering(CanReadFileFilter.READ_ONLY, readOnlyFile, true);</span>
+<span class="fc" id="L837">        readOnlyFile.delete();</span>
+<span class="fc" id="L838">    }</span>
+
+    public void testCanWrite() throws Exception {
+<span class="fc" id="L841">        File readOnlyFile = new File(getTestDirectory(), &quot;read-only-file2.txt&quot;);</span>
+<span class="fc" id="L842">        createFile(readOnlyFile, 32);</span>
+<span class="fc" id="L843">        readOnlyFile.setReadOnly();</span>
+<span class="fc" id="L844">        assertFiltering(CanWriteFileFilter.CAN_WRITE,    getTestDirectory(), true);</span>
+<span class="fc" id="L845">        assertFiltering(CanWriteFileFilter.CANNOT_WRITE, getTestDirectory(), false);</span>
+<span class="fc" id="L846">        assertFiltering(CanWriteFileFilter.CAN_WRITE,    readOnlyFile, false);</span>
+<span class="fc" id="L847">        assertFiltering(CanWriteFileFilter.CANNOT_WRITE, readOnlyFile, true);</span>
+<span class="fc" id="L848">        readOnlyFile.delete();</span>
+<span class="fc" id="L849">    }</span>
+
+    public void testEmpty() throws Exception {
+
+        // Empty Dir        
+<span class="fc" id="L854">        File emptyDir  = new File(getTestDirectory(), &quot;empty-dir&quot;);</span>
+<span class="fc" id="L855">        emptyDir.mkdirs();</span>
+<span class="fc" id="L856">        assertFiltering(EmptyFileFilter.EMPTY, emptyDir, true);</span>
+<span class="fc" id="L857">        assertFiltering(EmptyFileFilter.NOT_EMPTY, emptyDir, false);</span>
+
+        // Empty File
+<span class="fc" id="L860">        File emptyFile = new File(emptyDir, &quot;empty-file.txt&quot;);</span>
+<span class="fc" id="L861">        createFile(emptyFile, 0);</span>
+<span class="fc" id="L862">        assertFiltering(EmptyFileFilter.EMPTY, emptyFile, true);</span>
+<span class="fc" id="L863">        assertFiltering(EmptyFileFilter.NOT_EMPTY, emptyFile, false);</span>
+
+        // Not Empty Dir
+<span class="fc" id="L866">        assertFiltering(EmptyFileFilter.EMPTY, emptyDir, false);</span>
+<span class="fc" id="L867">        assertFiltering(EmptyFileFilter.NOT_EMPTY, emptyDir, true);</span>
+
+        // Not Empty File
+<span class="fc" id="L870">        File notEmptyFile = new File(emptyDir, &quot;not-empty-file.txt&quot;);</span>
+<span class="fc" id="L871">        createFile(notEmptyFile, 32);</span>
+<span class="fc" id="L872">        assertFiltering(EmptyFileFilter.EMPTY, notEmptyFile, false);</span>
+<span class="fc" id="L873">        assertFiltering(EmptyFileFilter.NOT_EMPTY, notEmptyFile, true);</span>
+<span class="fc" id="L874">        FileUtils.forceDelete(emptyDir);</span>
+<span class="fc" id="L875">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testMakeDirectoryOnly() throws Exception {
+<span class="fc" id="L879">        assertSame(DirectoryFileFilter.DIRECTORY, FileFilterUtils.makeDirectoryOnly(null));</span>
+        
+<span class="fc" id="L881">        IOFileFilter filter = FileFilterUtils.makeDirectoryOnly(</span>
+<span class="fc" id="L882">                FileFilterUtils.nameFileFilter(&quot;B&quot;));</span>
+        
+<span class="fc" id="L884">        File fileA = new File(getTestDirectory(), &quot;A&quot;);</span>
+<span class="fc" id="L885">        File fileB = new File(getTestDirectory(), &quot;B&quot;);</span>
+        
+<span class="fc" id="L887">        fileA.mkdirs();</span>
+<span class="fc" id="L888">        fileB.mkdirs();</span>
+        
+<span class="fc" id="L890">        assertFiltering(filter, fileA, false);</span>
+<span class="fc" id="L891">        assertFiltering(filter, fileB, true);</span>
+        
+<span class="fc" id="L893">        FileUtils.deleteDirectory(fileA);</span>
+<span class="fc" id="L894">        FileUtils.deleteDirectory(fileB);</span>
+        
+<span class="fc" id="L896">        createFile(fileA, 32);</span>
+<span class="fc" id="L897">        createFile(fileB, 32);</span>
+        
+<span class="fc" id="L899">        assertFiltering(filter, fileA, false);</span>
+<span class="fc" id="L900">        assertFiltering(filter, fileB, false);</span>
+        
+<span class="fc" id="L902">        fileA.delete();</span>
+<span class="fc" id="L903">        fileB.delete();</span>
+<span class="fc" id="L904">    }</span>
+         
+    //-----------------------------------------------------------------------
+    public void testMakeFileOnly() throws Exception {
+<span class="fc" id="L908">        assertSame(FileFileFilter.FILE, FileFilterUtils.makeFileOnly(null));</span>
+        
+<span class="fc" id="L910">        IOFileFilter filter = FileFilterUtils.makeFileOnly(</span>
+<span class="fc" id="L911">                FileFilterUtils.nameFileFilter(&quot;B&quot;));</span>
+        
+<span class="fc" id="L913">        File fileA = new File(getTestDirectory(), &quot;A&quot;);</span>
+<span class="fc" id="L914">        File fileB = new File(getTestDirectory(), &quot;B&quot;);</span>
+        
+<span class="fc" id="L916">        fileA.mkdirs();</span>
+<span class="fc" id="L917">        fileB.mkdirs();</span>
+        
+<span class="fc" id="L919">        assertFiltering(filter, fileA, false);</span>
+<span class="fc" id="L920">        assertFiltering(filter, fileB, false);</span>
+        
+<span class="fc" id="L922">        FileUtils.deleteDirectory(fileA);</span>
+<span class="fc" id="L923">        FileUtils.deleteDirectory(fileB);</span>
+        
+<span class="fc" id="L925">        createFile(fileA, 32);</span>
+<span class="fc" id="L926">        createFile(fileB, 32);</span>
+        
+<span class="fc" id="L928">        assertFiltering(filter, fileA, false);</span>
+<span class="fc" id="L929">        assertFiltering(filter, fileB, true);</span>
+        
+<span class="fc" id="L931">        fileA.delete();</span>
+<span class="fc" id="L932">        fileB.delete();</span>
+<span class="fc" id="L933">    }</span>
+    
+    //-----------------------------------------------------------------------
+    
+    public void testMagicNumberFileFilterBytes() throws Exception {
+<span class="fc" id="L938">        byte[] classFileMagicNumber = </span>
+            new byte[] {(byte) 0xCA, (byte) 0xFE, (byte) 0xBA, (byte) 0xBE};
+<span class="fc" id="L940">        String xmlFileContent = &quot;&lt;?xml version=\&quot;1.0\&quot; encoding=\&quot;UTF-8\&quot;&gt;\n&quot; +</span>
+            &quot;&lt;element&gt;text&lt;/element&gt;&quot;;
+        
+<span class="fc" id="L943">        File classFileA = new File(getTestDirectory(), &quot;A.class&quot;);</span>
+<span class="fc" id="L944">        File xmlFileB = new File(getTestDirectory(), &quot;B.xml&quot;);</span>
+<span class="fc" id="L945">        File emptyFile = new File(getTestDirectory(), &quot;C.xml&quot;);</span>
+<span class="fc" id="L946">        File dir = new File(getTestDirectory(), &quot;D&quot;);</span>
+<span class="fc" id="L947">        dir.mkdirs();</span>
+        
+<span class="fc" id="L949">        OutputStream classFileAStream = FileUtils.openOutputStream(classFileA);</span>
+<span class="fc" id="L950">        IOUtils.write(classFileMagicNumber, classFileAStream);</span>
+<span class="fc" id="L951">        generateTestData(classFileAStream, 32);</span>
+<span class="fc" id="L952">        classFileAStream.close();</span>
+        
+<span class="fc" id="L954">        FileUtils.write(xmlFileB, xmlFileContent);</span>
+<span class="fc" id="L955">        FileUtils.touch(emptyFile);</span>
+        
+<span class="fc" id="L957">        IOFileFilter filter = new MagicNumberFileFilter(classFileMagicNumber);</span>
+        
+<span class="fc" id="L959">        assertFiltering(filter, classFileA, true);</span>
+<span class="fc" id="L960">        assertFiltering(filter, xmlFileB, false);</span>
+<span class="fc" id="L961">        assertFiltering(filter, emptyFile, false);</span>
+<span class="fc" id="L962">        assertFiltering(filter, dir, false);</span>
+        
+        
+<span class="fc" id="L965">        filter = FileFilterUtils.magicNumberFileFilter(classFileMagicNumber);</span>
+        
+<span class="fc" id="L967">        assertFiltering(filter, classFileA, true);</span>
+<span class="fc" id="L968">        assertFiltering(filter, xmlFileB, false);</span>
+<span class="fc" id="L969">        assertFiltering(filter, emptyFile, false);</span>
+<span class="fc" id="L970">        assertFiltering(filter, dir, false);</span>
+<span class="fc" id="L971">    }</span>
+    
+    public void testMagicNumberFileFilterBytesOffset() throws Exception {
+<span class="fc" id="L974">        byte[] tarMagicNumber = new byte[] {0x75, 0x73, 0x74, 0x61, 0x72};</span>
+<span class="fc" id="L975">        long tarMagicNumberOffset = 257;</span>
+        
+<span class="fc" id="L977">        File tarFileA = new File(getTestDirectory(), &quot;A.tar&quot;);</span>
+<span class="fc" id="L978">        File randomFileB = new File(getTestDirectory(), &quot;B.txt&quot;);</span>
+<span class="fc" id="L979">        File dir = new File(getTestDirectory(), &quot;D&quot;);</span>
+<span class="fc" id="L980">        dir.mkdirs();</span>
+        
+<span class="fc" id="L982">        OutputStream tarFileAStream = FileUtils.openOutputStream(tarFileA);</span>
+<span class="fc" id="L983">        generateTestData(tarFileAStream, tarMagicNumberOffset);</span>
+<span class="fc" id="L984">        IOUtils.write(tarMagicNumber, tarFileAStream);</span>
+<span class="fc" id="L985">        tarFileAStream.close();</span>
+        
+<span class="fc" id="L987">        createFile(randomFileB, 2 * tarMagicNumberOffset);</span>
+        
+<span class="fc" id="L989">        IOFileFilter filter = </span>
+            new MagicNumberFileFilter(tarMagicNumber, tarMagicNumberOffset);
+        
+<span class="fc" id="L992">        assertFiltering(filter, tarFileA, true);</span>
+<span class="fc" id="L993">        assertFiltering(filter, randomFileB, false);</span>
+<span class="fc" id="L994">        assertFiltering(filter, dir, false);</span>
+        
+<span class="fc" id="L996">        filter = FileFilterUtils.magicNumberFileFilter(tarMagicNumber, </span>
+                tarMagicNumberOffset);
+        
+<span class="fc" id="L999">        assertFiltering(filter, tarFileA, true);</span>
+<span class="fc" id="L1000">        assertFiltering(filter, randomFileB, false);</span>
+<span class="fc" id="L1001">        assertFiltering(filter, dir, false);</span>
+<span class="fc" id="L1002">    }</span>
+    
+    public void testMagicNumberFileFilterString() throws Exception {
+<span class="fc" id="L1005">        byte[] classFileMagicNumber = </span>
+            new byte[] {(byte) 0xCA, (byte) 0xFE, (byte) 0xBA, (byte) 0xBE};
+<span class="fc" id="L1007">        String xmlFileContent = &quot;&lt;?xml version=\&quot;1.0\&quot; encoding=\&quot;UTF-8\&quot;&gt;\n&quot; +</span>
+            &quot;&lt;element&gt;text&lt;/element&gt;&quot;;
+<span class="fc" id="L1009">        String xmlMagicNumber = &quot;&lt;?xml version=\&quot;1.0\&quot;&quot;;</span>
+        
+<span class="fc" id="L1011">        File classFileA = new File(getTestDirectory(), &quot;A.class&quot;);</span>
+<span class="fc" id="L1012">        File xmlFileB = new File(getTestDirectory(), &quot;B.xml&quot;);</span>
+<span class="fc" id="L1013">        File dir = new File(getTestDirectory(), &quot;D&quot;);</span>
+<span class="fc" id="L1014">        dir.mkdirs();</span>
+        
+<span class="fc" id="L1016">        OutputStream classFileAStream = FileUtils.openOutputStream(classFileA);</span>
+<span class="fc" id="L1017">        IOUtils.write(classFileMagicNumber, classFileAStream);</span>
+<span class="fc" id="L1018">        generateTestData(classFileAStream, 32);</span>
+<span class="fc" id="L1019">        classFileAStream.close();</span>
+        
+<span class="fc" id="L1021">        FileUtils.write(xmlFileB, xmlFileContent);</span>
+        
+<span class="fc" id="L1023">        IOFileFilter filter = new MagicNumberFileFilter(xmlMagicNumber);</span>
+        
+<span class="fc" id="L1025">        assertFiltering(filter, classFileA, false);</span>
+<span class="fc" id="L1026">        assertFiltering(filter, xmlFileB, true);</span>
+<span class="fc" id="L1027">        assertFiltering(filter, dir, false);</span>
+        
+<span class="fc" id="L1029">        filter = FileFilterUtils.magicNumberFileFilter(xmlMagicNumber);</span>
+        
+<span class="fc" id="L1031">        assertFiltering(filter, classFileA, false);</span>
+<span class="fc" id="L1032">        assertFiltering(filter, xmlFileB, true);</span>
+<span class="fc" id="L1033">        assertFiltering(filter, dir, false);</span>
+<span class="fc" id="L1034">    }</span>
+    
+    public void testMagicNumberFileFilterStringOffset() throws Exception {
+<span class="fc" id="L1037">        String tarMagicNumber = &quot;ustar&quot;;</span>
+<span class="fc" id="L1038">        long tarMagicNumberOffset = 257;</span>
+        
+<span class="fc" id="L1040">        File tarFileA = new File(getTestDirectory(), &quot;A.tar&quot;);</span>
+<span class="fc" id="L1041">        File randomFileB = new File(getTestDirectory(), &quot;B.txt&quot;);</span>
+<span class="fc" id="L1042">        File dir = new File(getTestDirectory(), &quot;D&quot;);</span>
+<span class="fc" id="L1043">        dir.mkdirs();</span>
+        
+<span class="fc" id="L1045">        OutputStream tarFileAStream = FileUtils.openOutputStream(tarFileA);</span>
+<span class="fc" id="L1046">        generateTestData(tarFileAStream, tarMagicNumberOffset);</span>
+<span class="fc" id="L1047">        IOUtils.write(tarMagicNumber, tarFileAStream);</span>
+<span class="fc" id="L1048">        tarFileAStream.close();</span>
+
+<span class="fc" id="L1050">        createFile(randomFileB, 2 * tarMagicNumberOffset);</span>
+        
+<span class="fc" id="L1052">        IOFileFilter filter = </span>
+            new MagicNumberFileFilter(tarMagicNumber, tarMagicNumberOffset);
+        
+<span class="fc" id="L1055">        assertFiltering(filter, tarFileA, true);</span>
+<span class="fc" id="L1056">        assertFiltering(filter, randomFileB, false);</span>
+<span class="fc" id="L1057">        assertFiltering(filter, dir, false);</span>
+        
+<span class="fc" id="L1059">        filter = FileFilterUtils.magicNumberFileFilter(tarMagicNumber, </span>
+                tarMagicNumberOffset);
+        
+<span class="fc" id="L1062">        assertFiltering(filter, tarFileA, true);</span>
+<span class="fc" id="L1063">        assertFiltering(filter, randomFileB, false);</span>
+<span class="fc" id="L1064">        assertFiltering(filter, dir, false);</span>
+<span class="fc" id="L1065">    }</span>
+
+    /**
+     * Test method for {@link FileFilterUtils#filter(IOFileFilter, File...)}
+     * that tests that the method properly filters files from the list.
+     */
+    public void testFilterArray() throws Exception {
+<span class="fc" id="L1072">        File fileA = newFile(&quot;A&quot;);</span>
+<span class="fc" id="L1073">        File fileB = newFile(&quot;B&quot;);</span>
+
+<span class="fc" id="L1075">        IOFileFilter filter = FileFilterUtils.nameFileFilter(&quot;A&quot;);</span>
+
+<span class="fc" id="L1077">        File[] filtered = FileFilterUtils.filter(filter, fileA, fileB);</span>
+
+<span class="fc" id="L1079">        assertEquals(1, filtered.length);</span>
+<span class="fc" id="L1080">        assertEquals(fileA, filtered[0]);</span>
+<span class="fc" id="L1081">    }</span>
+
+    /**
+     * Test method for {@link FileFilterUtils#filter(IOFileFilter, java.lang.Iterable)}
+     * that tests that the method properly filters files from the list.
+     */
+    public void testFilterArray_fromList() throws Exception {
+<span class="fc" id="L1088">        File fileA = newFile(&quot;A&quot;);</span>
+<span class="fc" id="L1089">        File fileB = newFile(&quot;B&quot;);</span>
+<span class="fc" id="L1090">        List&lt;File&gt; fileList = Arrays.asList(fileA, fileB);</span>
+
+<span class="fc" id="L1092">        IOFileFilter filter = FileFilterUtils.nameFileFilter(&quot;A&quot;);</span>
+
+<span class="fc" id="L1094">        File[] filtered = FileFilterUtils.filter(filter, fileList);</span>
+
+<span class="fc" id="L1096">        assertEquals(1, filtered.length);</span>
+<span class="fc" id="L1097">        assertEquals(fileA, filtered[0]);</span>
+<span class="fc" id="L1098">    }</span>
+
+    /**
+     * Test method for {@link FileFilterUtils#filter(IOFileFilter, File...)}
+     * that tests &lt;code&gt;null&lt;/code&gt; parameters and &lt;code&gt;null&lt;/code&gt; elements
+     * in the provided list.
+     */
+    public void testFilterArrayNullParameters() throws Exception {
+<span class="fc" id="L1106">        File fileA = newFile(&quot;A&quot;);</span>
+<span class="fc" id="L1107">        File fileB = newFile(&quot;B&quot;);</span>
+        try {
+<span class="nc" id="L1109">            FileFilterUtils.filter(null, fileA, fileB); </span>
+<span class="nc" id="L1110">            fail();</span>
+<span class="fc" id="L1111">        } catch (IllegalArgumentException iae) {</span>
+            // Test passes, exception thrown for null filter
+<span class="nc" id="L1113">        }</span>
+
+<span class="fc" id="L1115">        IOFileFilter filter = FileFilterUtils.trueFileFilter();</span>
+        try {
+<span class="nc" id="L1117">            FileFilterUtils.filter(filter, fileA, null); </span>
+<span class="nc" id="L1118">            fail();</span>
+<span class="fc" id="L1119">        } catch (IllegalArgumentException iae) {</span>
+            // Test passes, exception thrown for list containing null
+<span class="nc" id="L1121">        }</span>
+
+<span class="fc" id="L1123">        File[] filtered = FileFilterUtils.filter(filter, (File[])null); </span>
+<span class="fc" id="L1124">        assertEquals(0, filtered.length);</span>
+<span class="fc" id="L1125">    }</span>
+
+    /**
+     * Test method for {@link FileFilterUtils#filterList(IOFileFilter, java.lang.Iterable)}
+     * that tests that the method properly filters files from the list.
+     */
+    public void testFilterList() throws Exception {
+<span class="fc" id="L1132">        File fileA = newFile(&quot;A&quot;);</span>
+<span class="fc" id="L1133">        File fileB = newFile(&quot;B&quot;);</span>
+<span class="fc" id="L1134">        List&lt;File&gt; fileList = Arrays.asList(fileA, fileB);</span>
+
+<span class="fc" id="L1136">        IOFileFilter filter = FileFilterUtils.nameFileFilter(&quot;A&quot;);</span>
+
+<span class="fc" id="L1138">        List&lt;File&gt; filteredList = FileFilterUtils.filterList(filter, fileList);</span>
+
+<span class="fc" id="L1140">        assertTrue(filteredList.contains(fileA));</span>
+<span class="fc" id="L1141">        assertFalse(filteredList.contains(fileB));</span>
+<span class="fc" id="L1142">    }</span>
+
+    /**
+     * Test method for {@link FileFilterUtils#filterList(IOFileFilter, File...)}
+     * that tests that the method properly filters files from the list.
+     */
+    public void testFilterList_fromArray() throws Exception {
+<span class="fc" id="L1149">        File fileA = newFile(&quot;A&quot;);</span>
+<span class="fc" id="L1150">        File fileB = newFile(&quot;B&quot;);</span>
+
+<span class="fc" id="L1152">        IOFileFilter filter = FileFilterUtils.nameFileFilter(&quot;A&quot;);</span>
+
+<span class="fc" id="L1154">        List&lt;File&gt; filteredList = FileFilterUtils.filterList(filter, fileA, fileB);</span>
+
+<span class="fc" id="L1156">        assertTrue(filteredList.contains(fileA));</span>
+<span class="fc" id="L1157">        assertFalse(filteredList.contains(fileB));</span>
+<span class="fc" id="L1158">    }</span>
+
+    /**
+     * Test method for {@link FileFilterUtils#filterList(IOFileFilter, java.lang.Iterable)}
+     * that tests &lt;code&gt;null&lt;/code&gt; parameters and &lt;code&gt;null&lt;/code&gt; elements
+     * in the provided list.
+     */
+    public void testFilterListNullParameters() {
+        try {
+<span class="nc" id="L1167">            FileFilterUtils.filterList(null, Collections.&lt;File&gt;emptyList()); </span>
+<span class="nc" id="L1168">            fail();</span>
+<span class="fc" id="L1169">        } catch (IllegalArgumentException iae) {</span>
+            // Test passes, exception thrown for null filter
+<span class="nc" id="L1171">        }</span>
+
+<span class="fc" id="L1173">        IOFileFilter filter = FileFilterUtils.trueFileFilter();</span>
+        try {
+<span class="nc" id="L1175">            FileFilterUtils.filterList(filter, Arrays.&lt;File&gt;asList((File) null)); </span>
+<span class="nc" id="L1176">            fail();</span>
+<span class="fc" id="L1177">        } catch (IllegalArgumentException iae) {</span>
+            // Test passes, exception thrown for list containing null
+<span class="nc" id="L1179">        }</span>
+
+<span class="fc" id="L1181">        List&lt;File&gt; filteredList = FileFilterUtils.filterList(filter, (List&lt;File&gt;)null); </span>
+<span class="fc" id="L1182">        assertEquals(0, filteredList.size());</span>
+<span class="fc" id="L1183">    }</span>
+ 
+    /**
+     * Test method for {@link FileFilterUtils#filterSet(IOFileFilter, java.lang.Iterable)}
+     * that tests that the method properly filters files from the set.
+     */
+    public void testFilterSet() throws Exception {
+<span class="fc" id="L1190">        File fileA = newFile(&quot;A&quot;);</span>
+<span class="fc" id="L1191">        File fileB = newFile(&quot;B&quot;);</span>
+<span class="fc" id="L1192">        Set&lt;File&gt; fileList = new HashSet&lt;File&gt;(Arrays.asList(fileA, fileB));</span>
+
+<span class="fc" id="L1194">        IOFileFilter filter = FileFilterUtils.nameFileFilter(&quot;A&quot;);</span>
+
+<span class="fc" id="L1196">        Set&lt;File&gt; filteredSet = FileFilterUtils.filterSet(filter, fileList);</span>
+
+<span class="fc" id="L1198">        assertTrue(filteredSet.contains(fileA));</span>
+<span class="fc" id="L1199">        assertFalse(filteredSet.contains(fileB));</span>
+<span class="fc" id="L1200">    }</span>
+    
+    /**
+     * Test method for {@link FileFilterUtils#filterSet(IOFileFilter, File...)}
+     * that tests that the method properly filters files from the set.
+     */
+    public void testFilterSet_fromArray() throws Exception {
+<span class="fc" id="L1207">        File fileA = newFile(&quot;A&quot;);</span>
+<span class="fc" id="L1208">        File fileB = newFile(&quot;B&quot;);</span>
+
+<span class="fc" id="L1210">        IOFileFilter filter = FileFilterUtils.nameFileFilter(&quot;A&quot;);</span>
+
+<span class="fc" id="L1212">        Set&lt;File&gt; filteredSet = FileFilterUtils.filterSet(filter, fileA, fileB);</span>
+
+<span class="fc" id="L1214">        assertTrue(filteredSet.contains(fileA));</span>
+<span class="fc" id="L1215">        assertFalse(filteredSet.contains(fileB));</span>
+<span class="fc" id="L1216">    }</span>
+
+    /**
+     * Test method for {@link FileFilterUtils#filterSet(IOFileFilter, java.lang.Iterable)}
+     * that tests &lt;code&gt;null&lt;/code&gt; parameters and &lt;code&gt;null&lt;/code&gt; elements
+     * in the provided set.
+     */
+   public void testFilterSetNullParameters() {
+        try {
+<span class="nc" id="L1225">            FileFilterUtils.filterSet(null, Collections.&lt;File&gt;emptySet()); </span>
+<span class="nc" id="L1226">            fail();</span>
+<span class="fc" id="L1227">        } catch (IllegalArgumentException iae) {</span>
+            // Test passes, exception thrown for null filter
+<span class="nc" id="L1229">        }</span>
+
+<span class="fc" id="L1231">        IOFileFilter filter = FileFilterUtils.trueFileFilter();</span>
+        try {
+<span class="nc" id="L1233">            FileFilterUtils.filterSet(filter, new HashSet&lt;File&gt;(Arrays.&lt;File&gt;asList((File) null))); </span>
+<span class="nc" id="L1234">            fail();</span>
+<span class="fc" id="L1235">        } catch (IllegalArgumentException iae) {</span>
+            // Test passes, exception thrown for set containing null
+<span class="nc" id="L1237">        }</span>
+
+<span class="fc" id="L1239">        Set&lt;File&gt; filteredSet = FileFilterUtils.filterSet(filter, (Set&lt;File&gt;)null); </span>
+<span class="fc" id="L1240">        assertEquals(0, filteredSet.size());</span>
+<span class="fc" id="L1241">    }</span>
+    
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.0 (Apr 20, 2019 6:00:46 PM)</div></body></html>

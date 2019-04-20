@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileUtilsCleanSymlinksTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.4 (Apr 20, 2019 6:07:50 PM)</a> &gt; <a href="../../index.html" class="el_group">2.4</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io</a> &gt; <span class="el_source">FileUtilsCleanSymlinksTestCase.java</span></div><h1>FileUtilsCleanSymlinksTestCase.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.io.testtools.FileBasedTestCase;
+
+/**
+ * Test cases for FileUtils.cleanDirectory() method that involve symlinks.
+ * &amp; FileUtils.isSymlink(File file)
+ */
+public class FileUtilsCleanSymlinksTestCase extends FileBasedTestCase {
+
+<span class="fc" id="L31">    final File top = getTestDirectory();</span>
+
+    public FileUtilsCleanSymlinksTestCase(String name) {
+<span class="fc" id="L34">        super(name);</span>
+<span class="fc" id="L35">    }</span>
+
+    @Override
+    protected void setUp() throws Exception {
+<span class="fc" id="L39">        top.mkdirs();</span>
+<span class="fc" id="L40">    }</span>
+
+    @Override
+    protected void tearDown() throws Exception {
+<span class="fc" id="L44">        FileUtils.deleteDirectory(top);</span>
+<span class="fc" id="L45">    }</span>
+
+    public void testCleanDirWithSymlinkFile() throws Exception {
+<span class="pc bpc" id="L48" title="1 of 2 branches missed.">        if (System.getProperty(&quot;os.name&quot;).startsWith(&quot;Win&quot;)) {</span>
+            // cant create symlinks in windows.
+<span class="nc" id="L50">            return;</span>
+        }
+
+<span class="fc" id="L53">        final File realOuter = new File(top, &quot;realouter&quot;);</span>
+<span class="fc" id="L54">        assertTrue(realOuter.mkdirs());</span>
+
+<span class="fc" id="L56">        final File realInner = new File(realOuter, &quot;realinner&quot;);</span>
+<span class="fc" id="L57">        assertTrue(realInner.mkdirs());</span>
+
+<span class="fc" id="L59">        final File realFile = new File(realInner, &quot;file1&quot;);</span>
+<span class="fc" id="L60">        FileUtils.touch(realFile);</span>
+<span class="fc" id="L61">        assertEquals(1, realInner.list().length);</span>
+
+<span class="fc" id="L63">        final File randomFile = new File(top, &quot;randomfile&quot;);</span>
+<span class="fc" id="L64">        FileUtils.touch(randomFile);</span>
+
+<span class="fc" id="L66">        final File symlinkFile = new File(realInner, &quot;fakeinner&quot;);</span>
+<span class="fc" id="L67">        setupSymlink(randomFile, symlinkFile);</span>
+
+<span class="fc" id="L69">        assertEquals(2, realInner.list().length);</span>
+
+        // assert contents of the real directory were removed including the symlink
+<span class="fc" id="L72">        FileUtils.cleanDirectory(realOuter);</span>
+<span class="fc" id="L73">        assertEquals(0, realOuter.list().length);</span>
+
+        // ensure that the contents of the symlink were NOT removed.
+<span class="fc" id="L76">        assertTrue(randomFile.exists());</span>
+<span class="fc" id="L77">        assertFalse(symlinkFile.exists());</span>
+<span class="fc" id="L78">    }</span>
+
+
+    public void testCleanDirWithASymlinkDir() throws Exception {
+<span class="pc bpc" id="L82" title="1 of 2 branches missed.">        if (System.getProperty(&quot;os.name&quot;).startsWith(&quot;Win&quot;)) {</span>
+            // cant create symlinks in windows.
+<span class="nc" id="L84">            return;</span>
+        }
+
+<span class="fc" id="L87">        final File realOuter = new File(top, &quot;realouter&quot;);</span>
+<span class="fc" id="L88">        assertTrue(realOuter.mkdirs());</span>
+
+<span class="fc" id="L90">        final File realInner = new File(realOuter, &quot;realinner&quot;);</span>
+<span class="fc" id="L91">        assertTrue(realInner.mkdirs());</span>
+
+<span class="fc" id="L93">        FileUtils.touch(new File(realInner, &quot;file1&quot;));</span>
+<span class="fc" id="L94">        assertEquals(1, realInner.list().length);</span>
+
+<span class="fc" id="L96">        final File randomDirectory = new File(top, &quot;randomDir&quot;);</span>
+<span class="fc" id="L97">        assertTrue(randomDirectory.mkdirs());</span>
+
+<span class="fc" id="L99">        FileUtils.touch(new File(randomDirectory, &quot;randomfile&quot;));</span>
+<span class="fc" id="L100">        assertEquals(1, randomDirectory.list().length);</span>
+
+<span class="fc" id="L102">        final File symlinkDirectory = new File(realOuter, &quot;fakeinner&quot;);</span>
+<span class="fc" id="L103">        setupSymlink(randomDirectory, symlinkDirectory);</span>
+
+<span class="fc" id="L105">        assertEquals(1, symlinkDirectory.list().length);</span>
+
+        // assert contents of the real directory were removed including the symlink
+<span class="fc" id="L108">        FileUtils.cleanDirectory(realOuter);</span>
+<span class="fc" id="L109">        assertEquals(0, realOuter.list().length);</span>
+
+        // ensure that the contents of the symlink were NOT removed.
+<span class="fc" id="L112">        assertEquals(&quot;Contents of sym link should not have been removed&quot;, 1, randomDirectory.list().length);</span>
+<span class="fc" id="L113">    }</span>
+
+    public void testCleanDirWithParentSymlinks() throws Exception {
+<span class="pc bpc" id="L116" title="1 of 2 branches missed.">        if (System.getProperty(&quot;os.name&quot;).startsWith(&quot;Win&quot;)) {</span>
+            // cant create symlinks in windows.
+<span class="nc" id="L118">            return;</span>
+        }
+
+<span class="fc" id="L121">        final File realParent = new File(top, &quot;realparent&quot;);</span>
+<span class="fc" id="L122">        assertTrue(realParent.mkdirs());</span>
+
+<span class="fc" id="L124">        final File realInner = new File(realParent, &quot;realinner&quot;);</span>
+<span class="fc" id="L125">        assertTrue(realInner.mkdirs());</span>
+
+<span class="fc" id="L127">        FileUtils.touch(new File(realInner, &quot;file1&quot;));</span>
+<span class="fc" id="L128">        assertEquals(1, realInner.list().length);</span>
+
+<span class="fc" id="L130">        final File randomDirectory = new File(top, &quot;randomDir&quot;);</span>
+<span class="fc" id="L131">        assertTrue(randomDirectory.mkdirs());</span>
+
+<span class="fc" id="L133">        FileUtils.touch(new File(randomDirectory, &quot;randomfile&quot;));</span>
+<span class="fc" id="L134">        assertEquals(1, randomDirectory.list().length);</span>
+
+<span class="fc" id="L136">        final File symlinkDirectory = new File(realParent, &quot;fakeinner&quot;);</span>
+<span class="fc" id="L137">        setupSymlink(randomDirectory, symlinkDirectory);</span>
+
+<span class="fc" id="L139">        assertEquals(1, symlinkDirectory.list().length);</span>
+
+<span class="fc" id="L141">        final File symlinkParentDirectory = new File(top, &quot;fakeouter&quot;);</span>
+<span class="fc" id="L142">        setupSymlink(realParent, symlinkParentDirectory);</span>
+
+        // assert contents of the real directory were removed including the symlink
+<span class="fc" id="L145">        FileUtils.cleanDirectory(symlinkParentDirectory);// should clean the contents of this but not recurse into other links</span>
+<span class="fc" id="L146">        assertEquals(0, symlinkParentDirectory.list().length);</span>
+<span class="fc" id="L147">        assertEquals(0, realParent.list().length);</span>
+
+        // ensure that the contents of the symlink were NOT removed.
+<span class="fc" id="L150">        assertEquals(&quot;Contents of sym link should not have been removed&quot;, 1, randomDirectory.list().length);</span>
+<span class="fc" id="L151">    }</span>
+
+    public void testStillClearsIfGivenDirectoryIsASymlink() throws Exception {
+<span class="pc bpc" id="L154" title="1 of 2 branches missed.">        if (System.getProperty(&quot;os.name&quot;).startsWith(&quot;Win&quot;)) {</span>
+            // cant create symlinks in windows.
+<span class="nc" id="L156">            return;</span>
+        }
+
+<span class="fc" id="L159">        final File randomDirectory = new File(top, &quot;randomDir&quot;);</span>
+<span class="fc" id="L160">        assertTrue(randomDirectory.mkdirs());</span>
+
+<span class="fc" id="L162">        FileUtils.touch(new File(randomDirectory, &quot;randomfile&quot;));</span>
+<span class="fc" id="L163">        assertEquals(1, randomDirectory.list().length);</span>
+
+<span class="fc" id="L165">        final File symlinkDirectory = new File(top, &quot;fakeDir&quot;);</span>
+<span class="fc" id="L166">        setupSymlink(randomDirectory, symlinkDirectory);</span>
+
+<span class="fc" id="L168">        FileUtils.cleanDirectory(symlinkDirectory);</span>
+<span class="fc" id="L169">        assertEquals(0, symlinkDirectory.list().length);</span>
+<span class="fc" id="L170">        assertEquals(0, randomDirectory.list().length);</span>
+<span class="fc" id="L171">    }</span>
+
+
+    public void testIdentifiesSymlinkDir() throws Exception {
+<span class="pc bpc" id="L175" title="1 of 2 branches missed.">        if (System.getProperty(&quot;os.name&quot;).startsWith(&quot;Win&quot;)) {</span>
+            // cant create symlinks in windows.
+<span class="nc" id="L177">            return;</span>
+        }
+
+<span class="fc" id="L180">        final File randomDirectory = new File(top, &quot;randomDir&quot;);</span>
+<span class="fc" id="L181">        assertTrue(randomDirectory.mkdirs());</span>
+
+<span class="fc" id="L183">        final File symlinkDirectory = new File(top, &quot;fakeDir&quot;);</span>
+<span class="fc" id="L184">        setupSymlink(randomDirectory, symlinkDirectory);</span>
+
+<span class="fc" id="L186">        assertTrue(FileUtils.isSymlink(symlinkDirectory));</span>
+<span class="fc" id="L187">        assertFalse(FileUtils.isSymlink(randomDirectory));</span>
+<span class="fc" id="L188">    }</span>
+
+    public void testIdentifiesSymlinkFile() throws Exception {
+<span class="pc bpc" id="L191" title="1 of 2 branches missed.">        if (System.getProperty(&quot;os.name&quot;).startsWith(&quot;Win&quot;)) {</span>
+            // cant create symlinks in windows.
+<span class="nc" id="L193">            return;</span>
+        }
+
+<span class="fc" id="L196">        final File randomFile = new File(top, &quot;randomfile&quot;);</span>
+<span class="fc" id="L197">        FileUtils.touch(randomFile);</span>
+
+<span class="fc" id="L199">        final File symlinkFile = new File(top, &quot;fakeinner&quot;);</span>
+<span class="fc" id="L200">        setupSymlink(randomFile, symlinkFile);</span>
+
+<span class="fc" id="L202">        assertTrue(FileUtils.isSymlink(symlinkFile));</span>
+<span class="fc" id="L203">        assertFalse(FileUtils.isSymlink(randomFile));</span>
+<span class="fc" id="L204">    }</span>
+
+    public void testCorrectlyIdentifySymlinkWithParentSymLink() throws Exception {
+<span class="pc bpc" id="L207" title="1 of 2 branches missed.">        if (System.getProperty(&quot;os.name&quot;).startsWith(&quot;Win&quot;)) {</span>
+            // cant create symlinks in windows.
+<span class="nc" id="L209">            return;</span>
+        }
+
+<span class="fc" id="L212">        final File realParent = new File(top, &quot;realparent&quot;);</span>
+<span class="fc" id="L213">        assertTrue(realParent.mkdirs());</span>
+
+<span class="fc" id="L215">        final File symlinkParentDirectory = new File(top, &quot;fakeparent&quot;);</span>
+<span class="fc" id="L216">        setupSymlink(realParent, symlinkParentDirectory);</span>
+
+<span class="fc" id="L218">        final File realChild = new File(symlinkParentDirectory, &quot;realChild&quot;);</span>
+<span class="fc" id="L219">        assertTrue(realChild.mkdirs());</span>
+
+<span class="fc" id="L221">        final File symlinkChild = new File(symlinkParentDirectory, &quot;fakeChild&quot;);</span>
+<span class="fc" id="L222">        setupSymlink(realChild, symlinkChild);</span>
+
+<span class="fc" id="L224">        assertTrue(FileUtils.isSymlink(symlinkChild));</span>
+<span class="fc" id="L225">        assertFalse(FileUtils.isSymlink(realChild));</span>
+<span class="fc" id="L226">    }</span>
+
+    private void setupSymlink(File res, File link) throws Exception {
+        // create symlink
+<span class="fc" id="L230">        List&lt;String&gt; args = new ArrayList&lt;String&gt;();</span>
+<span class="fc" id="L231">        args.add(&quot;ln&quot;);</span>
+<span class="fc" id="L232">        args.add(&quot;-s&quot;);</span>
+
+<span class="fc" id="L234">        args.add(res.getAbsolutePath());</span>
+<span class="fc" id="L235">        args.add(link.getAbsolutePath());</span>
+
+        Process proc;
+
+<span class="fc" id="L239">        proc = Runtime.getRuntime().exec(args.toArray(new String[args.size()]));</span>
+<span class="fc" id="L240">        proc.waitFor();</span>
+<span class="fc" id="L241">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.4 (Apr 20, 2019 6:07:50 PM)</div></body></html>

@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>XmlStreamReaderUtilitiesTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.4 (Apr 20, 2019 6:07:50 PM)</a> &gt; <a href="../../index.html" class="el_group">2.4</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.input</a> &gt; <span class="el_source">XmlStreamReaderUtilitiesTest.java</span></div><h1>XmlStreamReaderUtilitiesTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.input;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+
+import org.junit.Test;
+
+/**
+ * Test the Encoding Utilities part of {@link XmlStreamReader}.
+ */
+<span class="fc" id="L32">public class XmlStreamReaderUtilitiesTest {</span>
+
+<span class="fc" id="L34">    private static String RAWMGS1 = &quot;encoding mismatch&quot;;</span>
+<span class="fc" id="L35">    private static String RAWMGS2 = &quot;unknown BOM&quot;;</span>
+<span class="fc" id="L36">    private static String HTTPMGS1 = &quot;BOM must be NULL&quot;;</span>
+<span class="fc" id="L37">    private static String HTTPMGS2 = &quot;encoding mismatch&quot;;</span>
+<span class="fc" id="L38">    private static String HTTPMGS3 = &quot;Invalid MIME&quot;;</span>
+
+<span class="fc" id="L40">    private static String APPXML         = &quot;application/xml&quot;;</span>
+<span class="fc" id="L41">    private static String APPXML_UTF8    = &quot;application/xml;charset=UTF-8&quot;;</span>
+<span class="fc" id="L42">    private static String APPXML_UTF16   = &quot;application/xml;charset=UTF-16&quot;;</span>
+<span class="fc" id="L43">    private static String APPXML_UTF32   = &quot;application/xml;charset=UTF-32&quot;;</span>
+<span class="fc" id="L44">    private static String APPXML_UTF16BE = &quot;application/xml;charset=UTF-16BE&quot;;</span>
+<span class="fc" id="L45">    private static String APPXML_UTF16LE = &quot;application/xml;charset=UTF-16LE&quot;;</span>
+<span class="fc" id="L46">    private static String APPXML_UTF32BE = &quot;application/xml;charset=UTF-32BE&quot;;</span>
+<span class="fc" id="L47">    private static String APPXML_UTF32LE = &quot;application/xml;charset=UTF-32LE&quot;;</span>
+<span class="fc" id="L48">    private static String TXTXML = &quot;text/xml&quot;;</span>
+
+    /** Test for {@link XmlStreamReader#getContentTypeEncoding(String)}. */
+    @Test
+    public void testContentTypeEncoding() {
+<span class="fc" id="L53">        checkContentTypeEncoding(null, null);</span>
+<span class="fc" id="L54">        checkContentTypeEncoding(null, &quot;&quot;);</span>
+<span class="fc" id="L55">        checkContentTypeEncoding(null, &quot;application/xml&quot;);</span>
+<span class="fc" id="L56">        checkContentTypeEncoding(null, &quot;application/xml;&quot;);</span>
+<span class="fc" id="L57">        checkContentTypeEncoding(null, &quot;multipart/mixed;boundary=frontier&quot;);</span>
+<span class="fc" id="L58">        checkContentTypeEncoding(null, &quot;multipart/mixed;boundary='frontier'&quot;);</span>
+<span class="fc" id="L59">        checkContentTypeEncoding(null, &quot;multipart/mixed;boundary=\&quot;frontier\&quot;&quot;);</span>
+<span class="fc" id="L60">        checkContentTypeEncoding(&quot;UTF-16&quot;, &quot;application/xml;charset=utf-16&quot;);</span>
+<span class="fc" id="L61">        checkContentTypeEncoding(&quot;UTF-16&quot;, &quot;application/xml;charset=UTF-16&quot;);</span>
+<span class="fc" id="L62">        checkContentTypeEncoding(&quot;UTF-16&quot;, &quot;application/xml;charset='UTF-16'&quot;);</span>
+<span class="fc" id="L63">        checkContentTypeEncoding(&quot;UTF-16&quot;, &quot;application/xml;charset=\&quot;UTF-16\&quot;&quot;);</span>
+<span class="fc" id="L64">        checkContentTypeEncoding(&quot;UTF-32&quot;, &quot;application/xml;charset=utf-32&quot;);</span>
+<span class="fc" id="L65">        checkContentTypeEncoding(&quot;UTF-32&quot;, &quot;application/xml;charset=UTF-32&quot;);</span>
+<span class="fc" id="L66">        checkContentTypeEncoding(&quot;UTF-32&quot;, &quot;application/xml;charset='UTF-32'&quot;);</span>
+<span class="fc" id="L67">        checkContentTypeEncoding(&quot;UTF-32&quot;, &quot;application/xml;charset=\&quot;UTF-32\&quot;&quot;);</span>
+<span class="fc" id="L68">    }</span>
+
+    private void checkContentTypeEncoding(String expected, String httpContentType) {
+<span class="fc" id="L71">        assertEquals(&quot;ContentTypeEncoding=[&quot; + httpContentType + &quot;]&quot;, expected, XmlStreamReader.getContentTypeEncoding(httpContentType));</span>
+<span class="fc" id="L72">    }</span>
+
+    /** Test for {@link XmlStreamReader#getContentTypeEncoding(String)}. */
+    @Test
+    public void testContentTypeMime() {
+<span class="fc" id="L77">        checkContentTypeMime(null, null);</span>
+<span class="fc" id="L78">        checkContentTypeMime(&quot;&quot;, &quot;&quot;);</span>
+<span class="fc" id="L79">        checkContentTypeMime(&quot;application/xml&quot;, &quot;application/xml&quot;);</span>
+<span class="fc" id="L80">        checkContentTypeMime(&quot;application/xml&quot;, &quot;application/xml;&quot;);</span>
+<span class="fc" id="L81">        checkContentTypeMime(&quot;application/xml&quot;, &quot;application/xml;charset=utf-16&quot;);</span>
+<span class="fc" id="L82">        checkContentTypeMime(&quot;application/xml&quot;, &quot;application/xml;charset=utf-32&quot;);</span>
+<span class="fc" id="L83">    }</span>
+    
+    private void checkContentTypeMime(String expected, String httpContentType) {
+<span class="fc" id="L86">        assertEquals(&quot;ContentTypeMime=[&quot; + httpContentType + &quot;]&quot;, expected, XmlStreamReader.getContentTypeMime(httpContentType));</span>
+<span class="fc" id="L87">    }</span>
+
+    /** Test for {@link XmlStreamReader#isAppXml(String)}. */
+    @Test
+    public void testAppXml() {
+<span class="fc" id="L92">        checkAppXml(false, null);</span>
+<span class="fc" id="L93">        checkAppXml(false, &quot;&quot;);</span>
+<span class="fc" id="L94">        checkAppXml(true,  &quot;application/xml&quot;);</span>
+<span class="fc" id="L95">        checkAppXml(true,  &quot;application/xml-dtd&quot;);</span>
+<span class="fc" id="L96">        checkAppXml(true,  &quot;application/xml-external-parsed-entity&quot;);</span>
+<span class="fc" id="L97">        checkAppXml(true,  &quot;application/soap+xml&quot;);</span>
+<span class="fc" id="L98">        checkAppXml(true,  &quot;application/atom+xml&quot;);</span>
+<span class="fc" id="L99">        checkAppXml(false, &quot;application/atomxml&quot;);</span>
+<span class="fc" id="L100">        checkAppXml(false, &quot;text/xml&quot;);</span>
+<span class="fc" id="L101">        checkAppXml(false, &quot;text/atom+xml&quot;);</span>
+<span class="fc" id="L102">        checkAppXml(true,  &quot;application/xml-dtd&quot;);</span>
+<span class="fc" id="L103">        checkAppXml(true,  &quot;application/xml-external-parsed-entity&quot;);</span>
+<span class="fc" id="L104">    }</span>
+    
+    private void checkAppXml(boolean expected, String mime) {
+<span class="fc" id="L107">        assertEquals(&quot;Mime=[&quot; + mime + &quot;]&quot;, expected, XmlStreamReader.isAppXml(mime));</span>
+<span class="fc" id="L108">    }</span>
+
+    /** Test for {@link XmlStreamReader#isTextXml(String)}. */
+    @Test
+    public void testTextXml() {
+<span class="fc" id="L113">        checkTextXml(false, null);</span>
+<span class="fc" id="L114">        checkTextXml(false, &quot;&quot;);</span>
+<span class="fc" id="L115">        checkTextXml(true,  &quot;text/xml&quot;);</span>
+<span class="fc" id="L116">        checkTextXml(true,  &quot;text/xml-external-parsed-entity&quot;);</span>
+<span class="fc" id="L117">        checkTextXml(true,  &quot;text/soap+xml&quot;);</span>
+<span class="fc" id="L118">        checkTextXml(true,  &quot;text/atom+xml&quot;);</span>
+<span class="fc" id="L119">        checkTextXml(false, &quot;text/atomxml&quot;);</span>
+<span class="fc" id="L120">        checkTextXml(false, &quot;application/xml&quot;);</span>
+<span class="fc" id="L121">        checkTextXml(false, &quot;application/atom+xml&quot;);</span>
+<span class="fc" id="L122">    }</span>
+    
+    private void checkTextXml(boolean expected, String mime) {
+<span class="fc" id="L125">        assertEquals(&quot;Mime=[&quot; + mime + &quot;]&quot;, expected, XmlStreamReader.isTextXml(mime));</span>
+<span class="fc" id="L126">    }</span>
+
+    /** No BOM calculateRawEncoding() Test */
+    @Test
+    public void testCalculateRawEncodingNoBOM() throws IOException {
+        // No BOM        Expected    BOM         Guess       XML         Default
+<span class="fc" id="L132">        checkRawError(RAWMGS2,       &quot;UTF-32&quot;,   null,       null,       null);</span>
+        //
+<span class="fc" id="L134">        checkRawEncoding(&quot;UTF-8&quot;,    null,       null,       null,       null);</span>
+<span class="fc" id="L135">        checkRawEncoding(&quot;UTF-8&quot;,    null,       &quot;UTF-16BE&quot;, null,       null); /* why default &amp; not Guess? */</span>
+<span class="fc" id="L136">        checkRawEncoding(&quot;UTF-8&quot;,    null,       null,       &quot;UTF-16BE&quot;, null); /* why default &amp; not XMLEnc? */</span>
+<span class="fc" id="L137">        checkRawEncoding(&quot;UTF-8&quot;,    null,       &quot;UTF-8&quot;,    &quot;UTF-8&quot;,    &quot;UTF-16BE&quot;);</span>
+        //
+<span class="fc" id="L139">        checkRawEncoding(&quot;UTF-16BE&quot;, null,       &quot;UTF-16BE&quot;, &quot;UTF-16BE&quot;, null);</span>
+<span class="fc" id="L140">        checkRawEncoding(&quot;UTF-16BE&quot;, null,       null,       null,       &quot;UTF-16BE&quot;);</span>
+<span class="fc" id="L141">        checkRawEncoding(&quot;UTF-16BE&quot;, null,       &quot;UTF-8&quot;,    null,       &quot;UTF-16BE&quot;); /* why default &amp; not Guess? */</span>
+<span class="fc" id="L142">        checkRawEncoding(&quot;UTF-16BE&quot;, null,       null,       &quot;UTF-8&quot;,    &quot;UTF-16BE&quot;); /* why default &amp; not Guess? */</span>
+<span class="fc" id="L143">        checkRawEncoding(&quot;UTF-16BE&quot;, null,       &quot;UTF-16BE&quot;, &quot;UTF-16&quot;,   null);</span>
+<span class="fc" id="L144">        checkRawEncoding(&quot;UTF-16LE&quot;, null,       &quot;UTF-16LE&quot;, &quot;UTF-16&quot;,   null);</span>
+<span class="fc" id="L145">    }</span>
+
+    /** BOM calculateRawEncoding() Test */
+    @Test
+    public void testCalculateRawEncodingStandard() throws IOException {
+        // Standard BOM Checks           BOM         Other       Default
+<span class="fc" id="L151">        testCalculateRawEncodingStandard(&quot;UTF-8&quot;,    &quot;UTF-16BE&quot;, &quot;UTF-16LE&quot;);</span>
+<span class="fc" id="L152">        testCalculateRawEncodingStandard(&quot;UTF-16BE&quot;, &quot;UTF-8&quot;,    &quot;UTF-16LE&quot;);</span>
+<span class="fc" id="L153">        testCalculateRawEncodingStandard(&quot;UTF-16LE&quot;, &quot;UTF-8&quot;,    &quot;UTF-16BE&quot;);</span>
+<span class="fc" id="L154">    }</span>
+    
+    /** BOM calculateRawEncoding() Test */
+    @Test
+    //@Ignore
+    public void testCalculateRawEncodingStandardUtf32() throws IOException {
+        // Standard BOM Checks           BOM         Other       Default
+<span class="fc" id="L161">        testCalculateRawEncodingStandard(&quot;UTF-8&quot;,    &quot;UTF-32BE&quot;, &quot;UTF-32LE&quot;);</span>
+<span class="fc" id="L162">        testCalculateRawEncodingStandard(&quot;UTF-32BE&quot;, &quot;UTF-8&quot;,    &quot;UTF-32LE&quot;);</span>
+<span class="fc" id="L163">        testCalculateRawEncodingStandard(&quot;UTF-32LE&quot;, &quot;UTF-8&quot;,    &quot;UTF-32BE&quot;);</span>
+<span class="fc" id="L164">}</span>
+    
+    private void testCalculateRawEncodingStandard(String bomEnc, String otherEnc, String defaultEnc) throws IOException {
+        //               Expected   BOM        Guess     XMLEnc    Default
+<span class="fc" id="L168">        checkRawEncoding(bomEnc,    bomEnc,    null,     null,     defaultEnc);</span>
+<span class="fc" id="L169">        checkRawEncoding(bomEnc,    bomEnc,    bomEnc,   null,     defaultEnc);</span>
+<span class="fc" id="L170">        checkRawError(RAWMGS1,      bomEnc,    otherEnc, null,     defaultEnc);</span>
+<span class="fc" id="L171">        checkRawEncoding(bomEnc,    bomEnc,    null,     bomEnc,   defaultEnc);</span>
+<span class="fc" id="L172">        checkRawError(RAWMGS1,      bomEnc,    null,     otherEnc, defaultEnc);</span>
+<span class="fc" id="L173">        checkRawEncoding(bomEnc,    bomEnc,    bomEnc,   bomEnc,   defaultEnc);</span>
+<span class="fc" id="L174">        checkRawError(RAWMGS1,      bomEnc,    bomEnc,   otherEnc, defaultEnc);</span>
+<span class="fc" id="L175">        checkRawError(RAWMGS1,      bomEnc,    otherEnc, bomEnc,   defaultEnc);</span>
+
+<span class="fc" id="L177">    }</span>
+
+    /** Additional UTF-16 calculateRawEncoding() Test */
+    @Test
+    public void testCalculateRawEncodingAdditonalUTF16() throws IOException {
+        //                           BOM         Guess       XML         Default
+<span class="fc" id="L183">        checkRawError(RAWMGS1,       &quot;UTF-16BE&quot;, &quot;UTF-16&quot;,   null,       null);</span>
+<span class="fc" id="L184">        checkRawEncoding(&quot;UTF-16BE&quot;, &quot;UTF-16BE&quot;, null,       &quot;UTF-16&quot;,   null);</span>
+<span class="fc" id="L185">        checkRawEncoding(&quot;UTF-16BE&quot;, &quot;UTF-16BE&quot;, &quot;UTF-16BE&quot;, &quot;UTF-16&quot;,   null);</span>
+<span class="fc" id="L186">        checkRawError(RAWMGS1,       &quot;UTF-16BE&quot;, null,       &quot;UTF-16LE&quot;, null);</span>
+<span class="fc" id="L187">        checkRawError(RAWMGS1,       &quot;UTF-16BE&quot;, &quot;UTF-16BE&quot;, &quot;UTF-16LE&quot;, null);</span>
+<span class="fc" id="L188">        checkRawError(RAWMGS1,       &quot;UTF-16LE&quot;, &quot;UTF-16&quot;,   null,       null);</span>
+<span class="fc" id="L189">        checkRawEncoding(&quot;UTF-16LE&quot;, &quot;UTF-16LE&quot;, null,       &quot;UTF-16&quot;,   null);</span>
+<span class="fc" id="L190">        checkRawEncoding(&quot;UTF-16LE&quot;, &quot;UTF-16LE&quot;, &quot;UTF-16LE&quot;, &quot;UTF-16&quot;,   null);</span>
+<span class="fc" id="L191">        checkRawError(RAWMGS1,       &quot;UTF-16LE&quot;, null,       &quot;UTF-16BE&quot;, null);</span>
+<span class="fc" id="L192">        checkRawError(RAWMGS1,       &quot;UTF-16LE&quot;, &quot;UTF-16LE&quot;, &quot;UTF-16BE&quot;, null);</span>
+<span class="fc" id="L193">    }</span>
+    
+    /** Additional UTF-32 calculateRawEncoding() Test */
+    @Test
+    public void testCalculateRawEncodingAdditonalUTF32() throws IOException {
+        //                           BOM         Guess       XML         Default
+<span class="fc" id="L199">        checkRawError(RAWMGS1,       &quot;UTF-32BE&quot;, &quot;UTF-32&quot;,   null,       null);</span>
+<span class="fc" id="L200">        checkRawEncoding(&quot;UTF-32BE&quot;, &quot;UTF-32BE&quot;, null,       &quot;UTF-32&quot;,   null);</span>
+<span class="fc" id="L201">        checkRawEncoding(&quot;UTF-32BE&quot;, &quot;UTF-32BE&quot;, &quot;UTF-32BE&quot;, &quot;UTF-32&quot;,   null);</span>
+<span class="fc" id="L202">        checkRawError(RAWMGS1,       &quot;UTF-32BE&quot;, null,       &quot;UTF-32LE&quot;, null);</span>
+<span class="fc" id="L203">        checkRawError(RAWMGS1,       &quot;UTF-32BE&quot;, &quot;UTF-32BE&quot;, &quot;UTF-32LE&quot;, null);</span>
+<span class="fc" id="L204">        checkRawError(RAWMGS1,       &quot;UTF-32LE&quot;, &quot;UTF-32&quot;,   null,       null);</span>
+<span class="fc" id="L205">        checkRawEncoding(&quot;UTF-32LE&quot;, &quot;UTF-32LE&quot;, null,       &quot;UTF-32&quot;,   null);</span>
+<span class="fc" id="L206">        checkRawEncoding(&quot;UTF-32LE&quot;, &quot;UTF-32LE&quot;, &quot;UTF-32LE&quot;, &quot;UTF-32&quot;,   null);</span>
+<span class="fc" id="L207">        checkRawError(RAWMGS1,       &quot;UTF-32LE&quot;, null,       &quot;UTF-32BE&quot;, null);</span>
+<span class="fc" id="L208">        checkRawError(RAWMGS1,       &quot;UTF-32LE&quot;, &quot;UTF-32LE&quot;, &quot;UTF-32BE&quot;, null);</span>
+<span class="fc" id="L209">    }</span>
+    
+    private void checkRawEncoding(String expected,
+            String bomEnc, String xmlGuessEnc, String xmlEnc, String defaultEncoding) throws IOException {
+<span class="fc" id="L213">        StringBuilder builder = new StringBuilder();</span>
+<span class="fc" id="L214">        builder.append(&quot;RawEncoding: &quot;).append(bomEnc).append(&quot;], &quot;);</span>
+<span class="fc" id="L215">        builder.append(&quot;bomEnc=[&quot;).append(bomEnc).append(&quot;], &quot;);</span>
+<span class="fc" id="L216">        builder.append(&quot;xmlGuessEnc=[&quot;).append(xmlGuessEnc).append(&quot;], &quot;);</span>
+<span class="fc" id="L217">        builder.append(&quot;xmlEnc=[&quot;).append(xmlEnc).append(&quot;], &quot;);</span>
+<span class="fc" id="L218">        builder.append(&quot;defaultEncoding=[&quot;).append(defaultEncoding).append(&quot;],&quot;);</span>
+<span class="fc" id="L219">        String encoding = calculateRawEncoding(bomEnc,xmlGuessEnc,xmlEnc, defaultEncoding);</span>
+<span class="fc" id="L220">        assertEquals(builder.toString(), expected, encoding);</span>
+<span class="fc" id="L221">    }</span>
+    
+    protected String calculateRawEncoding(String bomEnc, String xmlGuessEnc, String xmlEnc,
+            String defaultEncoding) throws IOException {
+<span class="fc" id="L225">        MockXmlStreamReader mock = new MockXmlStreamReader(defaultEncoding);</span>
+<span class="fc" id="L226">        return mock.calculateRawEncoding(bomEnc, xmlGuessEnc, xmlEnc);</span>
+    }
+    
+    private void checkRawError(String msgSuffix,
+            String bomEnc, String xmlGuessEnc, String xmlEnc, String defaultEncoding) {
+        try {
+<span class="nc" id="L232">            checkRawEncoding(&quot;XmlStreamReaderException&quot;, bomEnc, xmlGuessEnc, xmlEnc, defaultEncoding);</span>
+<span class="nc" id="L233">            fail(&quot;Expected XmlStreamReaderException&quot;);</span>
+<span class="pc" id="L234">        } catch (XmlStreamReaderException e) {</span>
+<span class="fc" id="L235">            assertTrue(&quot;Msg Start: &quot; + e.getMessage(), e.getMessage().startsWith(&quot;Invalid encoding&quot;));</span>
+<span class="fc" id="L236">            assertTrue(&quot;Msg End: &quot;   + e.getMessage(), e.getMessage().endsWith(msgSuffix));</span>
+<span class="fc" id="L237">            assertEquals(&quot;bomEnc&quot;,      bomEnc,      e.getBomEncoding());</span>
+<span class="fc" id="L238">            assertEquals(&quot;xmlGuessEnc&quot;, xmlGuessEnc, e.getXmlGuessEncoding());</span>
+<span class="fc" id="L239">            assertEquals(&quot;xmlEnc&quot;,      xmlEnc,      e.getXmlEncoding());</span>
+<span class="fc" id="L240">            assertNull(&quot;ContentTypeEncoding&quot;, e.getContentTypeEncoding());</span>
+<span class="fc" id="L241">            assertNull(&quot;ContentTypeMime&quot;,     e.getContentTypeMime());</span>
+<span class="nc" id="L242">        } catch (Exception e) {</span>
+<span class="nc" id="L243">            fail(&quot;Expected XmlStreamReaderException, but threw &quot; + e);</span>
+        }
+<span class="fc" id="L245">    }</span>
+
+    /** Test calculate HTTP Encoding */
+    @Test
+    public void testCalculateHttpEncoding() throws IOException {
+        // No BOM        Expected     Lenient cType           BOM         Guess       XML         Default
+<span class="fc" id="L251">        checkHttpError(HTTPMGS3,      true,   null,           null,       null,       null,       null);</span>
+<span class="fc" id="L252">        checkHttpError(HTTPMGS3,      false,  null,           null,       null,       &quot;UTF-8&quot;,    null);</span>
+<span class="fc" id="L253">        checkHttpEncoding(&quot;UTF-8&quot;,    true,   null,           null,       null,       &quot;UTF-8&quot;,    null);</span>
+<span class="fc" id="L254">        checkHttpEncoding(&quot;UTF-16LE&quot;, true,   null,           null,       null,       &quot;UTF-16LE&quot;, null);</span>
+<span class="fc" id="L255">        checkHttpError(HTTPMGS3,      false,  &quot;text/css&quot;,     null,       null,       null,       null);</span>
+<span class="fc" id="L256">        checkHttpEncoding(&quot;US-ASCII&quot;, false,  TXTXML,         null,       null,       null,       null);</span>
+<span class="fc" id="L257">        checkHttpEncoding(&quot;UTF-16BE&quot;, false,  TXTXML,         null,       null,       null,       &quot;UTF-16BE&quot;);</span>
+<span class="fc" id="L258">        checkHttpEncoding(&quot;UTF-8&quot;,    false,  APPXML,         null,       null,       null,       null);</span>
+<span class="fc" id="L259">        checkHttpEncoding(&quot;UTF-16BE&quot;, false,  APPXML,         null,       null,       null,       &quot;UTF-16BE&quot;);</span>
+<span class="fc" id="L260">        checkHttpEncoding(&quot;UTF-8&quot;,    false,  APPXML,         &quot;UTF-8&quot;,    null,       null,       &quot;UTF-16BE&quot;);</span>
+<span class="fc" id="L261">        checkHttpEncoding(&quot;UTF-16LE&quot;, false,  APPXML_UTF16LE, null,       null,       null,       null);</span>
+<span class="fc" id="L262">        checkHttpEncoding(&quot;UTF-16BE&quot;, false,  APPXML_UTF16BE, null,       null,       null,       null);</span>
+<span class="fc" id="L263">        checkHttpError(HTTPMGS1,      false,  APPXML_UTF16LE, &quot;UTF-16LE&quot;, null,       null,       null);</span>
+<span class="fc" id="L264">        checkHttpError(HTTPMGS1,      false,  APPXML_UTF16BE, &quot;UTF-16BE&quot;, null,       null,       null);</span>
+<span class="fc" id="L265">        checkHttpError(HTTPMGS2,      false,  APPXML_UTF16,   null,       null,       null,       null);</span>
+<span class="fc" id="L266">        checkHttpError(HTTPMGS2,      false,  APPXML_UTF16,   &quot;UTF-8&quot;,    null,       null,       null);</span>
+<span class="fc" id="L267">        checkHttpEncoding(&quot;UTF-16LE&quot;, false,  APPXML_UTF16,   &quot;UTF-16LE&quot;, null,       null,       null);</span>
+<span class="fc" id="L268">        checkHttpEncoding(&quot;UTF-16BE&quot;, false,  APPXML_UTF16,   &quot;UTF-16BE&quot;, null,       null,       null);</span>
+<span class="fc" id="L269">        checkHttpEncoding(&quot;UTF-8&quot;,    false,  APPXML_UTF8,    null,       null,       null,       null);</span>
+<span class="fc" id="L270">        checkHttpEncoding(&quot;UTF-8&quot;,    false,  APPXML_UTF8,    &quot;UTF-16BE&quot;, &quot;UTF-16BE&quot;, &quot;UTF-16BE&quot;, &quot;UTF-16BE&quot;);</span>
+<span class="fc" id="L271">    }</span>
+    
+    /** Test calculate HTTP Encoding */
+    @Test
+    //@Ignore
+    public void testCalculateHttpEncodingUtf32() throws IOException {
+        // No BOM        Expected     Lenient cType           BOM         Guess       XML         Default
+<span class="fc" id="L278">        checkHttpEncoding(&quot;UTF-32LE&quot;, true,   null,           null,       null,       &quot;UTF-32LE&quot;, null);</span>
+<span class="fc" id="L279">        checkHttpEncoding(&quot;UTF-32BE&quot;, false,  TXTXML,         null,       null,       null,       &quot;UTF-32BE&quot;);</span>
+<span class="fc" id="L280">        checkHttpEncoding(&quot;UTF-32BE&quot;, false,  APPXML,         null,       null,       null,       &quot;UTF-32BE&quot;);</span>
+<span class="fc" id="L281">        checkHttpEncoding(&quot;UTF-32LE&quot;, false,  APPXML_UTF32LE, null,       null,       null,       null);</span>
+<span class="fc" id="L282">        checkHttpEncoding(&quot;UTF-32BE&quot;, false,  APPXML_UTF32BE, null,       null,       null,       null);</span>
+<span class="fc" id="L283">        checkHttpError(HTTPMGS1,      false,  APPXML_UTF32LE, &quot;UTF-32LE&quot;, null,       null,       null);</span>
+<span class="fc" id="L284">        checkHttpError(HTTPMGS1,      false,  APPXML_UTF32BE, &quot;UTF-32BE&quot;, null,       null,       null);</span>
+<span class="fc" id="L285">        checkHttpError(HTTPMGS2,      false,  APPXML_UTF32,   null,       null,       null,       null);</span>
+<span class="fc" id="L286">        checkHttpError(HTTPMGS2,      false,  APPXML_UTF32,   &quot;UTF-8&quot;,    null,       null,       null);</span>
+<span class="fc" id="L287">        checkHttpEncoding(&quot;UTF-32LE&quot;, false,  APPXML_UTF32,   &quot;UTF-32LE&quot;, null,       null,       null);</span>
+<span class="fc" id="L288">        checkHttpEncoding(&quot;UTF-32BE&quot;, false,  APPXML_UTF32,   &quot;UTF-32BE&quot;, null,       null,       null);</span>
+<span class="fc" id="L289">        checkHttpEncoding(&quot;UTF-8&quot;,    false,  APPXML_UTF8,    &quot;UTF-32BE&quot;, &quot;UTF-32BE&quot;, &quot;UTF-32BE&quot;, &quot;UTF-32BE&quot;);</span>
+<span class="fc" id="L290">    }</span>
+    
+    private void checkHttpEncoding(String expected, boolean lenient, String httpContentType,
+            String bomEnc, String xmlGuessEnc, String xmlEnc, String defaultEncoding) throws IOException {
+<span class="fc" id="L294">        StringBuilder builder = new StringBuilder();</span>
+<span class="fc" id="L295">        builder.append(&quot;HttpEncoding=[&quot;).append(bomEnc).append(&quot;], &quot;);</span>
+<span class="fc" id="L296">        builder.append(&quot;lenient=[&quot;).append(lenient).append(&quot;], &quot;);</span>
+<span class="fc" id="L297">        builder.append(&quot;httpContentType=[&quot;).append(httpContentType).append(&quot;], &quot;);</span>
+<span class="fc" id="L298">        builder.append(&quot;bomEnc=[&quot;).append(bomEnc).append(&quot;], &quot;);</span>
+<span class="fc" id="L299">        builder.append(&quot;xmlGuessEnc=[&quot;).append(xmlGuessEnc).append(&quot;], &quot;);</span>
+<span class="fc" id="L300">        builder.append(&quot;xmlEnc=[&quot;).append(xmlEnc).append(&quot;], &quot;);</span>
+<span class="fc" id="L301">        builder.append(&quot;defaultEncoding=[&quot;).append(defaultEncoding).append(&quot;],&quot;);</span>
+<span class="fc" id="L302">        String encoding = calculateHttpEncoding(httpContentType, bomEnc, xmlGuessEnc, xmlEnc, lenient, defaultEncoding);</span>
+<span class="fc" id="L303">        assertEquals(builder.toString(), expected, encoding);</span>
+<span class="fc" id="L304">    }</span>
+    
+    protected String calculateHttpEncoding(String httpContentType, String bomEnc, String xmlGuessEnc,
+            String xmlEnc, boolean lenient, String defaultEncoding) throws IOException {
+<span class="fc" id="L308">        MockXmlStreamReader mock = new MockXmlStreamReader(defaultEncoding);</span>
+<span class="fc" id="L309">        return mock.calculateHttpEncoding(httpContentType, bomEnc, xmlGuessEnc, xmlEnc, lenient);</span>
+    }
+    
+    private void checkHttpError(String msgSuffix, boolean lenient, String httpContentType,
+            String bomEnc, String xmlGuessEnc, String xmlEnc, String defaultEncoding) {
+        try {
+<span class="nc" id="L315">            checkHttpEncoding(&quot;XmlStreamReaderException&quot;, lenient, httpContentType, bomEnc, xmlGuessEnc, xmlEnc, defaultEncoding);</span>
+<span class="nc" id="L316">            fail(&quot;Expected XmlStreamReaderException&quot;);</span>
+<span class="pc" id="L317">        } catch (XmlStreamReaderException e) {</span>
+<span class="fc" id="L318">            assertTrue(&quot;Msg Start: &quot; + e.getMessage(), e.getMessage().startsWith(&quot;Invalid encoding&quot;));</span>
+<span class="fc" id="L319">            assertTrue(&quot;Msg End: &quot;   + e.getMessage(), e.getMessage().endsWith(msgSuffix));</span>
+<span class="fc" id="L320">            assertEquals(&quot;bomEnc&quot;,      bomEnc,      e.getBomEncoding());</span>
+<span class="fc" id="L321">            assertEquals(&quot;xmlGuessEnc&quot;, xmlGuessEnc, e.getXmlGuessEncoding());</span>
+<span class="fc" id="L322">            assertEquals(&quot;xmlEnc&quot;,      xmlEnc,      e.getXmlEncoding());</span>
+<span class="fc" id="L323">            assertEquals(&quot;ContentTypeEncoding&quot;, XmlStreamReader.getContentTypeEncoding(httpContentType),</span>
+<span class="fc" id="L324">                                                e.getContentTypeEncoding());</span>
+<span class="fc" id="L325">            assertEquals(&quot;ContentTypeMime&quot;, XmlStreamReader.getContentTypeMime(httpContentType),</span>
+<span class="fc" id="L326">                                            e.getContentTypeMime());</span>
+<span class="nc" id="L327">        } catch (Exception e) {</span>
+<span class="nc" id="L328">            fail(&quot;Expected XmlStreamReaderException, but threw &quot; + e);</span>
+        }
+<span class="fc" id="L330">    }</span>
+
+    /** Mock {@link XmlStreamReader} implementation */
+    private static class MockXmlStreamReader extends XmlStreamReader {
+        MockXmlStreamReader(String defaultEncoding) throws IOException {
+<span class="fc" id="L335">            super(new ByteArrayInputStream(&quot;&quot;.getBytes()), null, true, defaultEncoding);</span>
+<span class="fc" id="L336">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.4 (Apr 20, 2019 6:07:50 PM)</div></body></html>

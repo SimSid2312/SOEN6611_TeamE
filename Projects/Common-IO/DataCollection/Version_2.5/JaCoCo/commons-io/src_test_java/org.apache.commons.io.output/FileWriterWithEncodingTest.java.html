@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileWriterWithEncodingTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-io (Apr 20, 2019 6:11:46 PM)</a> &gt; <a href="../../index.html" class="el_group">commons-io</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.output</a> &gt; <span class="el_source">FileWriterWithEncodingTest.java</span></div><h1>FileWriterWithEncodingTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.output;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
+
+import junit.framework.AssertionFailedError;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.testtools.FileBasedTestCase;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import static org.apache.commons.io.testtools.TestUtils.checkFile;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+/**
+ * Tests that the encoding is actually set and used.
+ *
+ * @version $Id$
+ */
+<span class="fc" id="L46">public class FileWriterWithEncodingTest extends FileBasedTestCase {</span>
+
+    private String defaultEncoding;
+    private File file1;
+    private File file2;
+    private String textContent;
+<span class="fc" id="L52">    private char[] anotherTestContent = new char[]{'f', 'z', 'x'};</span>
+
+    @Before
+    public void setUp() {
+<span class="fc" id="L56">        final File encodingFinder = new File(getTestDirectory(), &quot;finder.txt&quot;);</span>
+<span class="fc" id="L57">        OutputStreamWriter out = null;</span>
+        try {
+<span class="fc" id="L59">            out = new OutputStreamWriter(new FileOutputStream(encodingFinder));</span>
+<span class="fc" id="L60">            defaultEncoding = out.getEncoding();</span>
+<span class="nc" id="L61">        } catch (final IOException ex) {</span>
+<span class="nc" id="L62">            throw new RuntimeException(ex.getMessage());</span>
+        } finally {
+<span class="fc" id="L64">            IOUtils.closeQuietly(out);</span>
+        }
+<span class="fc" id="L66">        file1 = new File(getTestDirectory(), &quot;testfile1.txt&quot;);</span>
+<span class="fc" id="L67">        file2 = new File(getTestDirectory(), &quot;testfile2.txt&quot;);</span>
+<span class="fc" id="L68">        final char[] arr = new char[1024];</span>
+<span class="fc" id="L69">        final char[] chars = &quot;ABCDEFGHIJKLMNOPQabcdefgihklmnopq&quot;.toCharArray();</span>
+<span class="fc bfc" id="L70" title="All 2 branches covered.">        for (int i = 0; i &lt; arr.length; i++) {</span>
+<span class="fc" id="L71">            arr[i] = chars[i % chars.length];</span>
+        }
+<span class="fc" id="L73">        textContent = new String(arr);</span>
+<span class="fc" id="L74">    }</span>
+
+    @After
+    public void tearDown() throws Exception {
+<span class="fc" id="L78">        FileUtils.deleteDirectory(getTestDirectory());</span>
+<span class="fc" id="L79">        defaultEncoding = null;</span>
+<span class="fc" id="L80">        textContent = null;</span>
+<span class="fc" id="L81">    }</span>
+
+    //-----------------------------------------------------------------------
+    @Test
+    public void sameEncoding_string_constructor() throws Exception {
+<span class="fc" id="L86">        succesfulRun(new FileWriterWithEncoding(file2, defaultEncoding));</span>
+<span class="fc" id="L87">    }</span>
+
+    @Test
+    public void sameEncoding_string_string_constructor() throws Exception {
+<span class="fc" id="L91">        succesfulRun(new FileWriterWithEncoding(file2.getPath(), defaultEncoding));</span>
+<span class="fc" id="L92">    }</span>
+
+    @Test
+    public void sameEncoding_Charset_constructor() throws Exception {
+<span class="fc" id="L96">        succesfulRun(new FileWriterWithEncoding(file2, Charset.defaultCharset()));</span>
+<span class="fc" id="L97">    }</span>
+
+    @Test
+    public void sameEncoding_string_Charset_constructor() throws Exception {
+<span class="fc" id="L101">        succesfulRun(new FileWriterWithEncoding(file2.getPath(), Charset.defaultCharset()));</span>
+<span class="fc" id="L102">    }</span>
+
+    @Test
+    public void sameEncoding_CharsetEncoder_constructor() throws Exception {
+<span class="fc" id="L106">        CharsetEncoder enc = Charset.defaultCharset().newEncoder();</span>
+<span class="fc" id="L107">        succesfulRun(new FileWriterWithEncoding(file2, enc));</span>
+<span class="fc" id="L108">    }</span>
+
+    @Test
+    public void sameEncoding_string_CharsetEncoder_constructor() throws Exception {
+<span class="fc" id="L112">        CharsetEncoder enc = Charset.defaultCharset().newEncoder();</span>
+<span class="fc" id="L113">        succesfulRun(new FileWriterWithEncoding(file2.getPath(), enc));</span>
+<span class="fc" id="L114">    }</span>
+
+    private void succesfulRun(FileWriterWithEncoding fw21) throws Exception {
+<span class="fc" id="L117">        FileWriter fw1 = null;</span>
+<span class="fc" id="L118">        FileWriterWithEncoding fw2 = null;</span>
+        try {
+<span class="fc" id="L120">            fw1 = new FileWriter(file1);  // default encoding</span>
+<span class="fc" id="L121">            fw2 = fw21;</span>
+<span class="fc" id="L122">            writeTestPayload(fw1, fw2);</span>
+<span class="fc" id="L123">            checkFile(file1, file2);</span>
+
+        } finally {
+<span class="fc" id="L126">            IOUtils.closeQuietly(fw1);</span>
+<span class="fc" id="L127">            IOUtils.closeQuietly(fw2);</span>
+        }
+<span class="fc" id="L129">        assertTrue(file1.exists());</span>
+<span class="fc" id="L130">        assertTrue(file2.exists());</span>
+<span class="fc" id="L131">    }</span>
+
+    @Test
+    public void testDifferentEncoding() throws Exception {
+<span class="pc bpc" id="L135" title="1 of 2 branches missed.">        if (Charset.isSupported(&quot;UTF-16BE&quot;)) {</span>
+<span class="fc" id="L136">            FileWriter fw1 = null;</span>
+<span class="fc" id="L137">            FileWriterWithEncoding fw2 = null;</span>
+            try {
+<span class="fc" id="L139">                fw1 = new FileWriter(file1);  // default encoding</span>
+<span class="fc" id="L140">                fw2 = new FileWriterWithEncoding(file2, defaultEncoding);</span>
+<span class="fc" id="L141">                writeTestPayload(fw1, fw2);</span>
+                try {
+<span class="fc" id="L143">                    checkFile(file1, file2);</span>
+<span class="nc" id="L144">                    fail();</span>
+<span class="fc" id="L145">                } catch (final AssertionError ex) {</span>
+                    // success
+<span class="nc" id="L147">                }</span>
+
+            } finally {
+<span class="fc" id="L150">                IOUtils.closeQuietly(fw1);</span>
+<span class="fc" id="L151">                IOUtils.closeQuietly(fw2);</span>
+            }
+<span class="fc" id="L153">            assertTrue(file1.exists());</span>
+<span class="fc" id="L154">            assertTrue(file2.exists());</span>
+        }
+<span class="pc bpc" id="L156" title="1 of 2 branches missed.">        if (Charset.isSupported(&quot;UTF-16LE&quot;)) {</span>
+<span class="fc" id="L157">            FileWriter fw1 = null;</span>
+<span class="fc" id="L158">            FileWriterWithEncoding fw2 = null;</span>
+            try {
+<span class="fc" id="L160">                fw1 = new FileWriter(file1);  // default encoding</span>
+<span class="fc" id="L161">                fw2 = new FileWriterWithEncoding(file2, defaultEncoding);</span>
+<span class="fc" id="L162">                writeTestPayload(fw1, fw2);</span>
+                try {
+<span class="fc" id="L164">                    checkFile(file1, file2);</span>
+<span class="nc" id="L165">                    fail();</span>
+<span class="fc" id="L166">                } catch (final AssertionError ex) {</span>
+                    // success
+<span class="nc" id="L168">                }</span>
+
+            } finally {
+<span class="fc" id="L171">                IOUtils.closeQuietly(fw1);</span>
+<span class="fc" id="L172">                IOUtils.closeQuietly(fw2);</span>
+            }
+<span class="fc" id="L174">            assertTrue(file1.exists());</span>
+<span class="fc" id="L175">            assertTrue(file2.exists());</span>
+        }
+<span class="fc" id="L177">    }</span>
+
+    private void writeTestPayload(FileWriter fw1, FileWriterWithEncoding fw2) throws IOException {
+<span class="fc" id="L180">        assertTrue(file1.exists());</span>
+<span class="fc" id="L181">        assertTrue(file2.exists());</span>
+
+<span class="fc" id="L183">        fw1.write(textContent);</span>
+<span class="fc" id="L184">        fw2.write(textContent);</span>
+<span class="fc" id="L185">        fw1.write(65);</span>
+<span class="fc" id="L186">        fw2.write(65);</span>
+<span class="fc" id="L187">        fw1.write(anotherTestContent);</span>
+<span class="fc" id="L188">        fw2.write(anotherTestContent);</span>
+<span class="fc" id="L189">        fw1.write(anotherTestContent, 1, 2);</span>
+<span class="fc" id="L190">        fw2.write(anotherTestContent, 1, 2);</span>
+<span class="fc" id="L191">        fw1.write(&quot;CAFE&quot;, 1, 2);</span>
+<span class="fc" id="L192">        fw2.write(&quot;CAFE&quot;, 1, 2);</span>
+
+<span class="fc" id="L194">        fw1.flush();</span>
+<span class="fc" id="L195">        fw2.flush();</span>
+<span class="fc" id="L196">    }</span>
+
+    //-----------------------------------------------------------------------
+    @Test
+    public void constructor_File_encoding_badEncoding() {
+<span class="fc" id="L201">        Writer writer = null;</span>
+        try {
+<span class="nc" id="L203">            writer = new FileWriterWithEncoding(file1, &quot;BAD-ENCODE&quot;);</span>
+<span class="nc" id="L204">            fail();</span>
+<span class="fc" id="L205">        } catch (final IOException ex) {</span>
+            // expected
+<span class="fc" id="L207">            assertFalse(file1.exists());</span>
+        } finally {
+<span class="fc" id="L209">            IOUtils.closeQuietly(writer);</span>
+        }
+<span class="fc" id="L211">        assertFalse(file1.exists());</span>
+<span class="fc" id="L212">    }</span>
+
+    //-----------------------------------------------------------------------
+    @Test
+    public void constructor_File_directory() {
+<span class="fc" id="L217">        Writer writer = null;</span>
+        try {
+<span class="nc" id="L219">            writer = new FileWriterWithEncoding(getTestDirectory(), defaultEncoding);</span>
+<span class="nc" id="L220">            fail();</span>
+<span class="fc" id="L221">        } catch (final IOException ex) {</span>
+            // expected
+<span class="fc" id="L223">            assertFalse(file1.exists());</span>
+        } finally {
+<span class="fc" id="L225">            IOUtils.closeQuietly(writer);</span>
+        }
+<span class="fc" id="L227">        assertFalse(file1.exists());</span>
+<span class="fc" id="L228">    }</span>
+
+    //-----------------------------------------------------------------------
+    @Test
+    public void constructor_File_nullFile() throws IOException {
+<span class="fc" id="L233">        Writer writer = null;</span>
+        try {
+<span class="nc" id="L235">            writer = new FileWriterWithEncoding((File) null, defaultEncoding);</span>
+<span class="nc" id="L236">            fail();</span>
+<span class="fc" id="L237">        } catch (final NullPointerException ex) {</span>
+            // expected
+<span class="fc" id="L239">            assertFalse(file1.exists());</span>
+        } finally {
+<span class="fc" id="L241">            IOUtils.closeQuietly(writer);</span>
+        }
+<span class="fc" id="L243">        assertFalse(file1.exists());</span>
+<span class="fc" id="L244">    }</span>
+
+    //-----------------------------------------------------------------------
+    @Test
+    public void constructor_fileName_nullFile() throws IOException {
+<span class="fc" id="L249">        Writer writer = null;</span>
+        try {
+<span class="nc" id="L251">            writer = new FileWriterWithEncoding((String) null, defaultEncoding);</span>
+<span class="nc" id="L252">            fail();</span>
+<span class="fc" id="L253">        } catch (final NullPointerException ex) {</span>
+            // expected
+<span class="fc" id="L255">            assertFalse(file1.exists());</span>
+        } finally {
+<span class="fc" id="L257">            IOUtils.closeQuietly(writer);</span>
+        }
+<span class="fc" id="L259">        assertFalse(file1.exists());</span>
+<span class="fc" id="L260">    }</span>
+
+    @Test
+    public void sameEncoding_null_Charset_constructor() throws Exception {
+        try {
+<span class="nc" id="L265">            succesfulRun(new FileWriterWithEncoding(file2, (Charset) null));</span>
+<span class="nc" id="L266">            fail();</span>
+<span class="fc" id="L267">        } catch (NullPointerException ignore) {</span>
+
+<span class="nc" id="L269">        }</span>
+<span class="fc" id="L270">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>commons-io (Apr 20, 2019 6:11:46 PM)</div></body></html>

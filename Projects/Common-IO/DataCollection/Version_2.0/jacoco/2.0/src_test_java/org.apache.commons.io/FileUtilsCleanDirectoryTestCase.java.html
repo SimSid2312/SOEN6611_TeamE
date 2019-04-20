@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileUtilsCleanDirectoryTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.0 (Apr 20, 2019 6:00:46 PM)</a> &gt; <a href="../../index.html" class="el_group">2.0</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io</a> &gt; <span class="el_source">FileUtilsCleanDirectoryTestCase.java</span></div><h1>FileUtilsCleanDirectoryTestCase.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.io.testtools.FileBasedTestCase;
+
+/**
+ * Test cases for FileUtils.cleanDirectory() method.
+ *
+ * @version $Id$
+ * @author Chris Eldredge
+ */
+public class FileUtilsCleanDirectoryTestCase extends FileBasedTestCase {
+<span class="fc" id="L33">    final File top = getLocalTestDirectory();</span>
+
+    public FileUtilsCleanDirectoryTestCase(String name) {
+<span class="fc" id="L36">        super(name);</span>
+<span class="fc" id="L37">    }</span>
+
+    private File getLocalTestDirectory() {
+<span class="fc" id="L40">        return new File(getTestDirectory(), &quot;list-files&quot;);</span>
+    }
+
+    /**
+     * @see junit.framework.TestCase#setUp()
+     */
+    @Override
+    protected void setUp() throws Exception {
+<span class="fc" id="L48">        top.mkdirs();</span>
+<span class="fc" id="L49">    }</span>
+
+    /**
+     * @see junit.framework.TestCase#tearDown()
+     */
+    @Override
+    protected void tearDown() throws Exception {
+<span class="fc" id="L56">        chmod(top, 775, true);</span>
+<span class="fc" id="L57">        FileUtils.deleteDirectory(top);</span>
+<span class="fc" id="L58">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testCleanEmpty() throws Exception {
+<span class="fc" id="L62">        assertEquals(0, top.list().length);</span>
+
+<span class="fc" id="L64">        FileUtils.cleanDirectory(top);</span>
+
+<span class="fc" id="L66">        assertEquals(0, top.list().length);</span>
+<span class="fc" id="L67">    }</span>
+
+    public void testDeletesRegular() throws Exception {
+<span class="fc" id="L70">        FileUtils.touch(new File(top, &quot;regular&quot;));</span>
+<span class="fc" id="L71">        FileUtils.touch(new File(top, &quot;.hidden&quot;));</span>
+
+<span class="fc" id="L73">        assertEquals(2, top.list().length);</span>
+
+<span class="fc" id="L75">        FileUtils.cleanDirectory(top);</span>
+
+<span class="fc" id="L77">        assertEquals(0, top.list().length);</span>
+<span class="fc" id="L78">    }</span>
+
+    public void testDeletesNested() throws Exception {
+<span class="fc" id="L81">        final File nested = new File(top, &quot;nested&quot;);</span>
+
+<span class="fc" id="L83">        assertTrue(nested.mkdirs());</span>
+
+<span class="fc" id="L85">        FileUtils.touch(new File(nested, &quot;file&quot;));</span>
+
+<span class="fc" id="L87">        assertEquals(1, top.list().length);</span>
+
+<span class="fc" id="L89">        FileUtils.cleanDirectory(top);</span>
+
+<span class="fc" id="L91">        assertEquals(0, top.list().length);</span>
+<span class="fc" id="L92">    }</span>
+
+    public void testThrowsOnNullList() throws Exception {
+<span class="pc bpc" id="L95" title="2 of 4 branches missed.">        if (System.getProperty(&quot;os.name&quot;).startsWith(&quot;Win&quot;)  ||  !chmod(top, 0, false)) {</span>
+            // test wont work if we can't restrict permissions on the
+            // directory, so skip it.
+<span class="nc" id="L98">            return;</span>
+        }
+
+        try {
+<span class="nc" id="L102">            FileUtils.cleanDirectory(top);</span>
+<span class="nc" id="L103">            fail(&quot;expected IOException&quot;);</span>
+<span class="fc" id="L104">        } catch (IOException e) {</span>
+<span class="fc" id="L105">            assertEquals(&quot;Failed to list contents of &quot; +</span>
+<span class="fc" id="L106">                    top.getAbsolutePath(), e.getMessage());</span>
+<span class="nc" id="L107">        }</span>
+<span class="fc" id="L108">    }</span>
+
+    public void testThrowsOnCannotDeleteFile() throws Exception {
+<span class="fc" id="L111">        final File file = new File(top, &quot;restricted&quot;);</span>
+<span class="fc" id="L112">        FileUtils.touch(file);</span>
+
+<span class="pc bpc" id="L114" title="2 of 4 branches missed.">        if (System.getProperty(&quot;os.name&quot;).startsWith(&quot;Win&quot;)  ||  !chmod(top, 500, false)) {</span>
+            // test wont work if we can't restrict permissions on the
+            // directory, so skip it.
+<span class="nc" id="L117">            return;</span>
+        }
+
+        try {
+<span class="nc" id="L121">            FileUtils.cleanDirectory(top);</span>
+<span class="nc" id="L122">            fail(&quot;expected IOException&quot;);</span>
+<span class="fc" id="L123">        } catch (IOException e) {</span>
+<span class="fc" id="L124">            assertEquals(&quot;Unable to delete file: &quot; +</span>
+<span class="fc" id="L125">                    file.getAbsolutePath(), e.getMessage());</span>
+<span class="nc" id="L126">        }</span>
+<span class="fc" id="L127">    }</span>
+
+    private boolean chmod(File file, int mode, boolean recurse)
+            throws InterruptedException {
+        // TODO: Refactor this to FileSystemUtils
+<span class="fc" id="L132">        List&lt;String&gt; args = new ArrayList&lt;String&gt;();</span>
+<span class="fc" id="L133">        args.add(&quot;chmod&quot;);</span>
+
+<span class="fc bfc" id="L135" title="All 2 branches covered.">        if (recurse) {</span>
+<span class="fc" id="L136">            args.add(&quot;-R&quot;);</span>
+        }
+
+<span class="fc" id="L139">        args.add(Integer.toString(mode));</span>
+<span class="fc" id="L140">        args.add(file.getAbsolutePath());</span>
+
+        Process proc;
+
+        try {
+<span class="fc" id="L145">            proc = Runtime.getRuntime().exec(</span>
+<span class="fc" id="L146">                    args.toArray(new String[args.size()]));</span>
+<span class="nc" id="L147">        } catch (IOException e) {</span>
+<span class="nc" id="L148">            return false;</span>
+<span class="fc" id="L149">        }</span>
+<span class="fc" id="L150">        int result = proc.waitFor();</span>
+<span class="pc bpc" id="L151" title="1 of 2 branches missed.">        return (result == 0);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.0 (Apr 20, 2019 6:00:46 PM)</div></body></html>

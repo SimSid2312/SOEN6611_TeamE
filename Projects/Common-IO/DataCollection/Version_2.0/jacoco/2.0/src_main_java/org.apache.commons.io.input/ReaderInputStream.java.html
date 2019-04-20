@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ReaderInputStream.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.0 (Apr 20, 2019 6:00:46 PM)</a> &gt; <a href="../../index.html" class="el_group">2.0</a> &gt; <a href="../index.html" class="el_bundle">src/main/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.input</a> &gt; <span class="el_source">ReaderInputStream.java</span></div><h1>ReaderInputStream.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.input;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CoderResult;
+
+/**
+ * {@link InputStream} implementation that reads a character stream from a {@link Reader}
+ * and transforms it to a byte stream using a specified charset encoding. The stream
+ * is transformed using a {@link CharsetEncoder} object, guaranteeing that all charset
+ * encodings supported by the JRE are handled correctly. In particular for charsets such as
+ * UTF-16, the implementation ensures that one and only one byte order marker
+ * is produced.
+ * &lt;p&gt;
+ * Since in general it is not possible to predict the number of characters to be read from the
+ * {@link Reader} to satisfy a read request on the {@link ReaderInputStream}, all reads from
+ * the {@link Reader} are buffered. There is therefore no well defined correlation
+ * between the current position of the {@link Reader} and that of the {@link ReaderInputStream}.
+ * This also implies that in general there is no need to wrap the underlying {@link Reader}
+ * in a {@link java.io.BufferedReader}.
+ * &lt;p&gt;
+ * {@link ReaderInputStream} implements the inverse transformation of {@link java.io.InputStreamReader};
+ * in the following example, reading from &lt;tt&gt;in2&lt;/tt&gt; would return the same byte
+ * sequence as reading from &lt;tt&gt;in&lt;/tt&gt; (provided that the initial byte sequence is legal
+ * with respect to the charset encoding):
+ * &lt;pre&gt;
+ * InputStream in = ...
+ * Charset cs = ...
+ * InputStreamReader reader = new InputStreamReader(in, cs);
+ * ReaderInputStream in2 = new ReaderInputStream(reader, cs);&lt;/pre&gt;
+ * {@link ReaderInputStream} implements the same transformation as {@link java.io.OutputStreamWriter},
+ * except that the control flow is reversed: both classes transform a character stream
+ * into a byte stream, but {@link java.io.OutputStreamWriter} pushes data to the underlying stream,
+ * while {@link ReaderInputStream} pulls it from the underlying stream.
+ * &lt;p&gt;
+ * Note that while there are use cases where there is no alternative to using
+ * this class, very often the need to use this class is an indication of a flaw
+ * in the design of the code. This class is typically used in situations where an existing
+ * API only accepts an {@link InputStream}, but where the most natural way to produce the data
+ * is as a character stream, i.e. by providing a {@link Reader} instance. An example of a situation
+ * where this problem may appear is when implementing the {@link javax.activation.DataSource}
+ * interface from the Java Activation Framework.
+ * &lt;p&gt;
+ * Given the fact that the {@link Reader} class doesn't provide any way to predict whether the next
+ * read operation will block or not, it is not possible to provide a meaningful
+ * implementation of the {@link InputStream#available()} method. A call to this method
+ * will always return 0. Also, this class doesn't support {@link InputStream#mark(int)}.
+ * &lt;p&gt;
+ * Instances of {@link ReaderInputStream} are not thread safe.
+ * 
+ * @see org.apache.commons.io.output.WriterOutputStream
+ * 
+ * @author &lt;a href=&quot;mailto:veithen@apache.org&quot;&gt;Andreas Veithen&lt;/a&gt;
+ * @since Commons IO 2.0
+ */
+public class ReaderInputStream extends InputStream {
+    private static final int DEFAULT_BUFFER_SIZE = 1024;
+
+    private final Reader reader;
+    private final CharsetEncoder encoder;
+
+    /**
+     * CharBuffer used as input for the decoder. It should be reasonably
+     * large as we read data from the underlying Reader into this buffer.
+     */
+    private final CharBuffer encoderIn;
+
+    /**
+     * ByteBuffer used as output for the decoder. This buffer can be small
+     * as it is only used to transfer data from the decoder to the
+     * buffer provided by the caller.
+     */
+<span class="fc" id="L94">    private final ByteBuffer encoderOut = ByteBuffer.allocate(128);</span>
+
+    private CoderResult lastCoderResult;
+    private boolean endOfInput;
+
+    /**
+     * Construct a new {@link ReaderInputStream}.
+     * 
+     * @param reader the target {@link Reader}
+     * @param charset the charset encoding
+     * @param bufferSize the size of the input buffer in number of characters
+     */
+<span class="fc" id="L106">    public ReaderInputStream(Reader reader, Charset charset, int bufferSize) {</span>
+<span class="fc" id="L107">        this.reader = reader;</span>
+<span class="fc" id="L108">        encoder = charset.newEncoder();</span>
+<span class="fc" id="L109">        encoderIn = CharBuffer.allocate(bufferSize);</span>
+<span class="fc" id="L110">        encoderIn.flip();</span>
+<span class="fc" id="L111">    }</span>
+
+    /**
+     * Construct a new {@link ReaderInputStream} with a default input buffer size of
+     * 1024 characters.
+     * 
+     * @param reader the target {@link Reader}
+     * @param charset the charset encoding
+     */
+    public ReaderInputStream(Reader reader, Charset charset) {
+<span class="fc" id="L121">        this(reader, charset, DEFAULT_BUFFER_SIZE);</span>
+<span class="fc" id="L122">    }</span>
+
+    /**
+     * Construct a new {@link ReaderInputStream}.
+     * 
+     * @param reader the target {@link Reader}
+     * @param charsetName the name of the charset encoding
+     * @param bufferSize the size of the input buffer in number of characters
+     */
+    public ReaderInputStream(Reader reader, String charsetName, int bufferSize) {
+<span class="fc" id="L132">        this(reader, Charset.forName(charsetName), bufferSize);</span>
+<span class="fc" id="L133">    }</span>
+
+    /**
+     * Construct a new {@link ReaderInputStream} with a default input buffer size of
+     * 1024 characters.
+     * 
+     * @param reader the target {@link Reader}
+     * @param charsetName the name of the charset encoding
+     */
+    public ReaderInputStream(Reader reader, String charsetName) {
+<span class="fc" id="L143">        this(reader, charsetName, DEFAULT_BUFFER_SIZE);</span>
+<span class="fc" id="L144">    }</span>
+
+    /**
+     * Construct a new {@link ReaderInputStream} that uses the default character encoding
+     * with a default input buffer size of 1024 characters.
+     * 
+     * @param reader the target {@link Reader}
+     */
+    public ReaderInputStream(Reader reader) {
+<span class="fc" id="L153">        this(reader, Charset.defaultCharset());</span>
+<span class="fc" id="L154">    }</span>
+
+    /**
+     * Read the specified number of bytes into an array.
+     * 
+     * @param b the byte array to read into
+     * @param off the offset to start reading bytes into
+     * @param len the number of bytes to read
+     * @return the number of bytes read or &lt;code&gt;-1&lt;/code&gt;
+     *         if the end of the stream has been reached
+     * @throws IOException if an I/O error occurs
+     */
+    @Override
+    public int read(byte[] b, int off, int len) throws IOException {
+<span class="fc" id="L168">        int read = 0;</span>
+<span class="fc bfc" id="L169" title="All 2 branches covered.">        while (len &gt; 0) {</span>
+<span class="fc bfc" id="L170" title="All 2 branches covered.">            if (encoderOut.position() &gt; 0) {</span>
+<span class="fc" id="L171">                encoderOut.flip();</span>
+<span class="fc" id="L172">                int c = Math.min(encoderOut.remaining(), len);</span>
+<span class="fc" id="L173">                encoderOut.get(b, off, c);</span>
+<span class="fc" id="L174">                off += c;</span>
+<span class="fc" id="L175">                len -= c;</span>
+<span class="fc" id="L176">                read += c;</span>
+<span class="fc" id="L177">                encoderOut.compact();</span>
+<span class="fc" id="L178">            } else {</span>
+<span class="fc bfc" id="L179" title="All 6 branches covered.">                if (!endOfInput &amp;&amp; (lastCoderResult == null || lastCoderResult.isUnderflow())) {</span>
+<span class="fc" id="L180">                    encoderIn.compact();</span>
+<span class="fc" id="L181">                    int position = encoderIn.position();</span>
+                    // We don't use Reader#read(CharBuffer) here because it is more efficient
+                    // to write directly to the underlying char array (the default implementation
+                    // copies data to a temporary char array).
+<span class="fc" id="L185">                    int c = reader.read(encoderIn.array(), position, encoderIn.remaining());</span>
+<span class="fc bfc" id="L186" title="All 2 branches covered.">                    if (c == -1) {</span>
+<span class="fc" id="L187">                        endOfInput = true;</span>
+                    } else {
+<span class="fc" id="L189">                        encoderIn.position(position+c);</span>
+                    }
+<span class="fc" id="L191">                    encoderIn.flip();</span>
+                }
+<span class="fc" id="L193">                lastCoderResult = encoder.encode(encoderIn, encoderOut, endOfInput);</span>
+<span class="pc bpc" id="L194" title="1 of 4 branches missed.">                if (endOfInput &amp;&amp; encoderOut.position() == 0) {</span>
+<span class="fc" id="L195">                    break;</span>
+                }
+            }
+        }
+<span class="fc bfc" id="L199" title="All 4 branches covered.">        return read == 0 &amp;&amp; endOfInput ? -1 : read;</span>
+    }
+
+    /**
+     * Read the specified number of bytes into an array.
+     * 
+     * @param b the byte array to read into
+     * @return the number of bytes read or &lt;code&gt;-1&lt;/code&gt;
+     *         if the end of the stream has been reached
+     * @throws IOException if an I/O error occurs
+     */
+    @Override
+    public int read(byte[] b) throws IOException {
+<span class="fc" id="L212">        return read(b, 0, b.length);</span>
+    }
+
+    /**
+     * Read a single byte.
+     *
+     * @return either the byte read or &lt;code&gt;-1&lt;/code&gt; if the end of the stream
+     *         has been reached
+     * @throws IOException if an I/O error occurs
+     */
+    @Override
+    public int read() throws IOException {
+<span class="fc" id="L224">        byte[] b = new byte[1];</span>
+<span class="fc bfc" id="L225" title="All 2 branches covered.">        return read(b) == -1 ? -1 : b[0] &amp; 0xFF;</span>
+    }
+
+    /**
+     * Close the stream. This method will cause the underlying {@link Reader}
+     * to be closed.
+     * @throws IOException if an I/O error occurs
+     */
+    @Override
+    public void close() throws IOException {
+<span class="nc" id="L235">        reader.close();</span>
+<span class="nc" id="L236">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.0 (Apr 20, 2019 6:00:46 PM)</div></body></html>

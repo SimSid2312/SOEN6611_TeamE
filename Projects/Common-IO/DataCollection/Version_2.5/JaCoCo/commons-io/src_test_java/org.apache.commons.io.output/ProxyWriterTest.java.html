@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ProxyWriterTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-io (Apr 20, 2019 6:11:46 PM)</a> &gt; <a href="../../index.html" class="el_group">commons-io</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.output</a> &gt; <span class="el_source">ProxyWriterTest.java</span></div><h1>ProxyWriterTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.output;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
+
+import org.junit.Test;
+
+/**
+ * Test {@link ProxyWriter}.
+ *
+ * @version $Id$
+ */
+<span class="fc" id="L34">public class ProxyWriterTest {</span>
+
+    @Test
+    public void appendCharSequence() throws Exception {
+<span class="fc" id="L38">        final StringBuilderWriter writer = new StringBuilderWriter();</span>
+<span class="fc" id="L39">        final ProxyWriter proxy = new ProxyWriter(writer);</span>
+        try {
+<span class="fc" id="L41">            proxy.append(&quot;ABC&quot;);</span>
+<span class="nc" id="L42">        } catch (final Exception e) {</span>
+<span class="nc" id="L43">            fail(&quot;Appending CharSequence threw &quot; + e);</span>
+<span class="fc" id="L44">        }</span>
+<span class="fc" id="L45">        assertEquals(&quot;ABC&quot;, writer.toString());</span>
+<span class="fc" id="L46">        proxy.close();</span>
+<span class="fc" id="L47">    }</span>
+
+    @Test
+    public void appendCharSequence_with_offset() throws Exception {
+<span class="fc" id="L51">        final StringBuilderWriter writer = new StringBuilderWriter();</span>
+<span class="fc" id="L52">        final ProxyWriter proxy = new ProxyWriter(writer);</span>
+<span class="fc" id="L53">        proxy.append(&quot;ABC&quot;, 1, 3);</span>
+<span class="fc" id="L54">        proxy.flush();</span>
+<span class="fc" id="L55">        assertEquals(&quot;BC&quot;, writer.toString());</span>
+<span class="fc" id="L56">        proxy.close();</span>
+<span class="fc" id="L57">    }</span>
+
+    @Test
+    public void appendChar() throws Exception {
+<span class="fc" id="L61">        final StringBuilderWriter writer = new StringBuilderWriter();</span>
+<span class="fc" id="L62">        final ProxyWriter proxy = new ProxyWriter(writer);</span>
+<span class="fc" id="L63">        proxy.append('c');</span>
+<span class="fc" id="L64">        assertEquals(&quot;c&quot;, writer.toString());</span>
+<span class="fc" id="L65">        proxy.close();</span>
+<span class="fc" id="L66">    }</span>
+
+    @Test
+    public void writeString() throws Exception {
+<span class="fc" id="L70">        final StringBuilderWriter writer = new StringBuilderWriter();</span>
+<span class="fc" id="L71">        final ProxyWriter proxy = new ProxyWriter(writer);</span>
+        try {
+<span class="fc" id="L73">            proxy.write(&quot;ABC&quot;);</span>
+<span class="nc" id="L74">        } catch (final Exception e) {</span>
+<span class="nc" id="L75">            fail(&quot;Writing String threw &quot; + e);</span>
+<span class="fc" id="L76">        }</span>
+<span class="fc" id="L77">        assertEquals(&quot;ABC&quot;, writer.toString());</span>
+<span class="fc" id="L78">        proxy.close();</span>
+<span class="fc" id="L79">    }</span>
+
+    @Test
+    public void writeStringPartial() throws Exception {
+<span class="fc" id="L83">        final StringBuilderWriter writer = new StringBuilderWriter();</span>
+<span class="fc" id="L84">        final ProxyWriter proxy = new ProxyWriter(writer);</span>
+        try {
+<span class="fc" id="L86">            proxy.write(&quot;ABC&quot;, 1, 2);</span>
+<span class="nc" id="L87">        } catch (final Exception e) {</span>
+<span class="nc" id="L88">            fail(&quot;Writing String threw &quot; + e);</span>
+<span class="fc" id="L89">        }</span>
+<span class="fc" id="L90">        assertEquals(&quot;BC&quot;, writer.toString());</span>
+<span class="fc" id="L91">        proxy.close();</span>
+<span class="fc" id="L92">    }</span>
+
+    @Test
+    public void writeCharArray() throws Exception {
+<span class="fc" id="L96">        final StringBuilderWriter writer = new StringBuilderWriter();</span>
+<span class="fc" id="L97">        final ProxyWriter proxy = new ProxyWriter(writer);</span>
+        try {
+<span class="fc" id="L99">            proxy.write(new char[]{'A', 'B', 'C'});</span>
+<span class="nc" id="L100">        } catch (final Exception e) {</span>
+<span class="nc" id="L101">            fail(&quot;Writing char[] threw &quot; + e);</span>
+<span class="fc" id="L102">        }</span>
+<span class="fc" id="L103">        assertEquals(&quot;ABC&quot;, writer.toString());</span>
+<span class="fc" id="L104">        proxy.close();</span>
+<span class="fc" id="L105">    }</span>
+
+    @Test
+    public void writeInt() throws Exception {
+<span class="fc" id="L109">        final StringBuilderWriter writer = new StringBuilderWriter();</span>
+<span class="fc" id="L110">        final ProxyWriter proxy = new ProxyWriter(writer);</span>
+        try {
+<span class="fc" id="L112">            proxy.write(65);</span>
+<span class="nc" id="L113">        } catch (final Exception e) {</span>
+<span class="nc" id="L114">            fail(&quot;Writing char[] threw &quot; + e);</span>
+<span class="fc" id="L115">        }</span>
+<span class="fc" id="L116">        assertEquals(&quot;A&quot;, writer.toString());</span>
+<span class="fc" id="L117">        proxy.close();</span>
+<span class="fc" id="L118">    }</span>
+
+    @Test
+    public void writeCharArrayPartial() throws Exception {
+<span class="fc" id="L122">        final StringBuilderWriter writer = new StringBuilderWriter();</span>
+<span class="fc" id="L123">        final ProxyWriter proxy = new ProxyWriter(writer);</span>
+        try {
+<span class="fc" id="L125">            proxy.write(new char[]{'A', 'B', 'C'}, 1, 2);</span>
+<span class="nc" id="L126">        } catch (final Exception e) {</span>
+<span class="nc" id="L127">            fail(&quot;Writing char[] threw &quot; + e);</span>
+<span class="fc" id="L128">        }</span>
+<span class="fc" id="L129">        assertEquals(&quot;BC&quot;, writer.toString());</span>
+<span class="fc" id="L130">        proxy.close();</span>
+<span class="fc" id="L131">    }</span>
+
+    @Test
+    public void nullString() throws Exception {
+
+<span class="fc" id="L136">        final ProxyWriter proxy = new ProxyWriter(new NullWriter());</span>
+
+        try {
+<span class="fc" id="L139">            proxy.write((String) null);</span>
+<span class="nc" id="L140">        } catch (final Exception e) {</span>
+<span class="nc" id="L141">            fail(&quot;Writing null String threw &quot; + e);</span>
+<span class="fc" id="L142">        }</span>
+
+        try {
+<span class="fc" id="L145">            proxy.write((String) null, 0, 0);</span>
+<span class="nc" id="L146">        } catch (final Exception e) {</span>
+<span class="nc" id="L147">            fail(&quot;Writing null String threw &quot; + e);</span>
+<span class="fc" id="L148">        }</span>
+<span class="fc" id="L149">        proxy.close();</span>
+<span class="fc" id="L150">    }</span>
+
+    @Test
+    public void nullCharArray() throws Exception {
+
+<span class="fc" id="L155">        final ProxyWriter proxy = new ProxyWriter(new NullWriter());</span>
+
+        try {
+<span class="fc" id="L158">            proxy.write((char[]) null);</span>
+<span class="nc" id="L159">        } catch (final Exception e) {</span>
+<span class="nc" id="L160">            fail(&quot;Writing null char[] threw &quot; + e);</span>
+<span class="fc" id="L161">        }</span>
+
+        try {
+<span class="fc" id="L164">            proxy.write((char[]) null, 0, 0);</span>
+<span class="nc" id="L165">        } catch (final Exception e) {</span>
+<span class="nc" id="L166">            fail(&quot;Writing null char[] threw &quot; + e);</span>
+<span class="fc" id="L167">        }</span>
+<span class="fc" id="L168">        proxy.close();</span>
+<span class="fc" id="L169">    }</span>
+
+    @Test
+    public void nullCharSequencec() throws Exception {
+
+<span class="fc" id="L174">        final ProxyWriter proxy = new ProxyWriter(new NullWriter());</span>
+
+        try {
+<span class="fc" id="L177">            proxy.append(null);</span>
+<span class="nc" id="L178">        } catch (final Exception e) {</span>
+<span class="nc" id="L179">            fail(&quot;Appending null CharSequence threw &quot; + e);</span>
+<span class="fc" id="L180">        }</span>
+<span class="fc" id="L181">        proxy.close();</span>
+<span class="fc" id="L182">    }</span>
+
+    @Test(expected = UnsupportedEncodingException.class)
+    public void exceptions_in_append_char() throws IOException {
+<span class="fc" id="L186">        OutputStreamWriter osw = new OutputStreamWriter(new ByteArrayOutputStream()) {</span>
+            @Override
+            public void write(int c) throws IOException {
+<span class="fc" id="L189">                throw new UnsupportedEncodingException(&quot;Bah&quot;);</span>
+            }
+        };
+<span class="fc" id="L192">        final ProxyWriter proxy = new ProxyWriter(osw);</span>
+        try {
+<span class="nc" id="L194">            proxy.append('c');</span>
+        } finally {
+<span class="fc" id="L196">            proxy.close();</span>
+        }
+<span class="nc" id="L198">    }</span>
+
+    @Test(expected = UnsupportedEncodingException.class)
+    public void exceptions_in_append_charSequence() throws IOException {
+<span class="fc" id="L202">        OutputStreamWriter osw = new OutputStreamWriter(new ByteArrayOutputStream()) {</span>
+            @Override
+            public Writer append(CharSequence csq) throws IOException {
+<span class="fc" id="L205">                throw new UnsupportedEncodingException(&quot;Bah&quot;);</span>
+            }
+        };
+<span class="fc" id="L208">        final ProxyWriter proxy = new ProxyWriter(osw);</span>
+        try {
+<span class="nc" id="L210">            proxy.append(&quot;ABCE&quot;);</span>
+        } finally {
+<span class="fc" id="L212">            proxy.close();</span>
+        }
+<span class="nc" id="L214">    }</span>
+
+    @Test(expected = UnsupportedEncodingException.class)
+    public void exceptions_in_append_charSequence_offset() throws IOException {
+<span class="fc" id="L218">        OutputStreamWriter osw = new OutputStreamWriter(new ByteArrayOutputStream()) {</span>
+            @Override
+            public Writer append(CharSequence csq, int start, int end) throws IOException {
+<span class="fc" id="L221">                throw new UnsupportedEncodingException(&quot;Bah&quot;);</span>
+            }
+        };
+<span class="fc" id="L224">        final ProxyWriter proxy = new ProxyWriter(osw);</span>
+        try {
+<span class="nc" id="L226">            proxy.append(&quot;ABCE&quot;, 1, 2);</span>
+        } finally {
+<span class="fc" id="L228">            proxy.close();</span>
+        }
+<span class="nc" id="L230">    }</span>
+
+    @Test(expected = UnsupportedEncodingException.class)
+    public void exceptions_in_write_int() throws IOException {
+<span class="fc" id="L234">        OutputStreamWriter osw = new OutputStreamWriter(new ByteArrayOutputStream()) {</span>
+            @Override
+            public void write(int c) throws IOException {
+<span class="fc" id="L237">                throw new UnsupportedEncodingException(&quot;Bah&quot;);</span>
+            }
+        };
+<span class="fc" id="L240">        final ProxyWriter proxy = new ProxyWriter(osw);</span>
+        try {
+<span class="nc" id="L242">            proxy.write((int) 'a');</span>
+        } finally {
+<span class="fc" id="L244">            proxy.close();</span>
+        }
+<span class="nc" id="L246">    }</span>
+
+    @Test(expected = UnsupportedEncodingException.class)
+    public void exceptions_in_write_char_array() throws IOException {
+<span class="fc" id="L250">        OutputStreamWriter osw = new OutputStreamWriter(new ByteArrayOutputStream()) {</span>
+            @Override
+            public void write(char[] cbuf) throws IOException {
+<span class="fc" id="L253">                throw new UnsupportedEncodingException(&quot;Bah&quot;);</span>
+            }
+        };
+<span class="fc" id="L256">        final ProxyWriter proxy = new ProxyWriter(osw);</span>
+        try {
+<span class="nc" id="L258">            proxy.write(&quot;ABCE&quot;.toCharArray());</span>
+        } finally {
+<span class="fc" id="L260">            proxy.close();</span>
+        }
+<span class="nc" id="L262">    }</span>
+
+    @Test(expected = UnsupportedEncodingException.class)
+    public void exceptions_in_write_offset_char_array() throws IOException {
+<span class="fc" id="L266">        OutputStreamWriter osw = new OutputStreamWriter(new ByteArrayOutputStream()) {</span>
+            @Override
+            public void write(char[] cbuf, int off, int len) throws IOException {
+<span class="fc" id="L269">                throw new UnsupportedEncodingException(&quot;Bah&quot;);</span>
+            }
+        };
+<span class="fc" id="L272">        final ProxyWriter proxy = new ProxyWriter(osw);</span>
+        try {
+<span class="nc" id="L274">            proxy.write(&quot;ABCE&quot;.toCharArray(), 2, 3);</span>
+        } finally {
+<span class="fc" id="L276">            proxy.close();</span>
+        }
+<span class="nc" id="L278">    }</span>
+
+    @Test(expected = UnsupportedEncodingException.class)
+    public void exceptions_in_write_string() throws IOException {
+<span class="fc" id="L282">        OutputStreamWriter osw = new OutputStreamWriter(new ByteArrayOutputStream()) {</span>
+            @Override
+            public void write(String str) throws IOException {
+<span class="fc" id="L285">                throw new UnsupportedEncodingException(&quot;Bah&quot;);</span>
+            }
+        };
+<span class="fc" id="L288">        final ProxyWriter proxy = new ProxyWriter(osw);</span>
+        try {
+<span class="nc" id="L290">            proxy.write(&quot;ABCE&quot;);</span>
+        } finally {
+<span class="fc" id="L292">            proxy.close();</span>
+        }
+<span class="nc" id="L294">    }</span>
+
+    @Test(expected = UnsupportedEncodingException.class)
+    public void exceptions_in_write_string_offset() throws IOException {
+<span class="fc" id="L298">        OutputStreamWriter osw = new OutputStreamWriter(new ByteArrayOutputStream()) {</span>
+            @Override
+            public void write(String str, int off, int len) throws IOException {
+<span class="fc" id="L301">                throw new UnsupportedEncodingException(&quot;Bah&quot;);</span>
+            }
+        };
+<span class="fc" id="L304">        final ProxyWriter proxy = new ProxyWriter(osw);</span>
+        try {
+<span class="nc" id="L306">            proxy.write(&quot;ABCE&quot;, 1, 3);</span>
+        } finally {
+<span class="fc" id="L308">            proxy.close();</span>
+        }
+<span class="nc" id="L310">    }</span>
+
+    @Test(expected = UnsupportedEncodingException.class)
+    public void exceptions_in_flush() throws IOException {
+<span class="fc" id="L314">        OutputStreamWriter osw = new OutputStreamWriter(new ByteArrayOutputStream()) {</span>
+            @Override
+            public void flush() throws IOException {
+<span class="fc" id="L317">                throw new UnsupportedEncodingException(&quot;Bah&quot;);</span>
+            }
+        };
+<span class="fc" id="L320">        final ProxyWriter proxy = new ProxyWriter(osw);</span>
+        try {
+<span class="nc" id="L322">            proxy.flush();</span>
+        } finally {
+<span class="fc" id="L324">            proxy.close();</span>
+        }
+<span class="nc" id="L326">    }</span>
+
+    @Test(expected = UnsupportedEncodingException.class)
+    public void exceptions_in_close() throws IOException {
+<span class="fc" id="L330">        OutputStreamWriter osw = new OutputStreamWriter(new ByteArrayOutputStream()) {</span>
+            @Override
+            public void close() throws IOException {
+<span class="fc" id="L333">                throw new UnsupportedEncodingException(&quot;Bah&quot;);</span>
+            }
+        };
+<span class="fc" id="L336">        final ProxyWriter proxy = new ProxyWriter(osw);</span>
+<span class="nc" id="L337">        proxy.close();</span>
+<span class="nc" id="L338">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>commons-io (Apr 20, 2019 6:11:46 PM)</div></body></html>

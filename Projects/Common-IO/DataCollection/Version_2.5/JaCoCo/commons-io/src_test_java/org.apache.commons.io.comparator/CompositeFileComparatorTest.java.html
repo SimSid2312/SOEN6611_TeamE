@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>CompositeFileComparatorTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-io (Apr 20, 2019 6:11:46 PM)</a> &gt; <a href="../../index.html" class="el_group">commons-io</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.comparator</a> &gt; <span class="el_source">CompositeFileComparatorTest.java</span></div><h1>CompositeFileComparatorTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.comparator;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.testtools.TestUtils;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+/**
+ * Test case for {@link CompositeFileComparator}.
+ */
+<span class="fc" id="L38">public class CompositeFileComparatorTest extends ComparatorAbstractTestCase {</span>
+
+    @Before
+    public void setUp() throws Exception {
+<span class="fc" id="L42">        comparator = new CompositeFileComparator(</span>
+                new AbstractFileComparator[] {
+                    (AbstractFileComparator) SizeFileComparator.SIZE_COMPARATOR,
+                    (AbstractFileComparator) ExtensionFileComparator.EXTENSION_COMPARATOR});
+<span class="fc" id="L46">        reverse = new ReverseComparator(comparator);</span>
+<span class="fc" id="L47">        final File dir = getTestDirectory();</span>
+<span class="fc" id="L48">        lessFile   = new File(dir, &quot;xyz.txt&quot;);</span>
+<span class="fc" id="L49">        equalFile1 = new File(dir, &quot;foo.txt&quot;);</span>
+<span class="fc" id="L50">        equalFile2 = new File(dir, &quot;bar.txt&quot;);</span>
+<span class="fc" id="L51">        moreFile   = new File(dir, &quot;foo.xyz&quot;);</span>
+<span class="pc bpc" id="L52" title="1 of 2 branches missed.">        if (!lessFile.getParentFile().exists()) {</span>
+<span class="nc" id="L53">            throw new IOException(&quot;Cannot create file &quot; + lessFile</span>
+                    + &quot; as the parent directory does not exist&quot;);
+        }
+<span class="fc" id="L56">        final BufferedOutputStream output3 =</span>
+                new BufferedOutputStream(new FileOutputStream(lessFile));
+        try {
+<span class="fc" id="L59">            TestUtils.generateTestData(output3, (long) 32);</span>
+        } finally {
+<span class="fc" id="L61">            IOUtils.closeQuietly(output3);</span>
+        }
+<span class="pc bpc" id="L63" title="1 of 2 branches missed.">        if (!equalFile1.getParentFile().exists()) {</span>
+<span class="nc" id="L64">            throw new IOException(&quot;Cannot create file &quot; + equalFile1</span>
+                    + &quot; as the parent directory does not exist&quot;);
+        }
+<span class="fc" id="L67">        final BufferedOutputStream output2 =</span>
+                new BufferedOutputStream(new FileOutputStream(equalFile1));
+        try {
+<span class="fc" id="L70">            TestUtils.generateTestData(output2, (long) 48);</span>
+        } finally {
+<span class="fc" id="L72">            IOUtils.closeQuietly(output2);</span>
+        }
+<span class="pc bpc" id="L74" title="1 of 2 branches missed.">        if (!equalFile2.getParentFile().exists()) {</span>
+<span class="nc" id="L75">            throw new IOException(&quot;Cannot create file &quot; + equalFile2</span>
+                    + &quot; as the parent directory does not exist&quot;);
+        }
+<span class="fc" id="L78">        final BufferedOutputStream output1 =</span>
+                new BufferedOutputStream(new FileOutputStream(equalFile2));
+        try {
+<span class="fc" id="L81">            TestUtils.generateTestData(output1, (long) 48);</span>
+        } finally {
+<span class="fc" id="L83">            IOUtils.closeQuietly(output1);</span>
+        }
+<span class="pc bpc" id="L85" title="1 of 2 branches missed.">        if (!moreFile.getParentFile().exists()) {</span>
+<span class="nc" id="L86">            throw new IOException(&quot;Cannot create file &quot; + moreFile</span>
+                    + &quot; as the parent directory does not exist&quot;);
+        }
+<span class="fc" id="L89">        final BufferedOutputStream output =</span>
+                new BufferedOutputStream(new FileOutputStream(moreFile));
+        try {
+<span class="fc" id="L92">            TestUtils.generateTestData(output, (long) 48);</span>
+        } finally {
+<span class="fc" id="L94">            IOUtils.closeQuietly(output);</span>
+        }
+<span class="fc" id="L96">    }</span>
+
+    /**
+     * Test Constructor with null Iterable
+     */
+    @Test
+    public void constructorIterable_order() {
+<span class="fc" id="L103">        final List&lt;Comparator&lt;File&gt;&gt; list = new ArrayList&lt;Comparator&lt;File&gt;&gt;();</span>
+<span class="fc" id="L104">        list.add(SizeFileComparator.SIZE_COMPARATOR);</span>
+<span class="fc" id="L105">        list.add(ExtensionFileComparator.EXTENSION_COMPARATOR);</span>
+<span class="fc" id="L106">        final Comparator&lt;File&gt; c = new CompositeFileComparator(list);</span>
+
+<span class="fc" id="L108">        assertEquals(&quot;equal&quot;, 0, c.compare(equalFile1, equalFile2));</span>
+<span class="pc bpc" id="L109" title="1 of 2 branches missed.">        assertTrue(&quot;less&quot;,  c.compare(lessFile, moreFile) &lt; 0);</span>
+<span class="pc bpc" id="L110" title="1 of 2 branches missed.">        assertTrue(&quot;more&quot;,  c.compare(moreFile, lessFile) &gt; 0);</span>
+<span class="fc" id="L111">    }</span>
+
+    /**
+     * Test Constructor with null Iterable
+     */
+    @Test
+    public void constructorIterable_Null() {
+<span class="fc" id="L118">        final Comparator&lt;File&gt; c = new CompositeFileComparator((Iterable&lt;Comparator&lt;File&gt;&gt;)null);</span>
+<span class="fc" id="L119">        assertEquals(&quot;less,more&quot;, 0, c.compare(lessFile, moreFile));</span>
+<span class="fc" id="L120">        assertEquals(&quot;more,less&quot;, 0, c.compare(moreFile, lessFile));</span>
+<span class="fc" id="L121">        assertEquals(&quot;toString&quot;, &quot;CompositeFileComparator{}&quot;, c.toString());</span>
+<span class="fc" id="L122">    }</span>
+
+    /**
+     * Test Constructor with null array
+     */
+    @Test
+    public void constructorArray_Null() {
+<span class="fc" id="L129">        final Comparator&lt;File&gt; c = new CompositeFileComparator((Comparator&lt;File&gt;[])null);</span>
+<span class="fc" id="L130">        assertEquals(&quot;less,more&quot;, 0, c.compare(lessFile, moreFile));</span>
+<span class="fc" id="L131">        assertEquals(&quot;more,less&quot;, 0, c.compare(moreFile, lessFile));</span>
+<span class="fc" id="L132">        assertEquals(&quot;toString&quot;, &quot;CompositeFileComparator{}&quot;, c.toString());</span>
+<span class="fc" id="L133">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>commons-io (Apr 20, 2019 6:11:46 PM)</div></body></html>

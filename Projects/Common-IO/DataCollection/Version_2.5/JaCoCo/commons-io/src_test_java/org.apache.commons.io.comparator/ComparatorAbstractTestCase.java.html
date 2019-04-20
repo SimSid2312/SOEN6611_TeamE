@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ComparatorAbstractTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-io (Apr 20, 2019 6:11:46 PM)</a> &gt; <a href="../../index.html" class="el_group">commons-io</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.comparator</a> &gt; <span class="el_source">ComparatorAbstractTestCase.java</span></div><h1>ComparatorAbstractTestCase.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.comparator;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.testtools.FileBasedTestCase;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+
+/**
+ * Base Test case for Comparator implementations.
+ */
+<span class="fc" id="L40">public abstract class ComparatorAbstractTestCase extends FileBasedTestCase {</span>
+
+    /** comparator instance */
+    protected AbstractFileComparator comparator;
+
+    /** reverse comparator instance */
+    protected Comparator&lt;File&gt; reverse;
+
+    /** File which compares equal to  &quot;equalFile2&quot; */
+    protected File equalFile1;
+
+    /** File which compares equal to  &quot;equalFile1&quot; */
+    protected File equalFile2;
+
+    /** File which is less than the &quot;moreFile&quot; */
+    protected File lessFile;
+
+    /** File which is more than the &quot;lessFile&quot; */
+    protected File moreFile;
+
+    /** @see junit.framework.TestCase#tearDown() */
+    @After
+    public void tearDown() throws Exception {
+<span class="fc" id="L63">        comparator = null;</span>
+<span class="fc" id="L64">        reverse = null;</span>
+<span class="fc" id="L65">        equalFile1 = null;</span>
+<span class="fc" id="L66">        equalFile2 = null;</span>
+<span class="fc" id="L67">        lessFile = null;</span>
+<span class="fc" id="L68">        moreFile = null;</span>
+<span class="fc" id="L69">        FileUtils.deleteDirectory(getTestDirectory());</span>
+<span class="fc" id="L70">    }</span>
+
+    /**
+     * Test the comparator.
+     */
+    @Test
+    public void testComparator() {
+<span class="fc" id="L77">        assertEquals(&quot;equal&quot;, 0, comparator.compare(equalFile1, equalFile2));</span>
+<span class="pc bpc" id="L78" title="1 of 2 branches missed.">        assertTrue(&quot;less&quot;,  comparator.compare(lessFile, moreFile) &lt; 0);</span>
+<span class="pc bpc" id="L79" title="1 of 2 branches missed.">        assertTrue(&quot;more&quot;,  comparator.compare(moreFile, lessFile) &gt; 0);</span>
+<span class="fc" id="L80">    }</span>
+
+    /**
+     * Test the comparator reversed.
+     */
+    @Ignore
+    @Test
+    public void testReverseComparator() {
+<span class="nc" id="L88">        assertEquals(&quot;equal&quot;, 0, reverse.compare(equalFile1, equalFile2));</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">        assertTrue(&quot;less&quot;,  reverse.compare(moreFile, lessFile) &lt; 0);</span>
+<span class="nc bnc" id="L90" title="All 2 branches missed.">        assertTrue(&quot;more&quot;,  reverse.compare(lessFile, moreFile) &gt; 0);</span>
+<span class="nc" id="L91">    }</span>
+
+    /**
+     * Test comparator array sort is null safe.
+     */
+    @Test
+    public void testSortArrayNull() {
+<span class="fc" id="L98">        assertNull(comparator.sort((File[])null));</span>
+<span class="fc" id="L99">    }</span>
+
+    /**
+     * Test the comparator array sort.
+     */
+    @Ignore
+    @Test
+    public void testSortArray() {
+<span class="nc" id="L107">        final File[] files = new File[3];</span>
+<span class="nc" id="L108">        files[0] = equalFile1;</span>
+<span class="nc" id="L109">        files[1] = moreFile;</span>
+<span class="nc" id="L110">        files[2] = lessFile;</span>
+<span class="nc" id="L111">        comparator.sort(files);</span>
+<span class="nc" id="L112">        assertSame(&quot;equal&quot;, lessFile, files[0]);</span>
+<span class="nc" id="L113">        assertSame(&quot;less&quot;,  equalFile1, files[1]);</span>
+<span class="nc" id="L114">        assertSame(&quot;more&quot;,  moreFile, files[2]);</span>
+<span class="nc" id="L115">    }</span>
+
+    /**
+     * Test the comparator array sort.
+     */
+    @Test
+    public void testSortList() {
+<span class="fc" id="L122">        final List&lt;File&gt; files = new ArrayList&lt;File&gt;();</span>
+<span class="fc" id="L123">        files.add(equalFile1);</span>
+<span class="fc" id="L124">        files.add(moreFile);</span>
+<span class="fc" id="L125">        files.add(lessFile);</span>
+<span class="fc" id="L126">        comparator.sort(files);</span>
+<span class="fc" id="L127">        assertSame(&quot;equal&quot;, lessFile, files.get(0));</span>
+<span class="fc" id="L128">        assertSame(&quot;less&quot;,  equalFile1, files.get(1));</span>
+<span class="fc" id="L129">        assertSame(&quot;more&quot;,  moreFile, files.get(2));</span>
+<span class="fc" id="L130">    }</span>
+
+    /**
+     * Test comparator list sort is null safe.
+     */
+    @Test
+    public void testSortListNull() {
+<span class="fc" id="L137">        assertNull(comparator.sort((List&lt;File&gt;)null));</span>
+<span class="fc" id="L138">    }</span>
+
+    /**
+     * Test comparator toString.
+     */
+    @Test
+    public void testToString() {
+<span class="fc" id="L145">        assertNotNull(&quot;comparator&quot;, comparator.toString());</span>
+<span class="fc" id="L146">        assertTrue(&quot;reverse&quot;, reverse.toString().startsWith(&quot;ReverseComparator[&quot;));</span>
+<span class="fc" id="L147">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>commons-io (Apr 20, 2019 6:11:46 PM)</div></body></html>

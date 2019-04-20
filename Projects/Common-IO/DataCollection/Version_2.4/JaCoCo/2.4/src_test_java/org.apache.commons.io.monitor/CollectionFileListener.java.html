@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>CollectionFileListener.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.4 (Apr 20, 2019 6:07:50 PM)</a> &gt; <a href="../../index.html" class="el_group">2.4</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.monitor</a> &gt; <span class="el_source">CollectionFileListener.java</span></div><h1>CollectionFileListener.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.monitor;
+
+import java.io.File;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+
+/**
+ * {@link FileAlterationListener} implementation that adds created, changed and deleted
+ * files/directories to a set of {@link Collection}s.
+ */
+public class CollectionFileListener implements FileAlterationListener, Serializable {
+
+    private final boolean clearOnStart;
+<span class="fc" id="L31">    private final Collection&lt;File&gt; createdFiles = new ArrayList&lt;File&gt;();</span>
+<span class="fc" id="L32">    private final Collection&lt;File&gt; changedFiles = new ArrayList&lt;File&gt;();</span>
+<span class="fc" id="L33">    private final Collection&lt;File&gt; deletedFiles = new ArrayList&lt;File&gt;();</span>
+<span class="fc" id="L34">    private final Collection&lt;File&gt; createdDirectories = new ArrayList&lt;File&gt;();</span>
+<span class="fc" id="L35">    private final Collection&lt;File&gt; changedDirectories = new ArrayList&lt;File&gt;();</span>
+<span class="fc" id="L36">    private final Collection&lt;File&gt; deletedDirectories = new ArrayList&lt;File&gt;();</span>
+
+    /**
+     * Create a new observer.
+     *
+     * @param clearOnStart true if clear() should be called by onStart().
+     */
+<span class="fc" id="L43">    public CollectionFileListener(boolean clearOnStart) {</span>
+<span class="fc" id="L44">        this.clearOnStart = clearOnStart;</span>
+<span class="fc" id="L45">    }</span>
+
+    /**
+     * File system observer started checking event.
+     *
+     * @param observer The file system observer
+     */
+    public void onStart(final FileAlterationObserver observer) {
+<span class="fc bfc" id="L53" title="All 2 branches covered.">        if (clearOnStart) {</span>
+<span class="fc" id="L54">            clear();</span>
+        }
+<span class="fc" id="L56">    }</span>
+
+    /**
+     * Clear file collections.
+     */
+    public void clear() {
+<span class="fc" id="L62">        createdFiles.clear();</span>
+<span class="fc" id="L63">        changedFiles.clear();</span>
+<span class="fc" id="L64">        deletedFiles.clear();</span>
+<span class="fc" id="L65">        createdDirectories.clear();</span>
+<span class="fc" id="L66">        changedDirectories.clear();</span>
+<span class="fc" id="L67">        deletedDirectories.clear();</span>
+<span class="fc" id="L68">    }</span>
+
+    /**
+     * Return the set of changed directories.
+     *
+     * @return Directories which have changed
+     */
+    public Collection&lt;File&gt; getChangedDirectories() {
+<span class="fc" id="L76">        return changedDirectories;</span>
+    }
+
+    /**
+     * Return the set of changed files.
+     *
+     * @return Files which have changed
+     */
+    public Collection&lt;File&gt; getChangedFiles() {
+<span class="fc" id="L85">        return changedFiles;</span>
+    }
+
+    /**
+     * Return the set of created directories.
+     *
+     * @return Directories which have been created
+     */
+    public Collection&lt;File&gt; getCreatedDirectories() {
+<span class="fc" id="L94">        return createdDirectories;</span>
+    }
+
+    /**
+     * Return the set of created files.
+     *
+     * @return Files which have been created
+     */
+    public Collection&lt;File&gt; getCreatedFiles() {
+<span class="fc" id="L103">        return createdFiles;</span>
+    }
+
+    /**
+     * Return the set of deleted directories.
+     *
+     * @return Directories which been deleted
+     */
+    public Collection&lt;File&gt; getDeletedDirectories() {
+<span class="fc" id="L112">        return deletedDirectories;</span>
+    }
+
+    /**
+     * Return the set of deleted files.
+     *
+     * @return Files which been deleted
+     */
+    public Collection&lt;File&gt; getDeletedFiles() {
+<span class="fc" id="L121">        return deletedFiles;</span>
+    }
+
+    /**
+     * Directory created Event.
+     * 
+     * @param directory The directory created
+     */
+    public void onDirectoryCreate(final File directory) {
+<span class="fc" id="L130">        createdDirectories.add(directory);</span>
+<span class="fc" id="L131">    }</span>
+
+    /**
+     * Directory changed Event.
+     * 
+     * @param directory The directory changed
+     */
+    public void onDirectoryChange(final File directory) {
+<span class="fc" id="L139">        changedDirectories.add(directory);</span>
+<span class="fc" id="L140">    }</span>
+
+    /**
+     * Directory deleted Event.
+     * 
+     * @param directory The directory deleted
+     */
+    public void onDirectoryDelete(final File directory) {
+<span class="fc" id="L148">        deletedDirectories.add(directory);</span>
+<span class="fc" id="L149">    }</span>
+
+    /**
+     * File created Event.
+     * 
+     * @param file The file created
+     */
+    public void onFileCreate(final File file) {
+<span class="fc" id="L157">        createdFiles.add(file);</span>
+<span class="fc" id="L158">    }</span>
+
+    /**
+     * File changed Event.
+     * 
+     * @param file The file changed
+     */
+    public void onFileChange(final File file) {
+<span class="fc" id="L166">        changedFiles.add(file);</span>
+<span class="fc" id="L167">    }</span>
+
+    /**
+     * File deleted Event.
+     * 
+     * @param file The file deleted
+     */
+    public void onFileDelete(final File file) {
+<span class="fc" id="L175">        deletedFiles.add(file);</span>
+<span class="fc" id="L176">    }</span>
+
+    /**
+     * File system observer finished checking event.
+     *
+     * @param observer The file system observer
+     */
+    public void onStop(final FileAlterationObserver observer) {
+<span class="fc" id="L184">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.4 (Apr 20, 2019 6:07:50 PM)</div></body></html>

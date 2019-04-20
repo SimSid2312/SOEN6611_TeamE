@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ByteOrderMarkTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.4 (Apr 20, 2019 6:07:50 PM)</a> &gt; <a href="../../index.html" class="el_group">2.4</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io</a> &gt; <span class="el_source">ByteOrderMarkTestCase.java</span></div><h1>ByteOrderMarkTestCase.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io;
+
+import java.nio.charset.Charset;
+import java.util.Arrays;
+
+import org.apache.commons.io.testtools.FileBasedTestCase;
+
+
+/**
+ * Test for {@link ByteOrderMark}.
+ *
+ * @version $Id$
+ */
+public class ByteOrderMarkTestCase extends FileBasedTestCase {
+
+<span class="fc" id="L32">    private static final ByteOrderMark TEST_BOM_1 = new ByteOrderMark(&quot;test1&quot;, 1);</span>
+<span class="fc" id="L33">    private static final ByteOrderMark TEST_BOM_2 = new ByteOrderMark(&quot;test2&quot;, 1, 2);</span>
+<span class="fc" id="L34">    private static final ByteOrderMark TEST_BOM_3 = new ByteOrderMark(&quot;test3&quot;, 1, 2, 3);</span>
+
+    public ByteOrderMarkTestCase(String name) {
+<span class="fc" id="L37">        super(name);</span>
+<span class="fc" id="L38">    }</span>
+
+    /** Test {@link ByteOrderMark#getCharsetName()} */
+    public void testCharsetName() {
+<span class="fc" id="L42">        assertEquals(&quot;test1 name&quot;, &quot;test1&quot;, TEST_BOM_1.getCharsetName());</span>
+<span class="fc" id="L43">        assertEquals(&quot;test2 name&quot;, &quot;test2&quot;, TEST_BOM_2.getCharsetName());</span>
+<span class="fc" id="L44">        assertEquals(&quot;test3 name&quot;, &quot;test3&quot;, TEST_BOM_3.getCharsetName());</span>
+<span class="fc" id="L45">    }</span>
+
+    /** Tests that {@link ByteOrderMark#getCharsetName()} can be loaded as a {@link java.nio.charset.Charset} as advertised. */
+    public void testConstantCharsetNames() {
+<span class="fc" id="L49">        assertNotNull(Charset.forName(ByteOrderMark.UTF_8.getCharsetName()));</span>
+<span class="fc" id="L50">        assertNotNull(Charset.forName(ByteOrderMark.UTF_16BE.getCharsetName()));</span>
+<span class="fc" id="L51">        assertNotNull(Charset.forName(ByteOrderMark.UTF_16LE.getCharsetName()));</span>
+<span class="fc" id="L52">        assertNotNull(Charset.forName(ByteOrderMark.UTF_32BE.getCharsetName()));</span>
+<span class="fc" id="L53">        assertNotNull(Charset.forName(ByteOrderMark.UTF_32LE.getCharsetName()));</span>
+<span class="fc" id="L54">    }</span>
+
+    /** Test {@link ByteOrderMark#length()} */
+    public void testLength() {
+<span class="fc" id="L58">        assertEquals(&quot;test1 length&quot;, 1, TEST_BOM_1.length());</span>
+<span class="fc" id="L59">        assertEquals(&quot;test2 length&quot;, 2, TEST_BOM_2.length());</span>
+<span class="fc" id="L60">        assertEquals(&quot;test3 length&quot;, 3, TEST_BOM_3.length());</span>
+<span class="fc" id="L61">    }</span>
+
+    /** Test {@link ByteOrderMark#get(int)} */
+    public void testGet() {
+<span class="fc" id="L65">        assertEquals(&quot;test1 get(0)&quot;, 1, TEST_BOM_1.get(0));</span>
+<span class="fc" id="L66">        assertEquals(&quot;test2 get(0)&quot;, 1, TEST_BOM_2.get(0));</span>
+<span class="fc" id="L67">        assertEquals(&quot;test2 get(1)&quot;, 2, TEST_BOM_2.get(1));</span>
+<span class="fc" id="L68">        assertEquals(&quot;test3 get(0)&quot;, 1, TEST_BOM_3.get(0));</span>
+<span class="fc" id="L69">        assertEquals(&quot;test3 get(1)&quot;, 2, TEST_BOM_3.get(1));</span>
+<span class="fc" id="L70">        assertEquals(&quot;test3 get(2)&quot;, 3, TEST_BOM_3.get(2));</span>
+<span class="fc" id="L71">    }</span>
+
+    /** Test {@link ByteOrderMark#getBytes()} */
+    public void testGetBytes() {
+<span class="fc" id="L75">        assertTrue(&quot;test1 bytes&quot;, Arrays.equals(TEST_BOM_1.getBytes(), new byte[] {(byte)1}));</span>
+<span class="fc" id="L76">        assertTrue(&quot;test1 bytes&quot;, Arrays.equals(TEST_BOM_2.getBytes(), new byte[] {(byte)1, (byte)2}));</span>
+<span class="fc" id="L77">        assertTrue(&quot;test1 bytes&quot;, Arrays.equals(TEST_BOM_3.getBytes(), new byte[] {(byte)1, (byte)2, (byte)3}));</span>
+<span class="fc" id="L78">    }</span>
+
+    /** Test {@link ByteOrderMark#equals(Object)} */
+    public void testEquals() {
+<span class="fc" id="L82">        assertTrue(&quot;test1 equals&quot;, TEST_BOM_1.equals(TEST_BOM_1));</span>
+<span class="fc" id="L83">        assertTrue(&quot;test2 equals&quot;, TEST_BOM_2.equals(TEST_BOM_2));</span>
+<span class="fc" id="L84">        assertTrue(&quot;test3 equals&quot;, TEST_BOM_3.equals(TEST_BOM_3));</span>
+
+<span class="fc" id="L86">        assertFalse(&quot;Object not equal&quot;,  TEST_BOM_1.equals(new Object()));</span>
+<span class="fc" id="L87">        assertFalse(&quot;test1-1 not equal&quot;, TEST_BOM_1.equals(new ByteOrderMark(&quot;1a&quot;, 2)));</span>
+<span class="fc" id="L88">        assertFalse(&quot;test1-2 not test2&quot;, TEST_BOM_1.equals(new ByteOrderMark(&quot;1b&quot;, 1, 2)));</span>
+<span class="fc" id="L89">        assertFalse(&quot;test2 not equal&quot;, TEST_BOM_2.equals(new ByteOrderMark(&quot;2&quot;, 1, 1)));</span>
+<span class="fc" id="L90">        assertFalse(&quot;test3 not equal&quot;, TEST_BOM_3.equals(new ByteOrderMark(&quot;3&quot;, 1, 2, 4)));</span>
+<span class="fc" id="L91">    }</span>
+
+    /** Test {@link ByteOrderMark#hashCode()} */
+    public void testHashCode() {
+<span class="fc" id="L95">        int bomClassHash = ByteOrderMark.class.hashCode();</span>
+<span class="fc" id="L96">        assertEquals(&quot;hash test1 &quot;, bomClassHash + 1,  TEST_BOM_1.hashCode());</span>
+<span class="fc" id="L97">        assertEquals(&quot;hash test2 &quot;, bomClassHash + 3,  TEST_BOM_2.hashCode());</span>
+<span class="fc" id="L98">        assertEquals(&quot;hash test3 &quot;, bomClassHash + 6,  TEST_BOM_3.hashCode());</span>
+<span class="fc" id="L99">    }</span>
+
+    /** Test Erros */
+    public void testErrors() {
+        try {
+<span class="nc" id="L104">            new ByteOrderMark(null, 1,2,3);</span>
+<span class="nc" id="L105">            fail(&quot;null charset name, expected IllegalArgumentException&quot;);</span>
+<span class="pc" id="L106">        } catch (IllegalArgumentException e) {</span>
+            // expected
+        }
+        try {
+<span class="nc" id="L110">            new ByteOrderMark(&quot;&quot;, 1,2,3);</span>
+<span class="nc" id="L111">            fail(&quot;no charset name, expected IllegalArgumentException&quot;);</span>
+<span class="pc" id="L112">        } catch (IllegalArgumentException e) {</span>
+            // expected
+        }
+        try {
+<span class="nc" id="L116">            new ByteOrderMark(&quot;a&quot;, (int[])null);</span>
+<span class="nc" id="L117">            fail(&quot;null bytes, expected IllegalArgumentException&quot;);</span>
+<span class="pc" id="L118">        } catch (IllegalArgumentException e) {</span>
+            // expected
+        }
+        try {
+<span class="nc" id="L122">            new ByteOrderMark(&quot;b&quot;, new int[0]);</span>
+<span class="nc" id="L123">            fail(&quot;empty bytes, expected IllegalArgumentException&quot;);</span>
+<span class="pc" id="L124">        } catch (IllegalArgumentException e) {</span>
+            // expected
+        }
+<span class="fc" id="L127">    }</span>
+
+    /** Test {@link ByteOrderMark#toString()} */
+    public void testToString() {
+<span class="fc" id="L131">        assertEquals(&quot;test1 &quot;, &quot;ByteOrderMark[test1: 0x1]&quot;,          TEST_BOM_1.toString());</span>
+<span class="fc" id="L132">        assertEquals(&quot;test2 &quot;, &quot;ByteOrderMark[test2: 0x1,0x2]&quot;,      TEST_BOM_2.toString());</span>
+<span class="fc" id="L133">        assertEquals(&quot;test3 &quot;, &quot;ByteOrderMark[test3: 0x1,0x2,0x3]&quot;,  TEST_BOM_3.toString());</span>
+<span class="fc" id="L134">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.4 (Apr 20, 2019 6:07:50 PM)</div></body></html>

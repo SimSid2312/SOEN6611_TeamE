@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileUtilsDirectoryContainsTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-io (Apr 20, 2019 6:11:46 PM)</a> &gt; <a href="../../index.html" class="el_group">commons-io</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io</a> &gt; <span class="el_source">FileUtilsDirectoryContainsTestCase.java</span></div><h1>FileUtilsDirectoryContainsTestCase.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io;
+
+import java.io.File;
+import java.io.IOException;
+
+import org.apache.commons.io.testtools.FileBasedTestCase;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+/**
+ * This class ensure the correctness of {@link FileUtils#directoryContains(File,File)}.
+ * 
+ * @see FileUtils#directoryContains(File, File)
+ * @since 2.2
+ * @version $Id$
+ */
+<span class="fc" id="L38">public class FileUtilsDirectoryContainsTestCase extends FileBasedTestCase {</span>
+
+    private File directory1;
+    private File directory2;
+    private File directory3;
+    private File file1; 
+    private File file1ByRelativeDirectory2; 
+    private File file2; 
+    private File file2ByRelativeDirectory1; 
+    private File file3;
+<span class="fc" id="L48">    final File top = getTestDirectory();</span>
+
+    @SuppressWarnings(&quot;ResultOfMethodCallIgnored&quot;)
+    @Before
+    public void setUp() throws Exception {
+<span class="fc" id="L53">        top.mkdirs();</span>
+
+<span class="fc" id="L55">        directory1 = new File(top, &quot;directory1&quot;);</span>
+<span class="fc" id="L56">        directory2 = new File(top, &quot;directory2&quot;);</span>
+<span class="fc" id="L57">        directory3 = new File(directory2, &quot;directory3&quot;);</span>
+
+<span class="fc" id="L59">        directory1.mkdir();</span>
+<span class="fc" id="L60">        directory2.mkdir();</span>
+<span class="fc" id="L61">        directory3.mkdir();</span>
+
+<span class="fc" id="L63">        file1 = new File(directory1, &quot;file1&quot;);</span>
+<span class="fc" id="L64">        file2 = new File(directory2, &quot;file2&quot;);</span>
+<span class="fc" id="L65">        file3 = new File(top, &quot;file3&quot;);</span>
+
+        // Tests case with relative path
+<span class="fc" id="L68">        file1ByRelativeDirectory2 = new File(getTestDirectory(), &quot;directory2/../directory1/file1&quot;);</span>
+<span class="fc" id="L69">        file2ByRelativeDirectory1 = new File(getTestDirectory(), &quot;directory1/../directory2/file2&quot;);</span>
+
+<span class="fc" id="L71">        FileUtils.touch(file1);</span>
+<span class="fc" id="L72">        FileUtils.touch(file2);</span>
+<span class="fc" id="L73">        FileUtils.touch(file3);</span>
+<span class="fc" id="L74">    }</span>
+
+    @After
+    public void tearDown() throws Exception {
+<span class="fc" id="L78">        FileUtils.deleteDirectory(top);</span>
+<span class="fc" id="L79">    }</span>
+
+    @Test
+    public void testCanonicalPath() throws IOException {
+<span class="fc" id="L83">        assertTrue(FileUtils.directoryContains(directory1, file1ByRelativeDirectory2));</span>
+<span class="fc" id="L84">        assertTrue(FileUtils.directoryContains(directory2, file2ByRelativeDirectory1));</span>
+
+<span class="fc" id="L86">        assertFalse(FileUtils.directoryContains(directory1, file2ByRelativeDirectory1));</span>
+<span class="fc" id="L87">        assertFalse(FileUtils.directoryContains(directory2, file1ByRelativeDirectory2));</span>
+<span class="fc" id="L88">    }</span>
+
+    @Test
+    public void testDirectoryContainsDirectory() throws IOException {
+<span class="fc" id="L92">        assertTrue(FileUtils.directoryContains(top, directory1));</span>
+<span class="fc" id="L93">        assertTrue(FileUtils.directoryContains(top, directory2));</span>
+<span class="fc" id="L94">        assertTrue(FileUtils.directoryContains(top, directory3));</span>
+<span class="fc" id="L95">        assertTrue(FileUtils.directoryContains(directory2, directory3));</span>
+<span class="fc" id="L96">    }</span>
+
+    @Test
+    public void testDirectoryContainsFile() throws IOException {
+<span class="fc" id="L100">        assertTrue(FileUtils.directoryContains(directory1, file1));</span>
+<span class="fc" id="L101">        assertTrue(FileUtils.directoryContains(directory2, file2));</span>
+<span class="fc" id="L102">    }</span>
+
+    @Test
+    public void testDirectoryDoesNotContainFile() throws IOException {
+<span class="fc" id="L106">        assertFalse(FileUtils.directoryContains(directory1, file2));</span>
+<span class="fc" id="L107">        assertFalse(FileUtils.directoryContains(directory2, file1));</span>
+
+<span class="fc" id="L109">        assertFalse(FileUtils.directoryContains(directory1, file3));</span>
+<span class="fc" id="L110">        assertFalse(FileUtils.directoryContains(directory2, file3));</span>
+<span class="fc" id="L111">    }</span>
+
+    @Test
+    public void testDirectoryDoesNotContainsDirectory() throws IOException {
+<span class="fc" id="L115">        assertFalse(FileUtils.directoryContains(directory1, top));</span>
+<span class="fc" id="L116">        assertFalse(FileUtils.directoryContains(directory2, top));</span>
+<span class="fc" id="L117">        assertFalse(FileUtils.directoryContains(directory3, top));</span>
+<span class="fc" id="L118">        assertFalse(FileUtils.directoryContains(directory3, directory2));</span>
+<span class="fc" id="L119">    }</span>
+
+    @Test
+    public void testDirectoryDoesNotExist() throws IOException {
+<span class="fc" id="L123">        final File dir = new File(&quot;DOESNOTEXIST&quot;);</span>
+<span class="fc" id="L124">        assertFalse(dir.exists());</span>
+        try {
+<span class="nc" id="L126">            assertFalse(FileUtils.directoryContains(dir, file1));</span>
+<span class="nc" id="L127">            fail(&quot;Expected &quot; + IllegalArgumentException.class.getName());</span>
+<span class="fc" id="L128">        } catch (final IllegalArgumentException e) {</span>
+            // expected
+<span class="nc" id="L130">        }</span>
+<span class="fc" id="L131">    }</span>
+
+    @Test
+    public void testSameFile() throws IOException {
+        try {
+<span class="nc" id="L136">            assertTrue(FileUtils.directoryContains(file1, file1));</span>
+<span class="nc" id="L137">            fail(&quot;Expected &quot; + IllegalArgumentException.class.getName());</span>
+<span class="fc" id="L138">        } catch (final IllegalArgumentException e) {</span>
+            // expected
+<span class="nc" id="L140">        }</span>
+<span class="fc" id="L141">    }</span>
+
+    @Test
+    public void testIO466() throws IOException {
+<span class="fc" id="L145">            File fooFile = new File(directory1.getParent(), &quot;directory1.txt&quot;);</span>
+<span class="fc" id="L146">            assertFalse(FileUtils.directoryContains(directory1, fooFile));</span>
+<span class="fc" id="L147">    }</span>
+
+    @Test
+    public void testFileDoesNotExist() throws IOException {
+<span class="fc" id="L151">        assertFalse(FileUtils.directoryContains(top, null));</span>
+<span class="fc" id="L152">        final File file = new File(&quot;DOESNOTEXIST&quot;);</span>
+<span class="fc" id="L153">        assertFalse(file.exists());</span>
+<span class="fc" id="L154">        assertFalse(FileUtils.directoryContains(top, file));</span>
+<span class="fc" id="L155">    }</span>
+
+    /**
+     * Test to demonstrate a file which does not exist returns false
+     * @throws IOException If an I/O error occurs
+     */
+    @Test
+    public void testFileDoesNotExistBug() throws IOException {
+<span class="fc" id="L163">        final File file = new File(top, &quot;DOESNOTEXIST&quot;);</span>
+<span class="fc" id="L164">        assertTrue(&quot;Check directory exists&quot;, top.exists());</span>
+<span class="fc" id="L165">        assertFalse(&quot;Check file does not exist&quot;, file.exists());</span>
+<span class="fc" id="L166">        assertFalse(&quot;Direcory does not contain unrealized file&quot;, FileUtils.directoryContains(top, file));</span>
+<span class="fc" id="L167">    }</span>
+
+    @Test
+    public void testUnrealizedContainment() throws IOException {
+<span class="fc" id="L171">        final File dir = new File(&quot;DOESNOTEXIST&quot;);</span>
+<span class="fc" id="L172">        final File file = new File(dir, &quot;DOESNOTEXIST2&quot;);</span>
+<span class="fc" id="L173">        assertFalse(dir.exists());</span>
+<span class="fc" id="L174">        assertFalse(file.exists());</span>
+        try {
+<span class="nc" id="L176">            assertTrue(FileUtils.directoryContains(dir, file));</span>
+<span class="fc" id="L177">        } catch (final IllegalArgumentException e) {</span>
+            // expected
+<span class="nc" id="L179">        }</span>
+<span class="fc" id="L180">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>commons-io (Apr 20, 2019 6:11:46 PM)</div></body></html>

@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>NullInputStreamTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.4 (Apr 20, 2019 6:07:50 PM)</a> &gt; <a href="../../index.html" class="el_group">2.4</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.input</a> &gt; <span class="el_source">NullInputStreamTest.java</span></div><h1>NullInputStreamTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.input;
+
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+
+import junit.framework.TestCase;
+
+/**
+ * JUnit Test Case for {@link NullInputStream}.
+ *
+ * @version $Id$
+ */
+public class NullInputStreamTest extends TestCase {
+
+    /** Constructor */
+    public NullInputStreamTest(String name) {
+<span class="fc" id="L34">        super(name);</span>
+<span class="fc" id="L35">    }</span>
+
+    /** Set up */
+    @Override
+    protected void setUp() throws Exception {
+<span class="fc" id="L40">        super.setUp();</span>
+<span class="fc" id="L41">    }</span>
+
+    /** Tear Down */
+    @Override
+    protected void tearDown() throws Exception {
+<span class="fc" id="L46">        super.tearDown();</span>
+<span class="fc" id="L47">    }</span>
+
+    /**
+     * Test &lt;code&gt;available()&lt;/code&gt; method.
+     */
+    public void testRead() throws Exception {
+<span class="fc" id="L53">        int size = 5;</span>
+<span class="fc" id="L54">        InputStream input = new TestNullInputStream(size);</span>
+<span class="fc bfc" id="L55" title="All 2 branches covered.">        for (int i = 0; i &lt; size; i++) {</span>
+<span class="fc" id="L56">            assertEquals(&quot;Check Size [&quot; + i + &quot;]&quot;, size - i, input.available());</span>
+<span class="fc" id="L57">            assertEquals(&quot;Check Value [&quot; + i + &quot;]&quot;, i, input.read());</span>
+        }
+<span class="fc" id="L59">        assertEquals(&quot;Available after contents all read&quot;, 0, input.available());</span>
+
+        // Check availbale is zero after End of file
+<span class="fc" id="L62">        assertEquals(&quot;End of File&quot;, -1, input.read());</span>
+<span class="fc" id="L63">        assertEquals(&quot;Available after End of File&quot;, 0, input.available());</span>
+
+        // Test reading after the end of file
+        try {
+<span class="nc" id="L67">            int result = input.read();</span>
+<span class="nc" id="L68">            fail(&quot;Should have thrown an IOException, byte=[&quot; + result + &quot;]&quot;);</span>
+<span class="pc" id="L69">        } catch (IOException e) {</span>
+<span class="fc" id="L70">            assertEquals(&quot;Read after end of file&quot;, e.getMessage());</span>
+        }
+
+        // Close - should reset
+<span class="fc" id="L74">        input.close();</span>
+<span class="fc" id="L75">        assertEquals(&quot;Available after close&quot;, size, input.available());</span>
+<span class="fc" id="L76">    }</span>
+
+    /**
+     * Test &lt;code&gt;read(byte[])&lt;/code&gt; method.
+     */
+    public void testReadByteArray() throws Exception {
+<span class="fc" id="L82">        byte[] bytes = new byte[10];</span>
+<span class="fc" id="L83">        InputStream input = new TestNullInputStream(15);</span>
+
+        // Read into array
+<span class="fc" id="L86">        int count1 = input.read(bytes);</span>
+<span class="fc" id="L87">        assertEquals(&quot;Read 1&quot;, bytes.length, count1);</span>
+<span class="fc bfc" id="L88" title="All 2 branches covered.">        for (int i = 0; i &lt; count1; i++) {</span>
+<span class="fc" id="L89">            assertEquals(&quot;Check Bytes 1&quot;, i, bytes[i]);</span>
+        }
+
+        // Read into array
+<span class="fc" id="L93">        int count2 = input.read(bytes);</span>
+<span class="fc" id="L94">        assertEquals(&quot;Read 2&quot;, 5, count2);</span>
+<span class="fc bfc" id="L95" title="All 2 branches covered.">        for (int i = 0; i &lt; count2; i++) {</span>
+<span class="fc" id="L96">            assertEquals(&quot;Check Bytes 2&quot;, count1 + i, bytes[i]);</span>
+        }
+
+        // End of File
+<span class="fc" id="L100">        int count3 = input.read(bytes);</span>
+<span class="fc" id="L101">        assertEquals(&quot;Read 3 (EOF)&quot;, -1, count3);</span>
+
+        // Test reading after the end of file
+        try {
+<span class="nc" id="L105">            int count4 = input.read(bytes);</span>
+<span class="nc" id="L106">            fail(&quot;Should have thrown an IOException, byte=[&quot; + count4 + &quot;]&quot;);</span>
+<span class="pc" id="L107">        } catch (IOException e) {</span>
+<span class="fc" id="L108">            assertEquals(&quot;Read after end of file&quot;, e.getMessage());</span>
+        }
+
+        // reset by closing
+<span class="fc" id="L112">        input.close();</span>
+    
+        // Read into array using offset &amp; length
+<span class="fc" id="L115">        int offset = 2;</span>
+<span class="fc" id="L116">        int lth    = 4;</span>
+<span class="fc" id="L117">        int count5 = input.read(bytes, offset, lth);</span>
+<span class="fc" id="L118">        assertEquals(&quot;Read 5&quot;, lth, count5);</span>
+<span class="fc bfc" id="L119" title="All 2 branches covered.">        for (int i = offset; i &lt; lth; i++) {</span>
+<span class="fc" id="L120">            assertEquals(&quot;Check Bytes 2&quot;, i, bytes[i]);</span>
+        }
+<span class="fc" id="L122">    }</span>
+
+    /**
+     * Test when configured to throw an EOFException at the end of file
+     * (rather than return -1).
+     */
+    public void testEOFException() throws Exception {
+<span class="fc" id="L129">        InputStream input = new TestNullInputStream(2, false, true);</span>
+<span class="fc" id="L130">        assertEquals(&quot;Read 1&quot;,  0, input.read());</span>
+<span class="fc" id="L131">        assertEquals(&quot;Read 2&quot;,  1, input.read());</span>
+        try {
+<span class="nc" id="L133">            int result = input.read();</span>
+<span class="nc" id="L134">            fail(&quot;Should have thrown an EOFException, byte=[&quot; + result + &quot;]&quot;);</span>
+<span class="pc" id="L135">        } catch (EOFException e) {</span>
+            // expected
+        }
+<span class="fc" id="L138">    }</span>
+
+    /**
+     * Test &lt;code&gt;mark()&lt;/code&gt; and &lt;code&gt;reset()&lt;/code&gt; methods.
+     */
+    public void testMarkAndReset() throws Exception {
+<span class="fc" id="L144">        int position = 0;</span>
+<span class="fc" id="L145">        int readlimit = 10;</span>
+<span class="fc" id="L146">        InputStream input = new TestNullInputStream(100, true, false);</span>
+        
+<span class="fc" id="L148">        assertTrue(&quot;Mark Should be Supported&quot;, input.markSupported());</span>
+
+        // No Mark
+        try {
+<span class="nc" id="L152">            input.reset();</span>
+<span class="nc" id="L153">            fail(&quot;Read limit exceeded, expected IOException &quot;);</span>
+<span class="pc" id="L154">        } catch (IOException e) {</span>
+<span class="fc" id="L155">            assertEquals(&quot;No Mark IOException message&quot;,</span>
+<span class="fc" id="L156">                         &quot;No position has been marked&quot;,</span>
+<span class="fc" id="L157">                         e.getMessage());</span>
+        }
+
+<span class="fc bfc" id="L160" title="All 2 branches covered.">        for (; position &lt; 3; position++) {</span>
+<span class="fc" id="L161">            assertEquals(&quot;Read Before Mark [&quot; + position +&quot;]&quot;,  position, input.read());</span>
+        }
+
+        // Mark
+<span class="fc" id="L165">        input.mark(readlimit);</span>
+
+        // Read further
+<span class="fc bfc" id="L168" title="All 2 branches covered.">        for (int i = 0; i &lt; 3; i++) {</span>
+<span class="fc" id="L169">            assertEquals(&quot;Read After Mark [&quot; + i +&quot;]&quot;,  position + i, input.read());</span>
+        }
+
+        // Reset
+<span class="fc" id="L173">        input.reset();</span>
+
+        // Read From marked position
+<span class="fc bfc" id="L176" title="All 2 branches covered.">        for (int i = 0; i &lt; readlimit + 1; i++) {</span>
+<span class="fc" id="L177">            assertEquals(&quot;Read After Reset [&quot; + i +&quot;]&quot;,  position + i, input.read());</span>
+        }
+
+        // Reset after read limit passed
+        try {
+<span class="nc" id="L182">            input.reset();</span>
+<span class="nc" id="L183">            fail(&quot;Read limit exceeded, expected IOException &quot;);</span>
+<span class="pc" id="L184">        } catch (IOException e) {</span>
+<span class="fc" id="L185">            assertEquals(&quot;Read limit IOException message&quot;,</span>
+<span class="fc" id="L186">                         &quot;Marked position [&quot; + position</span>
+<span class="fc" id="L187">                         + &quot;] is no longer valid - passed the read limit [&quot;</span>
+<span class="fc" id="L188">                         + readlimit + &quot;]&quot;,</span>
+<span class="fc" id="L189">                         e.getMessage());</span>
+        }
+<span class="fc" id="L191">    }</span>
+
+    /**
+     * Test &lt;code&gt;mark()&lt;/code&gt; not supported.
+     */
+    public void testMarkNotSupported() throws Exception {
+<span class="fc" id="L197">        InputStream input = new TestNullInputStream(100, false, true);</span>
+<span class="fc" id="L198">        assertFalse(&quot;Mark Should NOT be Supported&quot;, input.markSupported());</span>
+
+        try {
+<span class="nc" id="L201">            input.mark(5);</span>
+<span class="nc" id="L202">            fail(&quot;mark() should throw UnsupportedOperationException&quot;);</span>
+<span class="pc" id="L203">        } catch (UnsupportedOperationException e) {</span>
+<span class="fc" id="L204">            assertEquals(&quot;mark() error message&quot;,  &quot;Mark not supported&quot;, e.getMessage());</span>
+        }
+
+        try {
+<span class="nc" id="L208">            input.reset();</span>
+<span class="nc" id="L209">            fail(&quot;reset() should throw UnsupportedOperationException&quot;);</span>
+<span class="pc" id="L210">        } catch (UnsupportedOperationException e) {</span>
+<span class="fc" id="L211">            assertEquals(&quot;reset() error message&quot;,  &quot;Mark not supported&quot;, e.getMessage());</span>
+        }
+<span class="fc" id="L213">    }</span>
+
+    /**
+     * Test &lt;code&gt;skip()&lt;/code&gt; method.
+     */
+   public void testSkip() throws Exception {
+<span class="fc" id="L219">        InputStream input = new TestNullInputStream(10, true, false);</span>
+<span class="fc" id="L220">        assertEquals(&quot;Read 1&quot;, 0, input.read());</span>
+<span class="fc" id="L221">        assertEquals(&quot;Read 2&quot;, 1, input.read());</span>
+<span class="fc" id="L222">        assertEquals(&quot;Skip 1&quot;, 5, input.skip(5));</span>
+<span class="fc" id="L223">        assertEquals(&quot;Read 3&quot;, 7, input.read());</span>
+<span class="fc" id="L224">        assertEquals(&quot;Skip 2&quot;, 2, input.skip(5)); // only 2 left to skip</span>
+<span class="fc" id="L225">        assertEquals(&quot;Skip 3 (EOF)&quot;, -1, input.skip(5)); // End of file</span>
+        try {
+<span class="nc" id="L227">            input.skip(5); //</span>
+<span class="nc" id="L228">            fail(&quot;Expected IOException for skipping after end of file&quot;);</span>
+<span class="pc" id="L229">        } catch (IOException e) {</span>
+<span class="fc" id="L230">            assertEquals(&quot;Skip after EOF IOException message&quot;,</span>
+<span class="fc" id="L231">                    &quot;Skip after end of file&quot;,</span>
+<span class="fc" id="L232">                    e.getMessage());</span>
+        }
+<span class="fc" id="L234">    }</span>
+
+
+    // ------------- Test NullInputStream implementation -------------
+
+    private static final class TestNullInputStream extends NullInputStream {
+        public TestNullInputStream(int size) {
+<span class="fc" id="L241">            super(size);</span>
+<span class="fc" id="L242">        }</span>
+        public TestNullInputStream(int size, boolean markSupported, boolean throwEofException) {
+<span class="fc" id="L244">            super(size, markSupported, throwEofException);</span>
+<span class="fc" id="L245">        }</span>
+        @Override
+        protected int processByte() {
+<span class="fc" id="L248">            return (int)getPosition() - 1;</span>
+        }
+        @Override
+        protected void processBytes(byte[] bytes, int offset, int length) {
+<span class="fc" id="L252">            int startPos = (int)getPosition() - length;</span>
+<span class="fc bfc" id="L253" title="All 2 branches covered.">            for (int i = offset; i &lt; length; i++) {</span>
+<span class="fc" id="L254">                bytes[i] = (byte)(startPos + i);</span>
+            }
+<span class="fc" id="L256">        }</span>
+        
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.4 (Apr 20, 2019 6:07:50 PM)</div></body></html>

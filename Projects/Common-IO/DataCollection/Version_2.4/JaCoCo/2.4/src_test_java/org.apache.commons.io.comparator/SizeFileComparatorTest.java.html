@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>SizeFileComparatorTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.4 (Apr 20, 2019 6:07:50 PM)</a> &gt; <a href="../../index.html" class="el_group">2.4</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.comparator</a> &gt; <span class="el_source">SizeFileComparatorTest.java</span></div><h1>SizeFileComparatorTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.comparator;
+
+import java.io.File;
+
+/**
+ * Test case for {@link SizeFileComparator}.
+ */
+public class SizeFileComparatorTest extends ComparatorAbstractTestCase {
+
+    private File smallerDir;
+    private File largerDir;
+    private File smallerFile;
+    private File largerFile;
+
+    /**
+     * Construct a new test case with the specified name.
+     *
+     * @param name Name of the test
+     */
+    public SizeFileComparatorTest(String name) {
+<span class="fc" id="L37">        super(name);</span>
+<span class="fc" id="L38">    }</span>
+
+    /** @see junit.framework.TestCase#setUp() */
+    @Override
+    protected void setUp() throws Exception {
+<span class="fc" id="L43">        super.setUp();</span>
+<span class="fc" id="L44">        comparator = (AbstractFileComparator)SizeFileComparator.SIZE_COMPARATOR;</span>
+<span class="fc" id="L45">        reverse = SizeFileComparator.SIZE_REVERSE;</span>
+<span class="fc" id="L46">        File dir = getTestDirectory();</span>
+<span class="fc" id="L47">        smallerDir = new File(dir, &quot;smallerdir&quot;);</span>
+<span class="fc" id="L48">        largerDir = new File(dir, &quot;largerdir&quot;);</span>
+<span class="fc" id="L49">        smallerFile = new File(smallerDir, &quot;smaller.txt&quot;);</span>
+<span class="fc" id="L50">        File equalFile = new File(dir, &quot;equal.txt&quot;);</span>
+<span class="fc" id="L51">        largerFile = new File(largerDir, &quot;larger.txt&quot;);</span>
+<span class="fc" id="L52">        smallerDir.mkdir();</span>
+<span class="fc" id="L53">        largerDir.mkdir();</span>
+<span class="fc" id="L54">        createFile(smallerFile, 32);</span>
+<span class="fc" id="L55">        createFile(equalFile, 48);</span>
+<span class="fc" id="L56">        createFile(largerFile, 64);</span>
+<span class="fc" id="L57">        equalFile1 = equalFile;</span>
+<span class="fc" id="L58">        equalFile2 = equalFile;</span>
+<span class="fc" id="L59">        lessFile   = smallerFile;</span>
+<span class="fc" id="L60">        moreFile   = largerFile;</span>
+<span class="fc" id="L61">    }</span>
+
+    /**
+     * Test a file which doesn't exist.
+     */
+    public void testNonexistantFile() {
+<span class="fc" id="L67">        File nonexistantFile = new File(new File(&quot;.&quot;), &quot;nonexistant.txt&quot;);</span>
+<span class="fc" id="L68">        assertFalse(nonexistantFile.exists());</span>
+<span class="pc bpc" id="L69" title="1 of 2 branches missed.">        assertTrue(&quot;less&quot;,  comparator.compare(nonexistantFile, moreFile) &lt; 0);</span>
+<span class="fc" id="L70">    }</span>
+
+    /**
+     * Test a file which doesn't exist.
+     */
+    public void testCompareDirectorySizes() {
+<span class="fc" id="L76">        assertEquals(&quot;sumDirectoryContents=false&quot;, 0, comparator.compare(smallerDir, largerDir));</span>
+<span class="fc" id="L77">        assertEquals(&quot;less&quot;, -1, SizeFileComparator.SIZE_SUMDIR_COMPARATOR.compare(smallerDir, largerDir));</span>
+<span class="fc" id="L78">        assertEquals(&quot;less&quot;, 1,  SizeFileComparator.SIZE_SUMDIR_REVERSE.compare(smallerDir, largerDir));</span>
+<span class="fc" id="L79">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.4 (Apr 20, 2019 6:07:50 PM)</div></body></html>

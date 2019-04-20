@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ByteArrayOutputStreamTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-io (Apr 20, 2019 6:11:46 PM)</a> &gt; <a href="../../index.html" class="el_group">commons-io</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.output</a> &gt; <span class="el_source">ByteArrayOutputStreamTestCase.java</span></div><h1>ByteArrayOutputStreamTestCase.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.output;
+
+import org.apache.commons.io.IOUtils;
+import org.junit.Test;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
+
+/**
+ * Basic unit tests for the alternative ByteArrayOutputStream implementation.
+ */
+<span class="fc" id="L33">public class ByteArrayOutputStreamTestCase {</span>
+
+    private static final byte[] DATA;
+
+    static {
+<span class="fc" id="L38">        DATA = new byte[64];</span>
+<span class="fc bfc" id="L39" title="All 2 branches covered.">        for (byte i = 0; i &lt; 64; i++) {</span>
+<span class="fc" id="L40">            DATA[i] = i;</span>
+        }
+<span class="fc" id="L42">    }</span>
+
+    private int writeData(final ByteArrayOutputStream baout,
+                final java.io.ByteArrayOutputStream ref,
+                final int count) {
+<span class="pc bpc" id="L47" title="1 of 2 branches missed.">        if (count &gt; DATA.length) {</span>
+<span class="nc" id="L48">            throw new IllegalArgumentException(&quot;Requesting too many bytes&quot;);</span>
+        }
+<span class="fc bfc" id="L50" title="All 2 branches covered.">        if (count == 0) {</span>
+<span class="fc" id="L51">            baout.write(100);</span>
+<span class="fc" id="L52">            ref.write(100);</span>
+<span class="fc" id="L53">            return 1;</span>
+        } else {
+<span class="fc" id="L55">            baout.write(DATA, 0, count);</span>
+<span class="fc" id="L56">            ref.write(DATA, 0, count);</span>
+<span class="fc" id="L57">            return count;</span>
+        }
+    }
+
+    private int writeData(final ByteArrayOutputStream baout,
+                final java.io.ByteArrayOutputStream ref,
+                final int[] instructions) {
+<span class="fc" id="L64">        int written = 0;</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">        for (final int instruction : instructions) {</span>
+<span class="fc" id="L66">            written += writeData(baout, ref, instruction);</span>
+        }
+<span class="fc" id="L68">        return written;</span>
+    }
+
+    private static boolean byteCmp(final byte[] src, final byte[] cmp) {
+<span class="fc bfc" id="L72" title="All 2 branches covered.">        for (int i = 0; i &lt; cmp.length; i++) {</span>
+<span class="pc bpc" id="L73" title="1 of 2 branches missed.">            if (src[i] != cmp[i]) {</span>
+<span class="nc" id="L74">                return false;</span>
+            }
+        }
+<span class="fc" id="L77">        return true;</span>
+    }
+
+    private void checkByteArrays(final byte[] expected, final byte[] actual) {
+<span class="pc bpc" id="L81" title="1 of 2 branches missed.">        if (expected.length != actual.length) {</span>
+<span class="nc" id="L82">            fail(&quot;Resulting byte arrays are not equally long&quot;);</span>
+        }
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">        if (!byteCmp(expected, actual)) {</span>
+<span class="nc" id="L85">            fail(&quot;Resulting byte arrays are not equal&quot;);</span>
+        }
+<span class="fc" id="L87">    }</span>
+
+    private void checkStreams(
+            final ByteArrayOutputStream actual,
+            final java.io.ByteArrayOutputStream expected) {
+<span class="fc" id="L92">        assertEquals(&quot;Sizes are not equal&quot;, expected.size(), actual.size());</span>
+<span class="fc" id="L93">        final byte[] buf = actual.toByteArray();</span>
+<span class="fc" id="L94">        final byte[] refbuf = expected.toByteArray();</span>
+<span class="fc" id="L95">        checkByteArrays(buf, refbuf);</span>
+<span class="fc" id="L96">    }</span>
+
+    @Test
+    public void testToInputStream() throws IOException {
+<span class="fc" id="L100">        ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L101">        java.io.ByteArrayOutputStream ref = new java.io.ByteArrayOutputStream();</span>
+
+        //Write 8224 bytes
+<span class="fc" id="L104">        writeData(baout, ref, 32);</span>
+<span class="fc bfc" id="L105" title="All 2 branches covered.">        for(int i=0;i&lt;128;i++) {</span>
+<span class="fc" id="L106">            writeData(baout, ref, 64);</span>
+        }
+
+        //Get data before more writes
+<span class="fc" id="L110">        InputStream in = baout.toInputStream();</span>
+<span class="fc" id="L111">        byte refData[] = ref.toByteArray();</span>
+
+        //Write some more data
+<span class="fc" id="L114">        writeData(baout, ref, new int[] { 2, 4, 8, 16 });</span>
+
+        //Check original data
+<span class="fc" id="L117">        byte baoutData[] = IOUtils.toByteArray(in);</span>
+<span class="fc" id="L118">        assertEquals(8224, baoutData.length);</span>
+<span class="fc" id="L119">        checkByteArrays(refData, baoutData);</span>
+
+        //Check all data written
+<span class="fc" id="L122">        baoutData = IOUtils.toByteArray(baout.toInputStream());</span>
+<span class="fc" id="L123">        refData = ref.toByteArray();</span>
+<span class="fc" id="L124">        assertEquals(8254, baoutData.length);</span>
+<span class="fc" id="L125">        checkByteArrays(refData, baoutData);</span>
+<span class="fc" id="L126">        baout.close();</span>
+<span class="fc" id="L127">        in.close();</span>
+<span class="fc" id="L128">    }</span>
+
+    @Test
+    public void testToInputStreamWithReset() throws IOException {
+        //Make sure reset() do not destroy InputStream returned from toInputStream()
+<span class="fc" id="L133">        ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L134">        java.io.ByteArrayOutputStream ref = new java.io.ByteArrayOutputStream();</span>
+
+        //Write 8224 bytes
+<span class="fc" id="L137">        writeData(baout, ref, 32);</span>
+<span class="fc bfc" id="L138" title="All 2 branches covered.">        for(int i=0;i&lt;128;i++) {</span>
+<span class="fc" id="L139">            writeData(baout, ref, 64);</span>
+        }
+
+        //Get data before reset
+<span class="fc" id="L143">        InputStream in = baout.toInputStream();</span>
+<span class="fc" id="L144">        byte refData[] = ref.toByteArray();</span>
+
+        //Reset and write some new data
+<span class="fc" id="L147">        baout.reset();</span>
+<span class="fc" id="L148">        ref.reset();</span>
+<span class="fc" id="L149">        writeData(baout, ref, new int[] { 2, 4, 8, 16 });</span>
+
+        //Check original data
+<span class="fc" id="L152">        byte baoutData[] = IOUtils.toByteArray(in);</span>
+<span class="fc" id="L153">        assertEquals(8224, baoutData.length);</span>
+<span class="fc" id="L154">        checkByteArrays(refData, baoutData);</span>
+
+        //Check new data written after reset
+<span class="fc" id="L157">        baoutData = IOUtils.toByteArray(baout.toInputStream());</span>
+<span class="fc" id="L158">        refData = ref.toByteArray();</span>
+<span class="fc" id="L159">        assertEquals(30, baoutData.length);</span>
+<span class="fc" id="L160">        checkByteArrays(refData, baoutData);</span>
+<span class="fc" id="L161">        baout.close();</span>
+<span class="fc" id="L162">        in.close();</span>
+<span class="fc" id="L163">    }</span>
+
+    @Test
+    public void testStream() throws Exception {
+        int written;
+
+        //The ByteArrayOutputStream is initialized with 32 bytes to match
+        //the original more closely for this test.
+<span class="fc" id="L171">        final ByteArrayOutputStream baout = new ByteArrayOutputStream(32);</span>
+<span class="fc" id="L172">        final java.io.ByteArrayOutputStream ref = new java.io.ByteArrayOutputStream();</span>
+
+        //First three writes
+<span class="fc" id="L175">        written = writeData(baout, ref, new int[] {4, 10, 22});</span>
+<span class="fc" id="L176">        assertEquals(36, written);</span>
+<span class="fc" id="L177">        checkStreams(baout, ref);</span>
+
+        //Another two writes to see if there are any bad effects after toByteArray()
+<span class="fc" id="L180">        written = writeData(baout, ref, new int[] {20, 12});</span>
+<span class="fc" id="L181">        assertEquals(32, written);</span>
+<span class="fc" id="L182">        checkStreams(baout, ref);</span>
+
+        //Now reset the streams
+<span class="fc" id="L185">        baout.reset();</span>
+<span class="fc" id="L186">        ref.reset();</span>
+
+        //Test again to see if reset() had any bad effects
+<span class="fc" id="L189">        written = writeData(baout, ref, new int[] {5, 47, 33, 60, 1, 0, 8});</span>
+<span class="fc" id="L190">        assertEquals(155, written);</span>
+<span class="fc" id="L191">        checkStreams(baout, ref);</span>
+
+        //Test the readFrom(InputStream) method
+<span class="fc" id="L194">        baout.reset();</span>
+<span class="fc" id="L195">        written = baout.write(new ByteArrayInputStream(ref.toByteArray()));</span>
+<span class="fc" id="L196">        assertEquals(155, written);</span>
+<span class="fc" id="L197">        checkStreams(baout, ref);</span>
+
+        //Write the commons Byte[]OutputStream to a java.io.Byte[]OutputStream
+        //and vice-versa to test the writeTo() method.
+<span class="fc" id="L201">        final ByteArrayOutputStream baout1 = new ByteArrayOutputStream(32);</span>
+<span class="fc" id="L202">        ref.writeTo(baout1);</span>
+<span class="fc" id="L203">        final java.io.ByteArrayOutputStream ref1 = new java.io.ByteArrayOutputStream();</span>
+<span class="fc" id="L204">        baout.writeTo(ref1);</span>
+<span class="fc" id="L205">        checkStreams(baout1, ref1);</span>
+
+        //Testing toString(String)
+<span class="fc" id="L208">        final String baoutString = baout.toString(&quot;ASCII&quot;);</span>
+<span class="fc" id="L209">        final String refString = ref.toString(&quot;ASCII&quot;);</span>
+<span class="fc" id="L210">        assertEquals(&quot;ASCII decoded String must be equal&quot;, refString, baoutString);</span>
+
+        //Make sure that empty ByteArrayOutputStreams really don't create garbage
+        //on toByteArray()
+<span class="fc" id="L214">        final ByteArrayOutputStream baos1 = new ByteArrayOutputStream();</span>
+<span class="fc" id="L215">        final ByteArrayOutputStream baos2 = new ByteArrayOutputStream();</span>
+<span class="fc" id="L216">        assertSame(baos1.toByteArray(), baos2.toByteArray());</span>
+<span class="fc" id="L217">        baos1.close();</span>
+<span class="fc" id="L218">        baos2.close();</span>
+<span class="fc" id="L219">        baout.close();</span>
+<span class="fc" id="L220">        baout1.close();</span>
+<span class="fc" id="L221">    }</span>
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>commons-io (Apr 20, 2019 6:11:46 PM)</div></body></html>

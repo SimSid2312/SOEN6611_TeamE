@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileUtilsFileNewerTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.0 (Apr 20, 2019 6:00:46 PM)</a> &gt; <a href="../../index.html" class="el_group">2.0</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io</a> &gt; <span class="el_source">FileUtilsFileNewerTestCase.java</span></div><h1>FileUtilsFileNewerTestCase.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io;
+
+import java.io.File;
+import java.util.Date;
+
+import org.apache.commons.io.testtools.FileBasedTestCase;
+
+/**
+ * This is used to test FileUtils for correctness.
+ *
+ * @author &lt;a href=&quot;mailto:alban.peignier@free.fr&quot;&gt;Alban Peignier&lt;/a&gt;
+ */
+public class FileUtilsFileNewerTestCase extends FileBasedTestCase {
+
+    // Test data
+    private static final int FILE1_SIZE = 1;
+    private static final int FILE2_SIZE = 1024 * 4 + 1;
+
+    private File m_testFile1;
+    private File m_testFile2;
+
+    public FileUtilsFileNewerTestCase(String name) {
+<span class="fc" id="L39">        super(name);</span>
+        
+<span class="fc" id="L41">        m_testFile1 = new File(getTestDirectory(), &quot;file1-test.txt&quot;);</span>
+<span class="fc" id="L42">        m_testFile2 = new File(getTestDirectory(), &quot;file2-test.txt&quot;);</span>
+<span class="fc" id="L43">    }</span>
+
+    /** @see junit.framework.TestCase#setUp() */
+    @Override
+    protected void setUp() throws Exception {
+<span class="fc" id="L48">        getTestDirectory().mkdirs();</span>
+<span class="fc" id="L49">        createFile(m_testFile1, FILE1_SIZE);</span>
+<span class="fc" id="L50">        createFile(m_testFile2, FILE2_SIZE);</span>
+<span class="fc" id="L51">    }</span>
+
+    /** @see junit.framework.TestCase#tearDown() */
+    @Override
+    protected void tearDown() throws Exception {
+<span class="fc" id="L56">        m_testFile1.delete();</span>
+<span class="fc" id="L57">        m_testFile2.delete();</span>
+<span class="fc" id="L58">    }</span>
+
+    /**
+     * Tests the &lt;code&gt;isFileNewer(File, *)&lt;/code&gt; methods which a &quot;normal&quot; file.
+     *
+     * @see FileUtils#isFileNewer(File, long)
+     * @see FileUtils#isFileNewer(File, Date)
+     * @see FileUtils#isFileNewer(File, File)
+     */
+    public void testIsFileNewer() {
+<span class="pc bpc" id="L68" title="1 of 2 branches missed.">        if (!m_testFile1.exists())</span>
+<span class="nc" id="L69">            throw new IllegalStateException(&quot;The m_testFile1 should exist&quot;);</span>
+
+<span class="fc" id="L71">        long fileLastModified = m_testFile1.lastModified();</span>
+<span class="fc" id="L72">        final long TWO_SECOND = 2000;</span>
+
+<span class="fc" id="L74">        testIsFileNewer(&quot;two second earlier is not newer&quot; , m_testFile1, fileLastModified + TWO_SECOND, false);</span>
+<span class="fc" id="L75">        testIsFileNewer(&quot;same time is not newer&quot; , m_testFile1, fileLastModified, false);</span>
+<span class="fc" id="L76">        testIsFileNewer(&quot;two second later is newer&quot; , m_testFile1, fileLastModified - TWO_SECOND, true);</span>
+<span class="fc" id="L77">    }</span>
+
+    /**
+     * Tests the &lt;code&gt;isFileNewer(File, *)&lt;/code&gt; methods which a not existing file.
+     *
+     * @see FileUtils#isFileNewer(File, long)
+     * @see FileUtils#isFileNewer(File, Date)
+     * @see FileUtils#isFileNewer(File, File)
+     */
+    public void testIsFileNewerImaginaryFile() {
+<span class="fc" id="L87">        File imaginaryFile = new File(getTestDirectory(), &quot;imaginaryFile&quot;);</span>
+<span class="pc bpc" id="L88" title="1 of 2 branches missed.">        if (imaginaryFile.exists())</span>
+<span class="nc" id="L89">            throw new IllegalStateException(&quot;The imaginary File exists&quot;);</span>
+
+<span class="fc" id="L91">        testIsFileNewer(&quot;imaginary file can be newer&quot; , imaginaryFile, m_testFile2.lastModified(), false);</span>
+<span class="fc" id="L92">    }</span>
+
+    /**
+     * Tests the &lt;code&gt;isFileNewer(File, *)&lt;/code&gt; methods which the specified conditions.
+     * &lt;p/&gt;
+     * Creates :
+     * &lt;ul&gt;
+     * &lt;li&gt;a &lt;code&gt;Date&lt;/code&gt; which represents the time reference&lt;/li&gt;
+     * &lt;li&gt;a temporary file with the same last modification date than the time reference&lt;/li&gt;
+     * &lt;/ul&gt;
+     * Then compares (with the needed &lt;code&gt;isFileNewer&lt;/code&gt; method) the last modification date of 
+     * the specified file with the specified time reference, the created &lt;code&gt;Date&lt;/code&gt; and the temporary 
+     * file.
+     * &lt;br/&gt;
+     * The test is successfull if the three comparaisons return the specified wanted result.
+     *
+     * @param description describes the tested situation
+     * @param file the file of which the last modification date is compared
+     * @param time the time reference measured in milliseconds since the epoch 
+     *
+     * @see FileUtils#isFileNewer(File, long)
+     * @see FileUtils#isFileNewer(File, Date)
+     * @see FileUtils#isFileNewer(File, File)
+     */
+    protected void testIsFileNewer(String description, File file, long time, boolean wantedResult)  {
+<span class="fc" id="L117">        assertEquals(description + &quot; - time&quot;, wantedResult, FileUtils.isFileNewer(file, time));</span>
+<span class="fc" id="L118">        assertEquals(description + &quot; - date&quot;, wantedResult, FileUtils.isFileNewer(file, new Date(time)));</span>
+        
+<span class="fc" id="L120">        File temporaryFile = m_testFile2;</span>
+
+<span class="fc" id="L122">        temporaryFile.setLastModified(time);</span>
+<span class="fc" id="L123">        assertEquals(&quot;The temporary file hasn't the right last modification date&quot;, time, temporaryFile.lastModified());</span>
+<span class="fc" id="L124">        assertEquals(description + &quot; - file&quot;, wantedResult, FileUtils.isFileNewer(file, temporaryFile));</span>
+<span class="fc" id="L125">    }</span>
+
+    /**
+     * Tests the &lt;code&gt;isFileNewer(File, long)&lt;/code&gt; method without specifying a &lt;code&gt;File&lt;/code&gt;.
+     * &lt;br/&gt;
+     * The test is successfull if the method throws an &lt;code&gt;IllegalArgumentException&lt;/code&gt;. 
+     */
+    public void testIsFileNewerNoFile() {
+        try {
+<span class="nc" id="L134">            FileUtils.isFileNewer(null,0);</span>
+<span class="nc" id="L135">            fail(&quot;File not specified&quot;);</span>
+<span class="pc" id="L136">        } catch (IllegalArgumentException e) {}</span>
+<span class="fc" id="L137">    }</span>
+
+    /**
+     * Tests the &lt;code&gt;isFileNewer(File, Date)&lt;/code&gt; method without specifying a &lt;code&gt;Date&lt;/code&gt;.
+     * &lt;br/&gt;
+     * The test is successfull if the method throws an &lt;code&gt;IllegalArgumentException&lt;/code&gt;. 
+     */
+    public void testIsFileNewerNoDate() {
+        try {
+<span class="nc" id="L146">            FileUtils.isFileNewer(m_testFile1, (Date) null);</span>
+<span class="nc" id="L147">            fail(&quot;Date not specified&quot;);</span>
+<span class="pc" id="L148">        } catch (IllegalArgumentException e) {}</span>
+<span class="fc" id="L149">    }</span>
+
+    /**
+     * Tests the &lt;code&gt;isFileNewer(File, File)&lt;/code&gt; method without specifying a reference &lt;code&gt;File&lt;/code&gt;.
+     * &lt;br/&gt;
+     * The test is successfull if the method throws an &lt;code&gt;IllegalArgumentException&lt;/code&gt;. 
+     */
+    public void testIsFileNewerNoFileReference() {
+        try {
+<span class="nc" id="L158">            FileUtils.isFileNewer(m_testFile1, (File) null);</span>
+<span class="nc" id="L159">            fail(&quot;Reference file not specified&quot;);</span>
+<span class="pc" id="L160">        } catch (IllegalArgumentException e) {}</span>
+<span class="fc" id="L161">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.0 (Apr 20, 2019 6:00:46 PM)</div></body></html>

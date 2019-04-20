@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ValidatingObjectInputStreamTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-io (Apr 20, 2019 6:11:46 PM)</a> &gt; <a href="../../index.html" class="el_group">commons-io</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.serialization</a> &gt; <span class="el_source">ValidatingObjectInputStreamTest.java</span></div><h1>ValidatingObjectInputStreamTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.apache.commons.io.serialization;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InvalidClassException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.UUID;
+import java.util.regex.Pattern;
+
+import org.junit.Before;
+import org.junit.Test;
+
+<span class="fc" id="L38">public class ValidatingObjectInputStreamTest extends ClosingBase {</span>
+    private MockSerializedClass testObject;
+    private InputStream testStream;
+
+<span class="fc" id="L42">    static private final ClassNameMatcher ALWAYS_TRUE = new ClassNameMatcher() {</span>
+        @Override
+        public boolean matches(String className) {
+<span class="fc" id="L45">            return true;</span>
+        }
+    };
+
+    @Before
+    public void setup() throws IOException {
+<span class="fc" id="L51">        testObject = new MockSerializedClass(UUID.randomUUID().toString());</span>
+<span class="fc" id="L52">        final ByteArrayOutputStream bos = willClose(new ByteArrayOutputStream());</span>
+<span class="fc" id="L53">        final ObjectOutputStream oos = willClose(new ObjectOutputStream(bos));</span>
+<span class="fc" id="L54">        oos.writeObject(testObject);</span>
+<span class="fc" id="L55">        testStream = willClose(new ByteArrayInputStream(bos.toByteArray()));</span>
+<span class="fc" id="L56">    }</span>
+
+    private void assertSerialization(ObjectInputStream ois) throws ClassNotFoundException, IOException {
+<span class="fc" id="L59">        final MockSerializedClass result = (MockSerializedClass) (ois.readObject());</span>
+<span class="fc" id="L60">        assertEquals(testObject, result);</span>
+<span class="fc" id="L61">    }</span>
+
+    @Test(expected = InvalidClassException.class)
+    public void noAccept() throws Exception {
+<span class="pc" id="L65">        assertSerialization(</span>
+<span class="fc" id="L66">                willClose(new ValidatingObjectInputStream(testStream)));</span>
+<span class="nc" id="L67">    }</span>
+
+    @Test
+    public void exceptionIncludesClassName() throws Exception {
+        try {
+<span class="pc" id="L72">            assertSerialization(</span>
+<span class="fc" id="L73">                    willClose(new ValidatingObjectInputStream(testStream)));</span>
+<span class="nc" id="L74">            fail(&quot;Expected an InvalidClassException&quot;);</span>
+<span class="fc" id="L75">        } catch(InvalidClassException ice) {</span>
+<span class="fc" id="L76">            final String name = MockSerializedClass.class.getName();</span>
+<span class="fc" id="L77">            assertTrue(&quot;Expecting message to contain &quot; + name, ice.getMessage().contains(name));</span>
+<span class="nc" id="L78">        }</span>
+<span class="fc" id="L79">    }</span>
+
+    @Test
+    public void acceptCustomMatcher() throws Exception {
+<span class="fc" id="L83">        assertSerialization(</span>
+<span class="fc" id="L84">                willClose(new ValidatingObjectInputStream(testStream))</span>
+<span class="fc" id="L85">                .accept(ALWAYS_TRUE)</span>
+        );
+<span class="fc" id="L87">    }</span>
+
+    @Test(expected = InvalidClassException.class)
+    public void rejectCustomMatcher() throws Exception {
+<span class="pc" id="L91">        assertSerialization(</span>
+<span class="fc" id="L92">                willClose(new ValidatingObjectInputStream(testStream))</span>
+<span class="fc" id="L93">                .accept(MockSerializedClass.class)</span>
+<span class="fc" id="L94">                .reject(ALWAYS_TRUE)</span>
+        );
+<span class="nc" id="L96">    }</span>
+
+    @Test
+    public void acceptPattern() throws Exception {
+<span class="fc" id="L100">        assertSerialization(</span>
+<span class="fc" id="L101">                willClose(new ValidatingObjectInputStream(testStream))</span>
+<span class="fc" id="L102">                .accept(Pattern.compile(&quot;.*MockSerializedClass.*&quot;))</span>
+        );
+<span class="fc" id="L104">    }</span>
+
+    @Test(expected = InvalidClassException.class)
+    public void rejectPattern() throws Exception {
+<span class="pc" id="L108">        assertSerialization(</span>
+<span class="fc" id="L109">                willClose(new ValidatingObjectInputStream(testStream))</span>
+<span class="fc" id="L110">                .accept(MockSerializedClass.class)</span>
+<span class="fc" id="L111">                .reject(Pattern.compile(&quot;org.*&quot;))</span>
+        );
+<span class="nc" id="L113">    }</span>
+
+    @Test
+    public void acceptWildcard() throws Exception {
+<span class="fc" id="L117">        assertSerialization(</span>
+<span class="fc" id="L118">                willClose(new ValidatingObjectInputStream(testStream))</span>
+<span class="fc" id="L119">                .accept(&quot;org.apache.commons.io.*&quot;)</span>
+        );
+<span class="fc" id="L121">    }</span>
+
+    @Test(expected = InvalidClassException.class)
+    public void rejectWildcard() throws Exception {
+<span class="pc" id="L125">        assertSerialization(</span>
+<span class="fc" id="L126">                willClose(new ValidatingObjectInputStream(testStream))</span>
+<span class="fc" id="L127">                .accept(MockSerializedClass.class)</span>
+<span class="fc" id="L128">                .reject(&quot;org.*&quot;)</span>
+        );
+<span class="nc" id="L130">    }</span>
+
+    @Test(expected = InvalidClassException.class)
+    public void ourTestClassNotAccepted() throws Exception {
+<span class="pc" id="L134">        assertSerialization(</span>
+<span class="fc" id="L135">                willClose(new ValidatingObjectInputStream(testStream))</span>
+<span class="fc" id="L136">                .accept(Integer.class)</span>
+        );
+<span class="nc" id="L138">    }</span>
+
+    @Test
+    public void ourTestClassOnlyAccepted() throws Exception {
+<span class="fc" id="L142">        assertSerialization(</span>
+<span class="fc" id="L143">                willClose(new ValidatingObjectInputStream(testStream))</span>
+<span class="fc" id="L144">                .accept(MockSerializedClass.class)</span>
+        );
+<span class="fc" id="L146">    }</span>
+
+    @Test
+    public void ourTestClassAcceptedFirst() throws Exception {
+<span class="fc" id="L150">        assertSerialization(</span>
+<span class="fc" id="L151">                willClose(new ValidatingObjectInputStream(testStream))</span>
+<span class="fc" id="L152">                .accept(MockSerializedClass.class, Integer.class)</span>
+        );
+<span class="fc" id="L154">    }</span>
+
+    @Test
+    public void ourTestClassAcceptedSecond() throws Exception {
+<span class="fc" id="L158">        assertSerialization(</span>
+<span class="fc" id="L159">                willClose(new ValidatingObjectInputStream(testStream))</span>
+<span class="fc" id="L160">                .accept(Integer.class, MockSerializedClass.class)</span>
+        );
+<span class="fc" id="L162">    }</span>
+
+    @Test
+    public void ourTestClassAcceptedFirstWildcard() throws Exception {
+<span class="fc" id="L166">        assertSerialization(</span>
+<span class="fc" id="L167">                willClose(new ValidatingObjectInputStream(testStream))</span>
+<span class="fc" id="L168">                .accept(&quot;*MockSerializedClass&quot;,&quot;*Integer&quot;)</span>
+        );
+<span class="fc" id="L170">    }</span>
+
+    @Test
+    public void ourTestClassAcceptedSecondWildcard() throws Exception {
+<span class="fc" id="L174">        assertSerialization(</span>
+<span class="fc" id="L175">                willClose(new ValidatingObjectInputStream(testStream))</span>
+<span class="fc" id="L176">                .accept(&quot;*Integer&quot;,&quot;*MockSerializedClass&quot;)</span>
+        );
+<span class="fc" id="L178">    }</span>
+
+    @Test(expected = InvalidClassException.class)
+    public void reject() throws Exception {
+<span class="pc" id="L182">        assertSerialization(</span>
+<span class="fc" id="L183">                willClose(new ValidatingObjectInputStream(testStream))</span>
+<span class="fc" id="L184">                .accept(Long.class)</span>
+<span class="fc" id="L185">                .reject(MockSerializedClass.class, Integer.class)</span>
+        );
+<span class="nc" id="L187">    }</span>
+    
+    @Test(expected = InvalidClassException.class)
+    public void rejectPrecedence() throws Exception {
+<span class="pc" id="L191">        assertSerialization(</span>
+<span class="fc" id="L192">                willClose(new ValidatingObjectInputStream(testStream))</span>
+<span class="fc" id="L193">                .accept(MockSerializedClass.class)</span>
+<span class="fc" id="L194">                .reject(MockSerializedClass.class, Integer.class)</span>
+        );
+<span class="nc" id="L196">    }</span>
+    
+    @Test(expected = InvalidClassException.class)
+    public void rejectOnly() throws Exception {
+<span class="pc" id="L200">        assertSerialization(</span>
+<span class="fc" id="L201">                willClose(new ValidatingObjectInputStream(testStream))</span>
+<span class="fc" id="L202">                .reject(Integer.class)</span>
+        );
+<span class="nc" id="L204">    }</span>
+    
+    @Test(expected = RuntimeException.class)
+    public void customInvalidMethod() throws Exception {
+        class CustomVOIS extends ValidatingObjectInputStream {
+<span class="fc" id="L209">            CustomVOIS(InputStream is) throws IOException {</span>
+<span class="fc" id="L210">                super(is);</span>
+<span class="fc" id="L211">            }</span>
+
+            @Override
+            protected void invalidClassNameFound(String className) throws InvalidClassException {
+<span class="fc" id="L215">                throw new RuntimeException(&quot;Custom exception&quot;);</span>
+            }
+        };
+        
+<span class="pc" id="L219">        assertSerialization(</span>
+<span class="fc" id="L220">                willClose(new CustomVOIS(testStream))</span>
+<span class="fc" id="L221">                .reject(Integer.class)</span>
+        );
+<span class="nc" id="L223">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>commons-io (Apr 20, 2019 6:11:46 PM)</div></body></html>

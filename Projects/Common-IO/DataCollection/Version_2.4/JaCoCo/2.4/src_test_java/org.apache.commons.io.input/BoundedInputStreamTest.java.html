@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>BoundedInputStreamTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.4 (Apr 20, 2019 6:07:50 PM)</a> &gt; <a href="../../index.html" class="el_group">2.4</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.input</a> &gt; <span class="el_source">BoundedInputStreamTest.java</span></div><h1>BoundedInputStreamTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.input;
+
+import java.io.ByteArrayInputStream;
+
+import junit.framework.TestCase;
+
+import org.apache.commons.io.IOUtils;
+
+/**
+ * Tests for {@link BoundedInputStream}.
+ *
+ * @version $Id$
+ */
+public class BoundedInputStreamTest extends TestCase {
+
+    public BoundedInputStreamTest(String name) {
+<span class="fc" id="L33">        super(name);</span>
+<span class="fc" id="L34">    }</span>
+
+    /**
+     * Test {@link BoundedInputStream#read()}.
+     */
+    public void testReadSingle() throws Exception {
+<span class="fc" id="L40">        BoundedInputStream bounded = null;</span>
+<span class="fc" id="L41">        byte[] helloWorld = &quot;Hello World&quot;.getBytes();</span>
+<span class="fc" id="L42">        byte[] hello      = &quot;Hello&quot;.getBytes();</span>
+
+        // limit = length
+<span class="fc" id="L45">        bounded = new BoundedInputStream(new ByteArrayInputStream(helloWorld), helloWorld.length);</span>
+<span class="fc bfc" id="L46" title="All 2 branches covered.">        for (int i = 0; i &lt; helloWorld.length; i++) {</span>
+<span class="fc" id="L47">            assertEquals(&quot;limit = length byte[&quot; + i + &quot;]&quot;, helloWorld[i], bounded.read());</span>
+        }
+<span class="fc" id="L49">        assertEquals(&quot;limit = length end&quot;, -1, bounded.read());</span>
+
+        // limit &gt; length
+<span class="fc" id="L52">        bounded = new BoundedInputStream(new ByteArrayInputStream(helloWorld), helloWorld.length + 1);</span>
+<span class="fc bfc" id="L53" title="All 2 branches covered.">        for (int i = 0; i &lt; helloWorld.length; i++) {</span>
+<span class="fc" id="L54">            assertEquals(&quot;limit &gt; length byte[&quot; + i + &quot;]&quot;, helloWorld[i], bounded.read());</span>
+        }
+<span class="fc" id="L56">        assertEquals(&quot;limit &gt; length end&quot;, -1, bounded.read());</span>
+
+        // limit &lt; length
+<span class="fc" id="L59">        bounded = new BoundedInputStream(new ByteArrayInputStream(helloWorld), hello.length);</span>
+<span class="fc bfc" id="L60" title="All 2 branches covered.">        for (int i = 0; i &lt; hello.length; i++) {</span>
+<span class="fc" id="L61">            assertEquals(&quot;limit &lt; length byte[&quot; + i + &quot;]&quot;, hello[i], bounded.read());</span>
+        }
+<span class="fc" id="L63">        assertEquals(&quot;limit &lt; length end&quot;, -1, bounded.read());</span>
+<span class="fc" id="L64">    }</span>
+
+    /**
+     * Test {@link BoundedInputStream#read(byte[], int, int)}.
+     */
+    public void testReadArray() throws Exception {
+
+<span class="fc" id="L71">        BoundedInputStream bounded = null;</span>
+<span class="fc" id="L72">        byte[] helloWorld = &quot;Hello World&quot;.getBytes();</span>
+<span class="fc" id="L73">        byte[] hello      = &quot;Hello&quot;.getBytes();</span>
+
+<span class="fc" id="L75">        bounded = new BoundedInputStream(new ByteArrayInputStream(helloWorld));</span>
+<span class="fc" id="L76">        compare(&quot;limit = -1&quot;, helloWorld, IOUtils.toByteArray(bounded));</span>
+
+<span class="fc" id="L78">        bounded = new BoundedInputStream(new ByteArrayInputStream(helloWorld), 0);</span>
+<span class="fc" id="L79">        compare(&quot;limit = 0&quot;, new byte[0], IOUtils.toByteArray(bounded));</span>
+
+<span class="fc" id="L81">        bounded = new BoundedInputStream(new ByteArrayInputStream(helloWorld), helloWorld.length);</span>
+<span class="fc" id="L82">        compare(&quot;limit = length&quot;, helloWorld, IOUtils.toByteArray(bounded));</span>
+
+<span class="fc" id="L84">        bounded = new BoundedInputStream(new ByteArrayInputStream(helloWorld), helloWorld.length + 1);</span>
+<span class="fc" id="L85">        compare(&quot;limit &gt; length&quot;, helloWorld, IOUtils.toByteArray(bounded));</span>
+
+<span class="fc" id="L87">        bounded = new BoundedInputStream(new ByteArrayInputStream(helloWorld), helloWorld.length - 6);</span>
+<span class="fc" id="L88">        compare(&quot;limit &lt; length&quot;, hello, IOUtils.toByteArray(bounded));</span>
+<span class="fc" id="L89">    }</span>
+
+    /**
+     * Compare byte arrays.
+     */
+    private void compare(String msg, byte[] expected, byte[] actual) {
+<span class="fc" id="L95">        assertEquals(msg + &quot; length&quot;, expected.length, actual.length);</span>
+<span class="fc bfc" id="L96" title="All 2 branches covered.">        for (int i = 0; i &lt; expected.length; i++) {</span>
+<span class="fc" id="L97">            assertEquals(msg + &quot; byte[&quot; + i + &quot;]&quot;, expected[i], actual[i]);</span>
+        }
+<span class="fc" id="L99">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.4 (Apr 20, 2019 6:07:50 PM)</div></body></html>

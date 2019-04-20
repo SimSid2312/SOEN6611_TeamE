@@ -1,0 +1,3061 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileUtilsTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-io (Apr 20, 2019 6:11:46 PM)</a> &gt; <a href="../../index.html" class="el_group">commons-io</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io</a> &gt; <span class="el_source">FileUtilsTestCase.java</span></div><h1>FileUtilsTestCase.java</h1><pre class="source lang-java linenums"><span class="fc" id="L1">/*</span>
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io;
+
+import org.apache.commons.io.filefilter.NameFileFilter;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
+import org.apache.commons.io.testtools.FileBasedTestCase;
+import org.apache.commons.io.testtools.TestUtils;
+import org.junit.*;
+
+import java.io.*;
+import java.math.BigInteger;
+import java.net.URL;
+import java.nio.charset.Charset;
+import java.util.*;
+import java.util.zip.CRC32;
+import java.util.zip.Checksum;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+/**
+ * This is used to test FileUtils for correctness.
+ *
+ * @version $Id$
+ * @see FileUtils
+ */
+@SuppressWarnings({&quot;deprecation&quot;, &quot;ResultOfMethodCallIgnored&quot;}) // unit tests include tests of many deprecated methods
+public class FileUtilsTestCase extends FileBasedTestCase {
+
+    // Test data
+
+    /**
+     * Size of test directory.
+     */
+    private static final int TEST_DIRECTORY_SIZE = 0;
+
+    /**
+     * Size of test directory.
+     */
+<span class="fc" id="L60">    private static final BigInteger TEST_DIRECTORY_SIZE_BI = BigInteger.ZERO;</span>
+
+    /**
+     * Size (greater of zero) of test file.
+     */
+<span class="fc" id="L65">    private static final BigInteger TEST_DIRECTORY_SIZE_GT_ZERO_BI = BigInteger.valueOf(100);</span>
+
+    /**
+     * List files recursively
+     */
+<span class="fc" id="L70">    private static final ListDirectoryWalker LIST_WALKER = new ListDirectoryWalker();</span>
+
+    /**
+     * Delay in milliseconds to make sure test for &quot;last modified date&quot; are accurate
+     */
+    //private static final int LAST_MODIFIED_DELAY = 600;
+
+    private final File testFile1;
+    private final File testFile2;
+
+    private final int testFile1Size;
+    private final int testFile2Size;
+
+<span class="fc" id="L83">    public FileUtilsTestCase() {</span>
+<span class="fc" id="L84">        testFile1 = new File(getTestDirectory(), &quot;file1-test.txt&quot;);</span>
+<span class="fc" id="L85">        testFile2 = new File(getTestDirectory(), &quot;file1a-test.txt&quot;);</span>
+
+<span class="fc" id="L87">        testFile1Size = (int) testFile1.length();</span>
+<span class="fc" id="L88">        testFile2Size = (int) testFile2.length();</span>
+<span class="fc" id="L89">    }</span>
+
+    @Before
+    public void setUp() throws Exception {
+<span class="fc" id="L93">        getTestDirectory().mkdirs();</span>
+<span class="pc bpc" id="L94" title="1 of 2 branches missed.">        if (!testFile1.getParentFile().exists()) {</span>
+<span class="nc" id="L95">            throw new IOException(&quot;Cannot create file &quot; + testFile1</span>
+<span class="nc" id="L96">                    + &quot; as the parent directory does not exist&quot;);</span>
+        }
+<span class="fc" id="L98">        final BufferedOutputStream output3 =</span>
+<span class="fc" id="L99">                new BufferedOutputStream(new FileOutputStream(testFile1));</span>
+        try {
+<span class="fc" id="L101">            TestUtils.generateTestData(output3, (long) testFile1Size);</span>
+<span class="fc" id="L102">        } finally {</span>
+<span class="fc" id="L103">            IOUtils.closeQuietly(output3);</span>
+        }
+<span class="pc bpc" id="L105" title="1 of 2 branches missed.">        if (!testFile2.getParentFile().exists()) {</span>
+<span class="nc" id="L106">            throw new IOException(&quot;Cannot create file &quot; + testFile2</span>
+<span class="nc" id="L107">                    + &quot; as the parent directory does not exist&quot;);</span>
+        }
+<span class="fc" id="L109">        final BufferedOutputStream output2 =</span>
+<span class="fc" id="L110">                new BufferedOutputStream(new FileOutputStream(testFile2));</span>
+        try {
+<span class="fc" id="L112">            TestUtils.generateTestData(output2, (long) testFile2Size);</span>
+<span class="fc" id="L113">        } finally {</span>
+<span class="fc" id="L114">            IOUtils.closeQuietly(output2);</span>
+        }
+<span class="fc" id="L116">        FileUtils.deleteDirectory(getTestDirectory());</span>
+<span class="fc" id="L117">        getTestDirectory().mkdirs();</span>
+<span class="pc bpc" id="L118" title="1 of 2 branches missed.">        if (!testFile1.getParentFile().exists()) {</span>
+<span class="nc" id="L119">            throw new IOException(&quot;Cannot create file &quot; + testFile1</span>
+<span class="nc" id="L120">                    + &quot; as the parent directory does not exist&quot;);</span>
+        }
+<span class="fc" id="L122">        final BufferedOutputStream output1 =</span>
+<span class="fc" id="L123">                new BufferedOutputStream(new FileOutputStream(testFile1));</span>
+        try {
+<span class="fc" id="L125">            TestUtils.generateTestData(output1, (long) testFile1Size);</span>
+<span class="fc" id="L126">        } finally {</span>
+<span class="fc" id="L127">            IOUtils.closeQuietly(output1);</span>
+        }
+<span class="pc bpc" id="L129" title="1 of 2 branches missed.">        if (!testFile2.getParentFile().exists()) {</span>
+<span class="nc" id="L130">            throw new IOException(&quot;Cannot create file &quot; + testFile2</span>
+<span class="nc" id="L131">                    + &quot; as the parent directory does not exist&quot;);</span>
+        }
+<span class="fc" id="L133">        final BufferedOutputStream output =</span>
+<span class="fc" id="L134">                new BufferedOutputStream(new FileOutputStream(testFile2));</span>
+        try {
+<span class="fc" id="L136">            TestUtils.generateTestData(output, (long) testFile2Size);</span>
+<span class="fc" id="L137">        } finally {</span>
+<span class="fc" id="L138">            IOUtils.closeQuietly(output);</span>
+        }
+<span class="fc" id="L140">    }</span>
+
+    @After
+    public void tearDown() throws Exception {
+<span class="fc" id="L144">        FileUtils.deleteDirectory(getTestDirectory());</span>
+<span class="fc" id="L145">    }</span>
+
+    private String getName() {
+<span class="fc" id="L148">        return this.getClass().getSimpleName();</span>
+    }
+
+    //-----------------------------------------------------------------------
+    @Test
+    public void testGetFile() {
+<span class="fc" id="L154">        final File expected_A = new File(&quot;src&quot;);</span>
+<span class="fc" id="L155">        final File expected_B = new File(expected_A, &quot;main&quot;);</span>
+<span class="fc" id="L156">        final File expected_C = new File(expected_B, &quot;java&quot;);</span>
+<span class="fc" id="L157">        assertEquals(&quot;A&quot;, expected_A, FileUtils.getFile(&quot;src&quot;));</span>
+<span class="fc" id="L158">        assertEquals(&quot;B&quot;, expected_B, FileUtils.getFile(&quot;src&quot;, &quot;main&quot;));</span>
+<span class="fc" id="L159">        assertEquals(&quot;C&quot;, expected_C, FileUtils.getFile(&quot;src&quot;, &quot;main&quot;, &quot;java&quot;));</span>
+        try {
+<span class="nc" id="L161">            FileUtils.getFile((String[]) null);</span>
+<span class="nc" id="L162">            fail(&quot;Expected NullPointerException&quot;);</span>
+<span class="pc" id="L163">        } catch (final NullPointerException e) {</span>
+            // expected
+        }
+<span class="fc" id="L166">    }</span>
+
+    @Test
+    public void testGetFile_Parent() {
+<span class="fc" id="L170">        final File parent = new File(&quot;parent&quot;);</span>
+<span class="fc" id="L171">        final File expected_A = new File(parent, &quot;src&quot;);</span>
+<span class="fc" id="L172">        final File expected_B = new File(expected_A, &quot;main&quot;);</span>
+<span class="fc" id="L173">        final File expected_C = new File(expected_B, &quot;java&quot;);</span>
+<span class="fc" id="L174">        assertEquals(&quot;A&quot;, expected_A, FileUtils.getFile(parent, &quot;src&quot;));</span>
+<span class="fc" id="L175">        assertEquals(&quot;B&quot;, expected_B, FileUtils.getFile(parent, &quot;src&quot;, &quot;main&quot;));</span>
+<span class="fc" id="L176">        assertEquals(&quot;C&quot;, expected_C, FileUtils.getFile(parent, &quot;src&quot;, &quot;main&quot;, &quot;java&quot;));</span>
+        try {
+<span class="nc" id="L178">            FileUtils.getFile(parent, (String[]) null);</span>
+<span class="nc" id="L179">            fail(&quot;Expected NullPointerException&quot;);</span>
+<span class="pc" id="L180">        } catch (final NullPointerException e) {</span>
+            // expected
+        }
+        try {
+<span class="nc" id="L184">            FileUtils.getFile((File) null, &quot;src&quot;);</span>
+<span class="nc" id="L185">            fail(&quot;Expected NullPointerException&quot;);</span>
+<span class="pc" id="L186">        } catch (final NullPointerException e) {</span>
+            // expected
+        }
+<span class="fc" id="L189">    }</span>
+
+    @Test
+    public void testGetTempDirectoryPath() {
+<span class="fc" id="L193">        assertEquals(System.getProperty(&quot;java.io.tmpdir&quot;),</span>
+<span class="fc" id="L194">                FileUtils.getTempDirectoryPath());</span>
+<span class="fc" id="L195">    }</span>
+
+    @Test
+    public void testGetTempDirectory() {
+<span class="fc" id="L199">        final File tempDirectory = new File(System.getProperty(&quot;java.io.tmpdir&quot;));</span>
+<span class="fc" id="L200">        assertEquals(tempDirectory, FileUtils.getTempDirectory());</span>
+<span class="fc" id="L201">    }</span>
+
+    @Test
+    public void testGetUserDirectoryPath() {
+<span class="fc" id="L205">        assertEquals(System.getProperty(&quot;user.home&quot;),</span>
+<span class="fc" id="L206">                FileUtils.getUserDirectoryPath());</span>
+<span class="fc" id="L207">    }</span>
+
+    @Test
+    public void testGetUserDirectory() {
+<span class="fc" id="L211">        final File userDirectory = new File(System.getProperty(&quot;user.home&quot;));</span>
+<span class="fc" id="L212">        assertEquals(userDirectory, FileUtils.getUserDirectory());</span>
+<span class="fc" id="L213">    }</span>
+
+    //-----------------------------------------------------------------------
+    @Test
+    public void test_openInputStream_exists() throws Exception {
+<span class="fc" id="L218">        final File file = new File(getTestDirectory(), &quot;test.txt&quot;);</span>
+<span class="fc" id="L219">        TestUtils.createLineBasedFile(file, new String[]{&quot;Hello&quot;});</span>
+<span class="fc" id="L220">        FileInputStream in = null;</span>
+        try {
+<span class="fc" id="L222">            in = FileUtils.openInputStream(file);</span>
+<span class="fc" id="L223">            assertEquals('H', in.read());</span>
+<span class="fc" id="L224">        } finally {</span>
+<span class="fc" id="L225">            IOUtils.closeQuietly(in);</span>
+        }
+<span class="fc" id="L227">    }</span>
+
+    @Test
+    public void test_openInputStream_existsButIsDirectory() throws Exception {
+<span class="fc" id="L231">        final File directory = new File(getTestDirectory(), &quot;subdir&quot;);</span>
+<span class="fc" id="L232">        directory.mkdirs();</span>
+<span class="fc" id="L233">        FileInputStream in = null;</span>
+        try {
+<span class="nc" id="L235">            in = FileUtils.openInputStream(directory);</span>
+<span class="nc" id="L236">            fail();</span>
+<span class="pc" id="L237">        } catch (final IOException ioe) {</span>
+            // expected
+        } finally {
+<span class="fc" id="L240">            IOUtils.closeQuietly(in);</span>
+        }
+<span class="fc" id="L242">    }</span>
+
+    @Test
+    public void test_openInputStream_notExists() throws Exception {
+<span class="fc" id="L246">        final File directory = new File(getTestDirectory(), &quot;test.txt&quot;);</span>
+<span class="fc" id="L247">        FileInputStream in = null;</span>
+        try {
+<span class="nc" id="L249">            in = FileUtils.openInputStream(directory);</span>
+<span class="nc" id="L250">            fail();</span>
+<span class="pc" id="L251">        } catch (final IOException ioe) {</span>
+            // expected
+        } finally {
+<span class="fc" id="L254">            IOUtils.closeQuietly(in);</span>
+        }
+<span class="fc" id="L256">    }</span>
+
+    //-----------------------------------------------------------------------
+    void openOutputStream_noParent(final boolean createFile) throws Exception {
+<span class="fc" id="L260">        final File file = new File(&quot;test.txt&quot;);</span>
+<span class="fc" id="L261">        assertNull(file.getParentFile());</span>
+        try {
+<span class="fc bfc" id="L263" title="All 2 branches covered.">            if (createFile) {</span>
+<span class="fc" id="L264">                TestUtils.createLineBasedFile(file, new String[]{&quot;Hello&quot;});</span>
+            }
+<span class="fc" id="L266">            FileOutputStream out = null;</span>
+            try {
+<span class="fc" id="L268">                out = FileUtils.openOutputStream(file);</span>
+<span class="fc" id="L269">                out.write(0);</span>
+<span class="fc" id="L270">            } finally {</span>
+<span class="fc" id="L271">                IOUtils.closeQuietly(out);</span>
+            }
+<span class="fc" id="L273">            assertTrue(file.exists());</span>
+<span class="fc" id="L274">        } finally {</span>
+<span class="pc bpc" id="L275" title="1 of 2 branches missed.">            if (!file.delete()) {</span>
+<span class="nc" id="L276">                file.deleteOnExit();</span>
+            }
+        }
+<span class="fc" id="L279">    }</span>
+
+    @Test
+    public void test_openOutputStream_noParentCreateFile() throws Exception {
+<span class="fc" id="L283">        openOutputStream_noParent(true);</span>
+<span class="fc" id="L284">    }</span>
+
+    @Test
+    public void test_openOutputStream_noParentNoFile() throws Exception {
+<span class="fc" id="L288">        openOutputStream_noParent(false);</span>
+<span class="fc" id="L289">    }</span>
+
+
+    @Test
+    public void test_openOutputStream_exists() throws Exception {
+<span class="fc" id="L294">        final File file = new File(getTestDirectory(), &quot;test.txt&quot;);</span>
+<span class="fc" id="L295">        TestUtils.createLineBasedFile(file, new String[]{&quot;Hello&quot;});</span>
+<span class="fc" id="L296">        FileOutputStream out = null;</span>
+        try {
+<span class="fc" id="L298">            out = FileUtils.openOutputStream(file);</span>
+<span class="fc" id="L299">            out.write(0);</span>
+<span class="fc" id="L300">        } finally {</span>
+<span class="fc" id="L301">            IOUtils.closeQuietly(out);</span>
+        }
+<span class="fc" id="L303">        assertTrue(file.exists());</span>
+<span class="fc" id="L304">    }</span>
+
+    @Test
+    public void test_openOutputStream_existsButIsDirectory() throws Exception {
+<span class="fc" id="L308">        final File directory = new File(getTestDirectory(), &quot;subdir&quot;);</span>
+<span class="fc" id="L309">        directory.mkdirs();</span>
+<span class="fc" id="L310">        FileOutputStream out = null;</span>
+        try {
+<span class="nc" id="L312">            out = FileUtils.openOutputStream(directory);</span>
+<span class="nc" id="L313">            fail();</span>
+<span class="pc" id="L314">        } catch (final IOException ioe) {</span>
+            // expected
+        } finally {
+<span class="fc" id="L317">            IOUtils.closeQuietly(out);</span>
+        }
+<span class="fc" id="L319">    }</span>
+
+    @Test
+    public void test_openOutputStream_notExists() throws Exception {
+<span class="fc" id="L323">        final File file = new File(getTestDirectory(), &quot;a/test.txt&quot;);</span>
+<span class="fc" id="L324">        FileOutputStream out = null;</span>
+        try {
+<span class="fc" id="L326">            out = FileUtils.openOutputStream(file);</span>
+<span class="fc" id="L327">            out.write(0);</span>
+<span class="fc" id="L328">        } finally {</span>
+<span class="fc" id="L329">            IOUtils.closeQuietly(out);</span>
+        }
+<span class="fc" id="L331">        assertTrue(file.exists());</span>
+<span class="fc" id="L332">    }</span>
+
+    @Test
+    public void test_openOutputStream_notExistsCannotCreate() throws Exception {
+        // according to Wikipedia, most filing systems have a 256 limit on filename
+<span class="fc" id="L337">        final String longStr =</span>
+<span class="fc" id="L338">                &quot;abcdevwxyzabcdevwxyzabcdevwxyzabcdevwxyzabcdevwxyz&quot; +</span>
+                        &quot;abcdevwxyzabcdevwxyzabcdevwxyzabcdevwxyzabcdevwxyz&quot; +
+                        &quot;abcdevwxyzabcdevwxyzabcdevwxyzabcdevwxyzabcdevwxyz&quot; +
+                        &quot;abcdevwxyzabcdevwxyzabcdevwxyzabcdevwxyzabcdevwxyz&quot; +
+                        &quot;abcdevwxyzabcdevwxyzabcdevwxyzabcdevwxyzabcdevwxyz&quot; +
+                        &quot;abcdevwxyzabcdevwxyzabcdevwxyzabcdevwxyzabcdevwxyz&quot;;  // 300 chars
+<span class="fc" id="L344">        final File file = new File(getTestDirectory(), &quot;a/&quot; + longStr + &quot;/test.txt&quot;);</span>
+<span class="fc" id="L345">        FileOutputStream out = null;</span>
+        try {
+<span class="nc" id="L347">            out = FileUtils.openOutputStream(file);</span>
+<span class="nc" id="L348">            fail();</span>
+<span class="pc" id="L349">        } catch (final IOException ioe) {</span>
+            // expected
+        } finally {
+<span class="fc" id="L352">            IOUtils.closeQuietly(out);</span>
+        }
+<span class="fc" id="L354">    }</span>
+
+    //-----------------------------------------------------------------------
+    // byteCountToDisplaySize
+    @Test
+    public void testByteCountToDisplaySizeBigInteger() {
+<span class="fc" id="L360">        final BigInteger b1023 = BigInteger.valueOf(1023);</span>
+<span class="fc" id="L361">        final BigInteger b1025 = BigInteger.valueOf(1025);</span>
+<span class="fc" id="L362">        final BigInteger KB1 = BigInteger.valueOf(1024);</span>
+<span class="fc" id="L363">        final BigInteger MB1 = KB1.multiply(KB1);</span>
+<span class="fc" id="L364">        final BigInteger GB1 = MB1.multiply(KB1);</span>
+<span class="fc" id="L365">        final BigInteger GB2 = GB1.add(GB1);</span>
+<span class="fc" id="L366">        final BigInteger TB1 = GB1.multiply(KB1);</span>
+<span class="fc" id="L367">        final BigInteger PB1 = TB1.multiply(KB1);</span>
+<span class="fc" id="L368">        final BigInteger EB1 = PB1.multiply(KB1);</span>
+<span class="fc" id="L369">        assertEquals(FileUtils.byteCountToDisplaySize(BigInteger.ZERO), &quot;0 bytes&quot;);</span>
+<span class="fc" id="L370">        assertEquals(FileUtils.byteCountToDisplaySize(BigInteger.ONE), &quot;1 bytes&quot;);</span>
+<span class="fc" id="L371">        assertEquals(FileUtils.byteCountToDisplaySize(b1023), &quot;1023 bytes&quot;);</span>
+<span class="fc" id="L372">        assertEquals(FileUtils.byteCountToDisplaySize(KB1), &quot;1 KB&quot;);</span>
+<span class="fc" id="L373">        assertEquals(FileUtils.byteCountToDisplaySize(b1025), &quot;1 KB&quot;);</span>
+<span class="fc" id="L374">        assertEquals(FileUtils.byteCountToDisplaySize(MB1.subtract(BigInteger.ONE)), &quot;1023 KB&quot;);</span>
+<span class="fc" id="L375">        assertEquals(FileUtils.byteCountToDisplaySize(MB1), &quot;1 MB&quot;);</span>
+<span class="fc" id="L376">        assertEquals(FileUtils.byteCountToDisplaySize(MB1.add(BigInteger.ONE)), &quot;1 MB&quot;);</span>
+<span class="fc" id="L377">        assertEquals(FileUtils.byteCountToDisplaySize(GB1.subtract(BigInteger.ONE)), &quot;1023 MB&quot;);</span>
+<span class="fc" id="L378">        assertEquals(FileUtils.byteCountToDisplaySize(GB1), &quot;1 GB&quot;);</span>
+<span class="fc" id="L379">        assertEquals(FileUtils.byteCountToDisplaySize(GB1.add(BigInteger.ONE)), &quot;1 GB&quot;);</span>
+<span class="fc" id="L380">        assertEquals(FileUtils.byteCountToDisplaySize(GB2), &quot;2 GB&quot;);</span>
+<span class="fc" id="L381">        assertEquals(FileUtils.byteCountToDisplaySize(GB2.subtract(BigInteger.ONE)), &quot;1 GB&quot;);</span>
+<span class="fc" id="L382">        assertEquals(FileUtils.byteCountToDisplaySize(TB1), &quot;1 TB&quot;);</span>
+<span class="fc" id="L383">        assertEquals(FileUtils.byteCountToDisplaySize(PB1), &quot;1 PB&quot;);</span>
+<span class="fc" id="L384">        assertEquals(FileUtils.byteCountToDisplaySize(EB1), &quot;1 EB&quot;);</span>
+<span class="fc" id="L385">        assertEquals(FileUtils.byteCountToDisplaySize(Long.MAX_VALUE), &quot;7 EB&quot;);</span>
+        // Other MAX_VALUEs
+<span class="fc" id="L387">        assertEquals(FileUtils.byteCountToDisplaySize(BigInteger.valueOf(Character.MAX_VALUE)), &quot;63 KB&quot;);</span>
+<span class="fc" id="L388">        assertEquals(FileUtils.byteCountToDisplaySize(BigInteger.valueOf(Short.MAX_VALUE)), &quot;31 KB&quot;);</span>
+<span class="fc" id="L389">        assertEquals(FileUtils.byteCountToDisplaySize(BigInteger.valueOf(Integer.MAX_VALUE)), &quot;1 GB&quot;);</span>
+<span class="fc" id="L390">    }</span>
+
+    @SuppressWarnings(&quot;NumericOverflow&quot;)
+    @Test
+    public void testByteCountToDisplaySizeLong() {
+<span class="fc" id="L395">        assertEquals(FileUtils.byteCountToDisplaySize(0), &quot;0 bytes&quot;);</span>
+<span class="fc" id="L396">        assertEquals(FileUtils.byteCountToDisplaySize(1), &quot;1 bytes&quot;);</span>
+<span class="fc" id="L397">        assertEquals(FileUtils.byteCountToDisplaySize(1023), &quot;1023 bytes&quot;);</span>
+<span class="fc" id="L398">        assertEquals(FileUtils.byteCountToDisplaySize(1024), &quot;1 KB&quot;);</span>
+<span class="fc" id="L399">        assertEquals(FileUtils.byteCountToDisplaySize(1025), &quot;1 KB&quot;);</span>
+<span class="fc" id="L400">        assertEquals(FileUtils.byteCountToDisplaySize(1024 * 1023), &quot;1023 KB&quot;);</span>
+<span class="fc" id="L401">        assertEquals(FileUtils.byteCountToDisplaySize(1024 * 1024), &quot;1 MB&quot;);</span>
+<span class="fc" id="L402">        assertEquals(FileUtils.byteCountToDisplaySize(1024 * 1025), &quot;1 MB&quot;);</span>
+<span class="fc" id="L403">        assertEquals(FileUtils.byteCountToDisplaySize(1024 * 1024 * 1023), &quot;1023 MB&quot;);</span>
+<span class="fc" id="L404">        assertEquals(FileUtils.byteCountToDisplaySize(1024 * 1024 * 1024), &quot;1 GB&quot;);</span>
+<span class="fc" id="L405">        assertEquals(FileUtils.byteCountToDisplaySize(1024 * 1024 * 1025), &quot;1 GB&quot;);</span>
+<span class="fc" id="L406">        assertEquals(FileUtils.byteCountToDisplaySize(1024L * 1024 * 1024 * 2), &quot;2 GB&quot;);</span>
+<span class="fc" id="L407">        assertEquals(FileUtils.byteCountToDisplaySize(1024 * 1024 * 1024 * 2 - 1), &quot;1 GB&quot;);</span>
+<span class="fc" id="L408">        assertEquals(FileUtils.byteCountToDisplaySize(1024L * 1024 * 1024 * 1024), &quot;1 TB&quot;);</span>
+<span class="fc" id="L409">        assertEquals(FileUtils.byteCountToDisplaySize(1024L * 1024 * 1024 * 1024 * 1024), &quot;1 PB&quot;);</span>
+<span class="fc" id="L410">        assertEquals(FileUtils.byteCountToDisplaySize(1024L * 1024 * 1024 * 1024 * 1024 * 1024), &quot;1 EB&quot;);</span>
+<span class="fc" id="L411">        assertEquals(FileUtils.byteCountToDisplaySize(Long.MAX_VALUE), &quot;7 EB&quot;);</span>
+        // Other MAX_VALUEs
+<span class="fc" id="L413">        assertEquals(FileUtils.byteCountToDisplaySize(Character.MAX_VALUE), &quot;63 KB&quot;);</span>
+<span class="fc" id="L414">        assertEquals(FileUtils.byteCountToDisplaySize(Short.MAX_VALUE), &quot;31 KB&quot;);</span>
+<span class="fc" id="L415">        assertEquals(FileUtils.byteCountToDisplaySize(Integer.MAX_VALUE), &quot;1 GB&quot;);</span>
+<span class="fc" id="L416">    }</span>
+
+    //-----------------------------------------------------------------------
+    @Test
+    public void testToFile1() throws Exception {
+<span class="fc" id="L421">        final URL url = new URL(&quot;file&quot;, null, &quot;a/b/c/file.txt&quot;);</span>
+<span class="fc" id="L422">        final File file = FileUtils.toFile(url);</span>
+<span class="fc" id="L423">        assertTrue(file.toString().contains(&quot;file.txt&quot;));</span>
+<span class="fc" id="L424">    }</span>
+
+    @Test
+    public void testToFile2() throws Exception {
+<span class="fc" id="L428">        final URL url = new URL(&quot;file&quot;, null, &quot;a/b/c/file%20n%61me%2520.tx%74&quot;);</span>
+<span class="fc" id="L429">        final File file = FileUtils.toFile(url);</span>
+<span class="fc" id="L430">        assertTrue(file.toString().contains(&quot;file name%20.txt&quot;));</span>
+<span class="fc" id="L431">    }</span>
+
+    @Test
+    public void testToFile3() throws Exception {
+<span class="fc" id="L435">        assertEquals(null, FileUtils.toFile(null));</span>
+<span class="fc" id="L436">        assertEquals(null, FileUtils.toFile(new URL(&quot;http://jakarta.apache.org&quot;)));</span>
+<span class="fc" id="L437">    }</span>
+
+    @Test
+    public void testToFile4() throws Exception {
+<span class="fc" id="L441">        final URL url = new URL(&quot;file&quot;, null, &quot;a/b/c/file%%20%me.txt%&quot;);</span>
+<span class="fc" id="L442">        final File file = FileUtils.toFile(url);</span>
+<span class="fc" id="L443">        assertTrue(file.toString().contains(&quot;file% %me.txt%&quot;));</span>
+<span class="fc" id="L444">    }</span>
+
+    /* IO-252 */
+    @Test
+    public void testToFile5() throws Exception {
+<span class="fc" id="L449">        final URL url = new URL(&quot;file&quot;, null, &quot;both%20are%20100%20%25%20true&quot;);</span>
+<span class="fc" id="L450">        final File file = FileUtils.toFile(url);</span>
+<span class="fc" id="L451">        assertEquals(&quot;both are 100 % true&quot;, file.toString());</span>
+<span class="fc" id="L452">    }</span>
+
+    @Test
+    public void testToFileUtf8() throws Exception {
+<span class="fc" id="L456">        final URL url = new URL(&quot;file&quot;, null, &quot;/home/%C3%A4%C3%B6%C3%BC%C3%9F&quot;);</span>
+<span class="fc" id="L457">        final File file = FileUtils.toFile(url);</span>
+<span class="fc" id="L458">        assertTrue(file.toString().contains(&quot;\u00E4\u00F6\u00FC\u00DF&quot;));</span>
+<span class="fc" id="L459">    }</span>
+
+    @Test
+    public void testDecodeUrl() {
+<span class="fc" id="L463">        assertEquals(&quot;&quot;, FileUtils.decodeUrl(&quot;&quot;));</span>
+<span class="fc" id="L464">        assertEquals(&quot;foo&quot;, FileUtils.decodeUrl(&quot;foo&quot;));</span>
+<span class="fc" id="L465">        assertEquals(&quot;+&quot;, FileUtils.decodeUrl(&quot;+&quot;));</span>
+<span class="fc" id="L466">        assertEquals(&quot;% &quot;, FileUtils.decodeUrl(&quot;%25%20&quot;));</span>
+<span class="fc" id="L467">        assertEquals(&quot;%20&quot;, FileUtils.decodeUrl(&quot;%2520&quot;));</span>
+<span class="fc" id="L468">        assertEquals(&quot;jar:file:/C:/dir/sub dir/1.0/foo-1.0.jar!/org/Bar.class&quot;, FileUtils</span>
+<span class="fc" id="L469">                .decodeUrl(&quot;jar:file:/C:/dir/sub%20dir/1.0/foo-1.0.jar!/org/Bar.class&quot;));</span>
+<span class="fc" id="L470">    }</span>
+
+    @Test
+    public void testDecodeUrlLenient() {
+<span class="fc" id="L474">        assertEquals(&quot; &quot;, FileUtils.decodeUrl(&quot; &quot;));</span>
+<span class="fc" id="L475">        assertEquals(&quot;\u00E4\u00F6\u00FC\u00DF&quot;, FileUtils.decodeUrl(&quot;\u00E4\u00F6\u00FC\u00DF&quot;));</span>
+<span class="fc" id="L476">        assertEquals(&quot;%&quot;, FileUtils.decodeUrl(&quot;%&quot;));</span>
+<span class="fc" id="L477">        assertEquals(&quot;% &quot;, FileUtils.decodeUrl(&quot;%%20&quot;));</span>
+<span class="fc" id="L478">        assertEquals(&quot;%2&quot;, FileUtils.decodeUrl(&quot;%2&quot;));</span>
+<span class="fc" id="L479">        assertEquals(&quot;%2G&quot;, FileUtils.decodeUrl(&quot;%2G&quot;));</span>
+<span class="fc" id="L480">    }</span>
+
+    @Test
+    public void testDecodeUrlNullSafe() {
+<span class="fc" id="L484">        assertNull(FileUtils.decodeUrl(null));</span>
+<span class="fc" id="L485">    }</span>
+
+    @Test
+    public void testDecodeUrlEncodingUtf8() {
+<span class="fc" id="L489">        assertEquals(&quot;\u00E4\u00F6\u00FC\u00DF&quot;, FileUtils.decodeUrl(&quot;%C3%A4%C3%B6%C3%BC%C3%9F&quot;));</span>
+<span class="fc" id="L490">    }</span>
+
+    // toFiles
+
+    @Test
+    public void testToFiles1() throws Exception {
+<span class="fc" id="L496">        final URL[] urls = new URL[]{</span>
+<span class="fc" id="L497">                new URL(&quot;file&quot;, null, &quot;file1.txt&quot;),</span>
+<span class="fc" id="L498">                new URL(&quot;file&quot;, null, &quot;file2.txt&quot;),</span>
+        };
+<span class="fc" id="L500">        final File[] files = FileUtils.toFiles(urls);</span>
+
+<span class="fc" id="L502">        assertEquals(urls.length, files.length);</span>
+<span class="fc" id="L503">        assertEquals(&quot;File: &quot; + files[0], true, files[0].toString().contains(&quot;file1.txt&quot;));</span>
+<span class="fc" id="L504">        assertEquals(&quot;File: &quot; + files[1], true, files[1].toString().contains(&quot;file2.txt&quot;));</span>
+<span class="fc" id="L505">    }</span>
+
+    @Test
+    public void testToFiles2() throws Exception {
+<span class="fc" id="L509">        final URL[] urls = new URL[]{</span>
+<span class="fc" id="L510">                new URL(&quot;file&quot;, null, &quot;file1.txt&quot;),</span>
+                null,
+        };
+<span class="fc" id="L513">        final File[] files = FileUtils.toFiles(urls);</span>
+
+<span class="fc" id="L515">        assertEquals(urls.length, files.length);</span>
+<span class="fc" id="L516">        assertEquals(&quot;File: &quot; + files[0], true, files[0].toString().contains(&quot;file1.txt&quot;));</span>
+<span class="fc" id="L517">        assertEquals(&quot;File: &quot; + files[1], null, files[1]);</span>
+<span class="fc" id="L518">    }</span>
+
+    @Test
+    public void testToFiles3() throws Exception {
+<span class="fc" id="L522">        final URL[] urls = null;</span>
+<span class="fc" id="L523">        final File[] files = FileUtils.toFiles(urls);</span>
+
+<span class="fc" id="L525">        assertEquals(0, files.length);</span>
+<span class="fc" id="L526">    }</span>
+
+    @Test
+    public void testToFiles3a() throws Exception {
+<span class="fc" id="L530">        final URL[] urls = new URL[0]; // empty array</span>
+<span class="fc" id="L531">        final File[] files = FileUtils.toFiles(urls);</span>
+
+<span class="fc" id="L533">        assertEquals(0, files.length);</span>
+<span class="fc" id="L534">    }</span>
+
+    @Test
+    public void testToFiles4() throws Exception {
+<span class="fc" id="L538">        final URL[] urls = new URL[]{</span>
+<span class="fc" id="L539">                new URL(&quot;file&quot;, null, &quot;file1.txt&quot;),</span>
+<span class="fc" id="L540">                new URL(&quot;http&quot;, &quot;jakarta.apache.org&quot;, &quot;file1.txt&quot;),</span>
+        };
+        try {
+<span class="nc" id="L543">            FileUtils.toFiles(urls);</span>
+<span class="nc" id="L544">            fail();</span>
+<span class="pc" id="L545">        } catch (final IllegalArgumentException ignore) {</span>
+        }
+<span class="fc" id="L547">    }</span>
+
+    // toURLs
+
+    @Test
+    public void testToURLs1() throws Exception {
+<span class="fc" id="L553">        final File[] files = new File[]{</span>
+<span class="fc" id="L554">                new File(getTestDirectory(), &quot;file1.txt&quot;),</span>
+<span class="fc" id="L555">                new File(getTestDirectory(), &quot;file2.txt&quot;),</span>
+<span class="fc" id="L556">                new File(getTestDirectory(), &quot;test file.txt&quot;),</span>
+        };
+<span class="fc" id="L558">        final URL[] urls = FileUtils.toURLs(files);</span>
+
+<span class="fc" id="L560">        assertEquals(files.length, urls.length);</span>
+<span class="fc" id="L561">        assertTrue(urls[0].toExternalForm().startsWith(&quot;file:&quot;));</span>
+<span class="fc" id="L562">        assertTrue(urls[0].toExternalForm().contains(&quot;file1.txt&quot;));</span>
+<span class="fc" id="L563">        assertTrue(urls[1].toExternalForm().startsWith(&quot;file:&quot;));</span>
+<span class="fc" id="L564">        assertTrue(urls[1].toExternalForm().contains(&quot;file2.txt&quot;));</span>
+
+        // Test escaped char
+<span class="fc" id="L567">        assertTrue(urls[2].toExternalForm().startsWith(&quot;file:&quot;));</span>
+<span class="fc" id="L568">        assertTrue(urls[2].toExternalForm().contains(&quot;test%20file.txt&quot;));</span>
+<span class="fc" id="L569">    }</span>
+
+//   @Test public void testToURLs2() throws Exception {
+//        File[] files = new File[] {
+//            new File(getTestDirectory(), &quot;file1.txt&quot;),
+//            null,
+//        };
+//        URL[] urls = FileUtils.toURLs(files);
+//
+//        assertEquals(files.length, urls.length);
+//        assertTrue(urls[0].toExternalForm().startsWith(&quot;file:&quot;));
+//        assertTrue(urls[0].toExternalForm().indexOf(&quot;file1.txt&quot;) &gt; 0);
+//        assertEquals(null, urls[1]);
+//    }
+//
+//   @Test public void testToURLs3() throws Exception {
+//        File[] files = null;
+//        URL[] urls = FileUtils.toURLs(files);
+//
+//        assertEquals(0, urls.length);
+//    }
+
+    @Test
+    public void testToURLs3a() throws Exception {
+<span class="fc" id="L593">        final File[] files = new File[0]; // empty array</span>
+<span class="fc" id="L594">        final URL[] urls = FileUtils.toURLs(files);</span>
+
+<span class="fc" id="L596">        assertEquals(0, urls.length);</span>
+<span class="fc" id="L597">    }</span>
+
+    // contentEquals
+
+    @Test
+    public void testContentEquals() throws Exception {
+        // Non-existent files
+<span class="fc" id="L604">        final File file = new File(getTestDirectory(), getName());</span>
+<span class="fc" id="L605">        final File file2 = new File(getTestDirectory(), getName() + &quot;2&quot;);</span>
+        // both don't  exist
+<span class="fc" id="L607">        assertTrue(FileUtils.contentEquals(file, file));</span>
+<span class="fc" id="L608">        assertTrue(FileUtils.contentEquals(file, file2));</span>
+<span class="fc" id="L609">        assertTrue(FileUtils.contentEquals(file2, file2));</span>
+<span class="fc" id="L610">        assertTrue(FileUtils.contentEquals(file2, file));</span>
+
+        // Directories
+        try {
+<span class="nc" id="L614">            FileUtils.contentEquals(getTestDirectory(), getTestDirectory());</span>
+<span class="nc" id="L615">            fail(&quot;Comparing directories should fail with an IOException&quot;);</span>
+<span class="pc" id="L616">        } catch (final IOException ioe) {</span>
+            //expected
+        }
+
+        // Different files
+<span class="fc" id="L621">        final File objFile1 =</span>
+<span class="fc" id="L622">                new File(getTestDirectory(), getName() + &quot;.object&quot;);</span>
+<span class="fc" id="L623">        objFile1.deleteOnExit();</span>
+<span class="fc" id="L624">        FileUtils.copyURLToFile(</span>
+<span class="fc" id="L625">                getClass().getResource(&quot;/java/lang/Object.class&quot;),</span>
+<span class="fc" id="L626">                objFile1);</span>
+
+<span class="fc" id="L628">        final File objFile1b =</span>
+<span class="fc" id="L629">                new File(getTestDirectory(), getName() + &quot;.object2&quot;);</span>
+<span class="fc" id="L630">        objFile1.deleteOnExit();</span>
+<span class="fc" id="L631">        FileUtils.copyURLToFile(</span>
+<span class="fc" id="L632">                getClass().getResource(&quot;/java/lang/Object.class&quot;),</span>
+<span class="fc" id="L633">                objFile1b);</span>
+
+<span class="fc" id="L635">        final File objFile2 =</span>
+<span class="fc" id="L636">                new File(getTestDirectory(), getName() + &quot;.collection&quot;);</span>
+<span class="fc" id="L637">        objFile2.deleteOnExit();</span>
+<span class="fc" id="L638">        FileUtils.copyURLToFile(</span>
+<span class="fc" id="L639">                getClass().getResource(&quot;/java/util/Collection.class&quot;),</span>
+<span class="fc" id="L640">                objFile2);</span>
+
+<span class="fc" id="L642">        assertFalse(FileUtils.contentEquals(objFile1, objFile2));</span>
+<span class="fc" id="L643">        assertFalse(FileUtils.contentEquals(objFile1b, objFile2));</span>
+<span class="fc" id="L644">        assertTrue(FileUtils.contentEquals(objFile1, objFile1b));</span>
+
+<span class="fc" id="L646">        assertTrue(FileUtils.contentEquals(objFile1, objFile1));</span>
+<span class="fc" id="L647">        assertTrue(FileUtils.contentEquals(objFile1b, objFile1b));</span>
+<span class="fc" id="L648">        assertTrue(FileUtils.contentEquals(objFile2, objFile2));</span>
+
+        // Equal files
+<span class="fc" id="L651">        file.createNewFile();</span>
+<span class="fc" id="L652">        file2.createNewFile();</span>
+<span class="fc" id="L653">        assertTrue(FileUtils.contentEquals(file, file));</span>
+<span class="fc" id="L654">        assertTrue(FileUtils.contentEquals(file, file2));</span>
+<span class="fc" id="L655">    }</span>
+
+    @Test
+    public void testContentEqualsIgnoreEOL() throws Exception {
+        // Non-existent files
+<span class="fc" id="L660">        final File file1 = new File(getTestDirectory(), getName());</span>
+<span class="fc" id="L661">        final File file2 = new File(getTestDirectory(), getName() + &quot;2&quot;);</span>
+        // both don't  exist
+<span class="fc" id="L663">        assertTrue(FileUtils.contentEqualsIgnoreEOL(file1, file1, null));</span>
+<span class="fc" id="L664">        assertTrue(FileUtils.contentEqualsIgnoreEOL(file1, file2, null));</span>
+<span class="fc" id="L665">        assertTrue(FileUtils.contentEqualsIgnoreEOL(file2, file2, null));</span>
+<span class="fc" id="L666">        assertTrue(FileUtils.contentEqualsIgnoreEOL(file2, file1, null));</span>
+
+        // Directories
+        try {
+<span class="nc" id="L670">            FileUtils.contentEqualsIgnoreEOL(getTestDirectory(), getTestDirectory(), null);</span>
+<span class="nc" id="L671">            fail(&quot;Comparing directories should fail with an IOException&quot;);</span>
+<span class="pc" id="L672">        } catch (final IOException ioe) {</span>
+            //expected
+        }
+
+        // Different files
+<span class="fc" id="L677">        final File tfile1 = new File(getTestDirectory(), getName() + &quot;.txt1&quot;);</span>
+<span class="fc" id="L678">        tfile1.deleteOnExit();</span>
+<span class="fc" id="L679">        FileUtils.write(tfile1, &quot;123\r&quot;);</span>
+
+<span class="fc" id="L681">        final File tfile2 = new File(getTestDirectory(), getName() + &quot;.txt2&quot;);</span>
+<span class="fc" id="L682">        tfile1.deleteOnExit();</span>
+<span class="fc" id="L683">        FileUtils.write(tfile2, &quot;123\n&quot;);</span>
+
+<span class="fc" id="L685">        final File tfile3 = new File(getTestDirectory(), getName() + &quot;.collection&quot;);</span>
+<span class="fc" id="L686">        tfile3.deleteOnExit();</span>
+<span class="fc" id="L687">        FileUtils.write(tfile3, &quot;123\r\n2&quot;);</span>
+
+<span class="fc" id="L689">        assertTrue(FileUtils.contentEqualsIgnoreEOL(tfile1, tfile1, null));</span>
+<span class="fc" id="L690">        assertTrue(FileUtils.contentEqualsIgnoreEOL(tfile2, tfile2, null));</span>
+<span class="fc" id="L691">        assertTrue(FileUtils.contentEqualsIgnoreEOL(tfile3, tfile3, null));</span>
+
+<span class="fc" id="L693">        assertTrue(FileUtils.contentEqualsIgnoreEOL(tfile1, tfile2, null));</span>
+<span class="fc" id="L694">        assertFalse(FileUtils.contentEqualsIgnoreEOL(tfile1, tfile3, null));</span>
+<span class="fc" id="L695">        assertFalse(FileUtils.contentEqualsIgnoreEOL(tfile2, tfile3, null));</span>
+
+<span class="fc" id="L697">        final URL urlCR = getClass().getResource(&quot;FileUtilsTestDataCR.dat&quot;);</span>
+<span class="fc" id="L698">        assertNotNull(urlCR);</span>
+<span class="fc" id="L699">        final File cr = new File(urlCR.getPath());</span>
+<span class="fc" id="L700">        assertTrue(cr.exists());</span>
+
+<span class="fc" id="L702">        final URL urlCRLF = getClass().getResource(&quot;FileUtilsTestDataCRLF.dat&quot;);</span>
+<span class="fc" id="L703">        assertNotNull(urlCRLF);</span>
+<span class="fc" id="L704">        final File crlf = new File(urlCRLF.getPath());</span>
+<span class="fc" id="L705">        assertTrue(crlf.exists());</span>
+
+<span class="fc" id="L707">        final URL urlLF = getClass().getResource(&quot;FileUtilsTestDataLF.dat&quot;);</span>
+<span class="fc" id="L708">        assertNotNull(urlLF);</span>
+<span class="fc" id="L709">        final File lf = new File(urlLF.getPath());</span>
+<span class="fc" id="L710">        assertTrue(lf.exists());</span>
+
+<span class="fc" id="L712">        assertTrue(FileUtils.contentEqualsIgnoreEOL(cr, cr, null));</span>
+<span class="fc" id="L713">        assertTrue(FileUtils.contentEqualsIgnoreEOL(crlf, crlf, null));</span>
+<span class="fc" id="L714">        assertTrue(FileUtils.contentEqualsIgnoreEOL(lf, lf, null));</span>
+
+<span class="fc" id="L716">        assertTrue(FileUtils.contentEqualsIgnoreEOL(cr, crlf, null));</span>
+<span class="fc" id="L717">        assertTrue(FileUtils.contentEqualsIgnoreEOL(cr, lf, null));</span>
+<span class="fc" id="L718">        assertTrue(FileUtils.contentEqualsIgnoreEOL(crlf, lf, null));</span>
+
+        // Check the files behave OK when EOL is not ignored
+<span class="fc" id="L721">        assertTrue(FileUtils.contentEquals(cr, cr));</span>
+<span class="fc" id="L722">        assertTrue(FileUtils.contentEquals(crlf, crlf));</span>
+<span class="fc" id="L723">        assertTrue(FileUtils.contentEquals(lf, lf));</span>
+
+<span class="fc" id="L725">        assertFalse(FileUtils.contentEquals(cr, crlf));</span>
+<span class="fc" id="L726">        assertFalse(FileUtils.contentEquals(cr, lf));</span>
+<span class="fc" id="L727">        assertFalse(FileUtils.contentEquals(crlf, lf));</span>
+
+        // Equal files
+<span class="fc" id="L730">        file1.createNewFile();</span>
+<span class="fc" id="L731">        file2.createNewFile();</span>
+<span class="fc" id="L732">        assertTrue(FileUtils.contentEqualsIgnoreEOL(file1, file1, null));</span>
+<span class="fc" id="L733">        assertTrue(FileUtils.contentEqualsIgnoreEOL(file1, file2, null));</span>
+<span class="fc" id="L734">    }</span>
+
+    // copyURLToFile
+
+    @Test
+    public void testCopyURLToFile() throws Exception {
+        // Creates file
+<span class="fc" id="L741">        final File file = new File(getTestDirectory(), getName());</span>
+<span class="fc" id="L742">        file.deleteOnExit();</span>
+
+        // Loads resource
+<span class="fc" id="L745">        final String resourceName = &quot;/java/lang/Object.class&quot;;</span>
+<span class="fc" id="L746">        FileUtils.copyURLToFile(getClass().getResource(resourceName), file);</span>
+
+        // Tests that resuorce was copied correctly
+<span class="fc" id="L749">        final FileInputStream fis = new FileInputStream(file);</span>
+        try {
+<span class="fc" id="L751">            assertTrue(</span>
+<span class="fc" id="L752">                    &quot;Content is not equal.&quot;,</span>
+<span class="fc" id="L753">                    IOUtils.contentEquals(</span>
+<span class="fc" id="L754">                            getClass().getResourceAsStream(resourceName),</span>
+<span class="fc" id="L755">                            fis));</span>
+<span class="fc" id="L756">        } finally {</span>
+<span class="fc" id="L757">            fis.close();</span>
+        }
+        //TODO Maybe test copy to itself like for copyFile()
+<span class="fc" id="L760">    }</span>
+
+    @Test
+    public void testCopyURLToFileWithTimeout() throws Exception {
+        // Creates file
+<span class="fc" id="L765">        final File file = new File(getTestDirectory(), &quot;testCopyURLToFileWithTimeout&quot;);</span>
+<span class="fc" id="L766">        file.deleteOnExit();</span>
+
+        // Loads resource
+<span class="fc" id="L769">        final String resourceName = &quot;/java/lang/Object.class&quot;;</span>
+<span class="fc" id="L770">        FileUtils.copyURLToFile(getClass().getResource(resourceName), file, 500, 500);</span>
+
+        // Tests that resuorce was copied correctly
+<span class="fc" id="L773">        final FileInputStream fis = new FileInputStream(file);</span>
+        try {
+<span class="fc" id="L775">            assertTrue(</span>
+<span class="fc" id="L776">                    &quot;Content is not equal.&quot;,</span>
+<span class="fc" id="L777">                    IOUtils.contentEquals(</span>
+<span class="fc" id="L778">                            getClass().getResourceAsStream(resourceName),</span>
+<span class="fc" id="L779">                            fis));</span>
+<span class="fc" id="L780">        } finally {</span>
+<span class="fc" id="L781">            fis.close();</span>
+        }
+        //TODO Maybe test copy to itself like for copyFile()
+<span class="fc" id="L784">    }</span>
+
+    // forceMkdir
+
+    @Test
+    public void testForceMkdir() throws Exception {
+        // Tests with existing directory
+<span class="fc" id="L791">        FileUtils.forceMkdir(getTestDirectory());</span>
+
+        // Creates test file
+<span class="fc" id="L794">        final File testFile = new File(getTestDirectory(), getName());</span>
+<span class="fc" id="L795">        testFile.deleteOnExit();</span>
+<span class="fc" id="L796">        testFile.createNewFile();</span>
+<span class="fc" id="L797">        assertTrue(&quot;Test file does not exist.&quot;, testFile.exists());</span>
+
+        // Tests with existing file
+        try {
+<span class="nc" id="L801">            FileUtils.forceMkdir(testFile);</span>
+<span class="nc" id="L802">            fail(&quot;Exception expected.&quot;);</span>
+<span class="pc" id="L803">        } catch (final IOException ignore) {</span>
+        }
+
+<span class="fc" id="L806">        testFile.delete();</span>
+
+        // Tests with non-existent directory
+<span class="fc" id="L809">        FileUtils.forceMkdir(testFile);</span>
+<span class="fc" id="L810">        assertTrue(&quot;Directory was not created.&quot;, testFile.exists());</span>
+<span class="fc" id="L811">    }</span>
+
+    @Test
+    public void testForceMkdirParent() throws Exception {
+        // Tests with existing directory
+<span class="fc" id="L816">        assertTrue(getTestDirectory().exists());</span>
+<span class="fc" id="L817">        final File testParentDir = new File(getTestDirectory(), &quot;testForceMkdirParent&quot;);</span>
+        try {
+<span class="fc" id="L819">            testParentDir.delete();</span>
+<span class="fc" id="L820">            assertFalse(testParentDir.exists());</span>
+<span class="fc" id="L821">            final File testFile = new File(testParentDir, &quot;test.txt&quot;);</span>
+<span class="fc" id="L822">            assertFalse(testParentDir.exists());</span>
+<span class="fc" id="L823">            assertFalse(testFile.exists());</span>
+            // Create
+<span class="fc" id="L825">            FileUtils.forceMkdirParent(testFile);</span>
+<span class="fc" id="L826">            assertTrue(testParentDir.exists());</span>
+<span class="fc" id="L827">            assertFalse(testFile.exists());</span>
+            // Again
+<span class="fc" id="L829">            FileUtils.forceMkdirParent(testFile);</span>
+<span class="fc" id="L830">            assertTrue(testParentDir.exists());</span>
+<span class="fc" id="L831">            assertFalse(testFile.exists());</span>
+<span class="fc" id="L832">        } finally {</span>
+<span class="fc" id="L833">            testParentDir.delete();</span>
+        }
+<span class="fc" id="L835">    }</span>
+
+    // sizeOfDirectory
+
+    @Test
+    public void testSizeOfDirectory() throws Exception {
+<span class="fc" id="L841">        final File file = new File(getTestDirectory(), getName());</span>
+
+        // Non-existent file
+        try {
+<span class="nc" id="L845">            FileUtils.sizeOfDirectory(file);</span>
+<span class="nc" id="L846">            fail(&quot;Exception expected.&quot;);</span>
+<span class="pc" id="L847">        } catch (final IllegalArgumentException ignore) {</span>
+        }
+
+        // Creates file
+<span class="fc" id="L851">        file.createNewFile();</span>
+<span class="fc" id="L852">        file.deleteOnExit();</span>
+
+        // Existing file
+        try {
+<span class="nc" id="L856">            FileUtils.sizeOfDirectory(file);</span>
+<span class="nc" id="L857">            fail(&quot;Exception expected.&quot;);</span>
+<span class="pc" id="L858">        } catch (final IllegalArgumentException ignore) {</span>
+        }
+
+        // Existing directory
+<span class="fc" id="L862">        file.delete();</span>
+<span class="fc" id="L863">        file.mkdir();</span>
+
+        // Create a cyclic symlink
+<span class="fc" id="L866">        this.createCircularSymLink(file);</span>
+
+<span class="fc" id="L868">        assertEquals(</span>
+<span class="fc" id="L869">                &quot;Unexpected directory size&quot;,</span>
+<span class="fc" id="L870">                TEST_DIRECTORY_SIZE,</span>
+<span class="fc" id="L871">                FileUtils.sizeOfDirectory(file));</span>
+<span class="fc" id="L872">    }</span>
+
+    private void createCircularSymLink(final File file) throws IOException {
+<span class="pc bpc" id="L875" title="1 of 2 branches missed.">        if (!FilenameUtils.isSystemWindows()) {</span>
+<span class="fc" id="L876">            Runtime.getRuntime()</span>
+<span class="fc" id="L877">                    .exec(&quot;ln -s &quot; + file + &quot;/.. &quot; + file + &quot;/cycle&quot;);</span>
+<span class="fc" id="L878">        } else {</span>
+            try {
+<span class="nc" id="L880">                Runtime.getRuntime()</span>
+<span class="nc" id="L881">                        .exec(&quot;mklink /D &quot; + file + &quot;/cycle&quot; + file + &quot;/.. &quot;);</span>
+<span class="nc" id="L882">            } catch (final IOException ioe) { // So that tests run in FAT filesystems</span>
+                //don't fail
+            }
+        }
+<span class="fc" id="L886">    }</span>
+
+    @Test
+    public void testSizeOfDirectoryAsBigInteger() throws Exception {
+<span class="fc" id="L890">        final File file = new File(getTestDirectory(), getName());</span>
+
+        // Non-existent file
+        try {
+<span class="nc" id="L894">            FileUtils.sizeOfDirectoryAsBigInteger(file);</span>
+<span class="nc" id="L895">            fail(&quot;Exception expected.&quot;);</span>
+<span class="pc" id="L896">        } catch (final IllegalArgumentException ignore) {</span>
+        }
+
+        // Creates file
+<span class="fc" id="L900">        file.createNewFile();</span>
+<span class="fc" id="L901">        file.deleteOnExit();</span>
+
+        // Existing file
+        try {
+<span class="nc" id="L905">            FileUtils.sizeOfDirectoryAsBigInteger(file);</span>
+<span class="nc" id="L906">            fail(&quot;Exception expected.&quot;);</span>
+<span class="pc" id="L907">        } catch (final IllegalArgumentException ignore) {</span>
+        }
+
+        // Existing directory
+<span class="fc" id="L911">        file.delete();</span>
+<span class="fc" id="L912">        file.mkdir();</span>
+
+<span class="fc" id="L914">        this.createCircularSymLink(file);</span>
+
+<span class="fc" id="L916">        assertEquals(&quot;Unexpected directory size&quot;, TEST_DIRECTORY_SIZE_BI, FileUtils.sizeOfDirectoryAsBigInteger(file));</span>
+
+        // Existing directory which size is greater than zero
+<span class="fc" id="L919">        file.delete();</span>
+<span class="fc" id="L920">        file.mkdir();</span>
+
+<span class="fc" id="L922">        final File nonEmptyFile = new File(file, &quot;nonEmptyFile&quot; + System.nanoTime());</span>
+<span class="pc bpc" id="L923" title="1 of 2 branches missed.">        if (!nonEmptyFile.getParentFile().exists()) {</span>
+<span class="nc" id="L924">            throw new IOException(&quot;Cannot create file &quot; + nonEmptyFile</span>
+<span class="nc" id="L925">                    + &quot; as the parent directory does not exist&quot;);</span>
+        }
+<span class="fc" id="L927">        final BufferedOutputStream output =</span>
+<span class="fc" id="L928">                new BufferedOutputStream(new FileOutputStream(nonEmptyFile));</span>
+        try {
+<span class="fc" id="L930">            TestUtils.generateTestData(output, TEST_DIRECTORY_SIZE_GT_ZERO_BI.longValue());</span>
+<span class="fc" id="L931">        } finally {</span>
+<span class="fc" id="L932">            IOUtils.closeQuietly(output);</span>
+        }
+<span class="fc" id="L934">        nonEmptyFile.deleteOnExit();</span>
+
+<span class="fc" id="L936">        assertEquals(&quot;Unexpected directory size&quot;, TEST_DIRECTORY_SIZE_GT_ZERO_BI,</span>
+<span class="fc" id="L937">                FileUtils.sizeOfDirectoryAsBigInteger(file));</span>
+
+<span class="fc" id="L939">        nonEmptyFile.delete();</span>
+<span class="fc" id="L940">        file.delete();</span>
+<span class="fc" id="L941">    }</span>
+
+    // Compare sizes of a directory tree using long and BigInteger methods
+    @Test
+    public void testCompareSizeOf() {
+<span class="fc" id="L946">        final File start = new File(&quot;src/test/java&quot;);</span>
+<span class="fc" id="L947">        final long sizeLong1 = FileUtils.sizeOf(start);</span>
+<span class="fc" id="L948">        final BigInteger sizeBig = FileUtils.sizeOfAsBigInteger(start);</span>
+<span class="fc" id="L949">        final long sizeLong2 = FileUtils.sizeOf(start);</span>
+<span class="fc" id="L950">        assertEquals(&quot;Size should not change&quot;, sizeLong1, sizeLong2);</span>
+<span class="fc" id="L951">        assertEquals(&quot;longSize should equal BigSize&quot;, sizeLong1, sizeBig.longValue());</span>
+<span class="fc" id="L952">    }</span>
+
+    @Test
+    public void testSizeOf() throws Exception {
+<span class="fc" id="L956">        final File file = new File(getTestDirectory(), getName());</span>
+
+        // Null argument
+        try {
+<span class="nc" id="L960">            FileUtils.sizeOf(null);</span>
+<span class="nc" id="L961">            fail(&quot;Exception expected.&quot;);</span>
+<span class="pc" id="L962">        } catch (final NullPointerException ignore) {</span>
+        }
+
+        // Non-existent file
+        try {
+<span class="nc" id="L967">            FileUtils.sizeOf(file);</span>
+<span class="nc" id="L968">            fail(&quot;Exception expected.&quot;);</span>
+<span class="pc" id="L969">        } catch (final IllegalArgumentException ignore) {</span>
+        }
+
+        // Creates file
+<span class="fc" id="L973">        file.createNewFile();</span>
+<span class="fc" id="L974">        file.deleteOnExit();</span>
+
+        // New file
+<span class="fc" id="L977">        assertEquals(0, FileUtils.sizeOf(file));</span>
+<span class="fc" id="L978">        file.delete();</span>
+
+        // Existing file
+<span class="fc" id="L981">        assertEquals(&quot;Unexpected files size&quot;,</span>
+<span class="fc" id="L982">                testFile1Size,</span>
+<span class="fc" id="L983">                FileUtils.sizeOf(testFile1));</span>
+
+        // Existing directory
+<span class="fc" id="L986">        assertEquals(&quot;Unexpected directory size&quot;,</span>
+<span class="fc" id="L987">                TEST_DIRECTORY_SIZE,</span>
+<span class="fc" id="L988">                FileUtils.sizeOf(getTestDirectory()));</span>
+<span class="fc" id="L989">    }</span>
+
+    @Test
+    public void testSizeOfAsBigInteger() throws Exception {
+<span class="fc" id="L993">        final File file = new File(getTestDirectory(), getName());</span>
+
+        // Null argument
+        try {
+<span class="nc" id="L997">            FileUtils.sizeOfAsBigInteger(null);</span>
+<span class="nc" id="L998">            fail(&quot;Exception expected.&quot;);</span>
+<span class="pc" id="L999">        } catch (final NullPointerException ignore) {</span>
+        }
+
+        // Non-existent file
+        try {
+<span class="nc" id="L1004">            FileUtils.sizeOfAsBigInteger(file);</span>
+<span class="nc" id="L1005">            fail(&quot;Exception expected.&quot;);</span>
+<span class="pc" id="L1006">        } catch (final IllegalArgumentException ignore) {</span>
+        }
+
+        // Creates file
+<span class="fc" id="L1010">        file.createNewFile();</span>
+<span class="fc" id="L1011">        file.deleteOnExit();</span>
+
+        // New file
+<span class="fc" id="L1014">        assertEquals(BigInteger.ZERO, FileUtils.sizeOfAsBigInteger(file));</span>
+<span class="fc" id="L1015">        file.delete();</span>
+
+        // Existing file
+<span class="fc" id="L1018">        assertEquals(&quot;Unexpected files size&quot;,</span>
+<span class="fc" id="L1019">                BigInteger.valueOf(testFile1Size),</span>
+<span class="fc" id="L1020">                FileUtils.sizeOfAsBigInteger(testFile1));</span>
+
+        // Existing directory
+<span class="fc" id="L1023">        assertEquals(&quot;Unexpected directory size&quot;,</span>
+<span class="fc" id="L1024">                TEST_DIRECTORY_SIZE_BI,</span>
+<span class="fc" id="L1025">                FileUtils.sizeOfAsBigInteger(getTestDirectory()));</span>
+<span class="fc" id="L1026">    }</span>
+
+    // isFileNewer / isFileOlder
+    @Test
+    public void testIsFileNewerOlder() throws Exception {
+<span class="fc" id="L1031">        final File reference = new File(getTestDirectory(), &quot;FileUtils-reference.txt&quot;);</span>
+<span class="fc" id="L1032">        final File oldFile = new File(getTestDirectory(), &quot;FileUtils-old.txt&quot;);</span>
+<span class="fc" id="L1033">        final File newFile = new File(getTestDirectory(), &quot;FileUtils-new.txt&quot;);</span>
+<span class="fc" id="L1034">        final File invalidFile = new File(getTestDirectory(), &quot;FileUtils-invalid-file.txt&quot;);</span>
+
+        // Create Files
+<span class="pc bpc" id="L1037" title="1 of 2 branches missed.">        if (!oldFile.getParentFile().exists()) {</span>
+<span class="nc" id="L1038">            throw new IOException(&quot;Cannot create file &quot; + oldFile</span>
+<span class="nc" id="L1039">                    + &quot; as the parent directory does not exist&quot;);</span>
+        }
+<span class="fc" id="L1041">        final BufferedOutputStream output1 =</span>
+<span class="fc" id="L1042">                new BufferedOutputStream(new FileOutputStream(oldFile));</span>
+        try {
+<span class="fc" id="L1044">            TestUtils.generateTestData(output1, (long) 0);</span>
+<span class="fc" id="L1045">        } finally {</span>
+<span class="fc" id="L1046">            IOUtils.closeQuietly(output1);</span>
+        }
+
+        do {
+            try {
+<span class="fc" id="L1051">                TestUtils.sleep(1000);</span>
+<span class="pc" id="L1052">            } catch (final InterruptedException ie) {</span>
+                // ignore
+            }
+<span class="pc bpc" id="L1055" title="1 of 2 branches missed.">            if (!reference.getParentFile().exists()) {</span>
+<span class="nc" id="L1056">                throw new IOException(&quot;Cannot create file &quot; + reference</span>
+<span class="nc" id="L1057">                        + &quot; as the parent directory does not exist&quot;);</span>
+            }
+<span class="fc" id="L1059">            final BufferedOutputStream output =</span>
+<span class="fc" id="L1060">                    new BufferedOutputStream(new FileOutputStream(reference));</span>
+            try {
+<span class="fc" id="L1062">                TestUtils.generateTestData(output, (long) 0);</span>
+<span class="fc" id="L1063">            } finally {</span>
+<span class="fc" id="L1064">                IOUtils.closeQuietly(output);</span>
+            }
+<span class="pc bpc" id="L1066" title="1 of 2 branches missed.">        } while (oldFile.lastModified() == reference.lastModified());</span>
+
+<span class="fc" id="L1068">        final Date date = new Date();</span>
+<span class="fc" id="L1069">        final long now = date.getTime();</span>
+
+        do {
+            try {
+<span class="fc" id="L1073">                TestUtils.sleep(1000);</span>
+<span class="pc" id="L1074">            } catch (final InterruptedException ie) {</span>
+                // ignore
+            }
+<span class="pc bpc" id="L1077" title="1 of 2 branches missed.">            if (!newFile.getParentFile().exists()) {</span>
+<span class="nc" id="L1078">                throw new IOException(&quot;Cannot create file &quot; + newFile</span>
+<span class="nc" id="L1079">                        + &quot; as the parent directory does not exist&quot;);</span>
+            }
+<span class="fc" id="L1081">            final BufferedOutputStream output =</span>
+<span class="fc" id="L1082">                    new BufferedOutputStream(new FileOutputStream(newFile));</span>
+            try {
+<span class="fc" id="L1084">                TestUtils.generateTestData(output, (long) 0);</span>
+<span class="fc" id="L1085">            } finally {</span>
+<span class="fc" id="L1086">                IOUtils.closeQuietly(output);</span>
+            }
+<span class="pc bpc" id="L1088" title="1 of 2 branches missed.">        } while (reference.lastModified() == newFile.lastModified());</span>
+
+        // Test isFileNewer()
+<span class="fc" id="L1091">        assertFalse(&quot;Old File - Newer - File&quot;, FileUtils.isFileNewer(oldFile, reference));</span>
+<span class="fc" id="L1092">        assertFalse(&quot;Old File - Newer - Date&quot;, FileUtils.isFileNewer(oldFile, date));</span>
+<span class="fc" id="L1093">        assertFalse(&quot;Old File - Newer - Mili&quot;, FileUtils.isFileNewer(oldFile, now));</span>
+<span class="fc" id="L1094">        assertTrue(&quot;New File - Newer - File&quot;, FileUtils.isFileNewer(newFile, reference));</span>
+<span class="fc" id="L1095">        assertTrue(&quot;New File - Newer - Date&quot;, FileUtils.isFileNewer(newFile, date));</span>
+<span class="fc" id="L1096">        assertTrue(&quot;New File - Newer - Mili&quot;, FileUtils.isFileNewer(newFile, now));</span>
+<span class="fc" id="L1097">        assertFalse(&quot;Invalid - Newer - File&quot;, FileUtils.isFileNewer(invalidFile, reference));</span>
+<span class="fc" id="L1098">        final String invalidFileName = invalidFile.getName();</span>
+        try {
+<span class="nc" id="L1100">            FileUtils.isFileNewer(newFile, invalidFile);</span>
+<span class="nc" id="L1101">            fail(&quot;Should have cause IllegalArgumentException&quot;);</span>
+<span class="pc" id="L1102">        } catch (final IllegalArgumentException iae) {</span>
+<span class="fc" id="L1103">            final String message = iae.getMessage();</span>
+<span class="fc" id="L1104">            assertTrue(&quot;Message should contain: &quot; + invalidFileName + &quot; but was: &quot; + message, message.contains(invalidFileName));</span>
+        }
+
+        // Test isFileOlder()
+<span class="fc" id="L1108">        assertTrue(&quot;Old File - Older - File&quot;, FileUtils.isFileOlder(oldFile, reference));</span>
+<span class="fc" id="L1109">        assertTrue(&quot;Old File - Older - Date&quot;, FileUtils.isFileOlder(oldFile, date));</span>
+<span class="fc" id="L1110">        assertTrue(&quot;Old File - Older - Mili&quot;, FileUtils.isFileOlder(oldFile, now));</span>
+<span class="fc" id="L1111">        assertFalse(&quot;New File - Older - File&quot;, FileUtils.isFileOlder(newFile, reference));</span>
+<span class="fc" id="L1112">        assertFalse(&quot;New File - Older - Date&quot;, FileUtils.isFileOlder(newFile, date));</span>
+<span class="fc" id="L1113">        assertFalse(&quot;New File - Older - Mili&quot;, FileUtils.isFileOlder(newFile, now));</span>
+<span class="fc" id="L1114">        assertFalse(&quot;Invalid - Older - File&quot;, FileUtils.isFileOlder(invalidFile, reference));</span>
+        try {
+<span class="nc" id="L1116">            FileUtils.isFileOlder(newFile, invalidFile);</span>
+<span class="nc" id="L1117">            fail(&quot;Should have cause IllegalArgumentException&quot;);</span>
+<span class="pc" id="L1118">        } catch (final IllegalArgumentException iae) {</span>
+<span class="fc" id="L1119">            final String message = iae.getMessage();</span>
+<span class="fc" id="L1120">            assertTrue(&quot;Message should contain: &quot; + invalidFileName + &quot; but was: &quot; + message, message.contains(invalidFileName));</span>
+        }
+
+
+        // ----- Test isFileNewer() exceptions -----
+        // Null File
+        try {
+<span class="nc" id="L1127">            FileUtils.isFileNewer(null, now);</span>
+<span class="nc" id="L1128">            fail(&quot;Newer Null, expected IllegalArgumentExcepion&quot;);</span>
+<span class="pc" id="L1129">        } catch (final IllegalArgumentException expected) {</span>
+            // expected result
+        }
+
+        // Null reference File
+        try {
+<span class="nc" id="L1135">            FileUtils.isFileNewer(oldFile, (File) null);</span>
+<span class="nc" id="L1136">            fail(&quot;Newer Null reference, expected IllegalArgumentExcepion&quot;);</span>
+<span class="pc" id="L1137">        } catch (final IllegalArgumentException ignore) {</span>
+            // expected result
+        }
+
+        // Invalid reference File
+        try {
+<span class="nc" id="L1143">            FileUtils.isFileNewer(oldFile, invalidFile);</span>
+<span class="nc" id="L1144">            fail(&quot;Newer invalid reference, expected IllegalArgumentExcepion&quot;);</span>
+<span class="pc" id="L1145">        } catch (final IllegalArgumentException ignore) {</span>
+            // expected result
+        }
+
+        // Null reference Date
+        try {
+<span class="nc" id="L1151">            FileUtils.isFileNewer(oldFile, (Date) null);</span>
+<span class="nc" id="L1152">            fail(&quot;Newer Null date, expected IllegalArgumentExcepion&quot;);</span>
+<span class="pc" id="L1153">        } catch (final IllegalArgumentException ignore) {</span>
+            // expected result
+        }
+
+
+        // ----- Test isFileOlder() exceptions -----
+        // Null File
+        try {
+<span class="nc" id="L1161">            FileUtils.isFileOlder(null, now);</span>
+<span class="nc" id="L1162">            fail(&quot;Older Null, expected IllegalArgumentExcepion&quot;);</span>
+<span class="pc" id="L1163">        } catch (final IllegalArgumentException ignore) {</span>
+            // expected result
+        }
+
+        // Null reference File
+        try {
+<span class="nc" id="L1169">            FileUtils.isFileOlder(oldFile, (File) null);</span>
+<span class="nc" id="L1170">            fail(&quot;Older Null reference, expected IllegalArgumentExcepion&quot;);</span>
+<span class="pc" id="L1171">        } catch (final IllegalArgumentException ignore) {</span>
+            // expected result
+        }
+
+        // Invalid reference File
+        try {
+<span class="nc" id="L1177">            FileUtils.isFileOlder(oldFile, invalidFile);</span>
+<span class="nc" id="L1178">            fail(&quot;Older invalid reference, expected IllegalArgumentExcepion&quot;);</span>
+<span class="pc" id="L1179">        } catch (final IllegalArgumentException ignore) {</span>
+            // expected result
+        }
+
+        // Null reference Date
+        try {
+<span class="nc" id="L1185">            FileUtils.isFileOlder(oldFile, (Date) null);</span>
+<span class="nc" id="L1186">            fail(&quot;Older Null date, expected IllegalArgumentExcepion&quot;);</span>
+<span class="pc" id="L1187">        } catch (final IllegalArgumentException ignore) {</span>
+            // expected result
+        }
+
+<span class="fc" id="L1191">    }</span>
+
+    // copyFile
+
+    @Test
+    public void testCopyFile1() throws Exception {
+<span class="fc" id="L1197">        final File destination = new File(getTestDirectory(), &quot;copy1.txt&quot;);</span>
+
+        //Thread.sleep(LAST_MODIFIED_DELAY);
+        //This is to slow things down so we can catch if
+        //the lastModified date is not ok
+
+<span class="fc" id="L1203">        FileUtils.copyFile(testFile1, destination);</span>
+<span class="fc" id="L1204">        assertTrue(&quot;Check Exist&quot;, destination.exists());</span>
+<span class="fc" id="L1205">        assertEquals(&quot;Check Full copy&quot;, testFile1Size, destination.length());</span>
+        /* disabled: Thread.sleep doesn't work reliantly for this case
+        assertTrue(&quot;Check last modified date preserved&quot;,
+            testFile1.lastModified() == destination.lastModified());*/
+<span class="fc" id="L1209">    }</span>
+
+    @Test
+    public void testCopyFileToOutputStream() throws Exception {
+<span class="fc" id="L1213">        final ByteArrayOutputStream destination = new ByteArrayOutputStream();</span>
+<span class="fc" id="L1214">        FileUtils.copyFile(testFile1, destination);</span>
+<span class="fc" id="L1215">        assertEquals(&quot;Check Full copy size&quot;, testFile1Size, destination.size());</span>
+<span class="fc" id="L1216">        final byte[] expected = FileUtils.readFileToByteArray(testFile1);</span>
+<span class="fc" id="L1217">        Assert.assertArrayEquals(&quot;Check Full copy&quot;, expected, destination.toByteArray());</span>
+<span class="fc" id="L1218">    }</span>
+
+    
+
+    @Test
+    public void testCopyFile2() throws Exception {
+<span class="fc" id="L1224">        final File destination = new File(getTestDirectory(), &quot;copy2.txt&quot;);</span>
+
+        //Thread.sleep(LAST_MODIFIED_DELAY);
+        //This is to slow things down so we can catch if
+        //the lastModified date is not ok
+
+<span class="fc" id="L1230">        FileUtils.copyFile(testFile1, destination);</span>
+<span class="fc" id="L1231">        assertTrue(&quot;Check Exist&quot;, destination.exists());</span>
+<span class="fc" id="L1232">        assertEquals(&quot;Check Full copy&quot;, testFile2Size, destination.length());</span>
+        /* disabled: Thread.sleep doesn't work reliably for this case
+        assertTrue(&quot;Check last modified date preserved&quot;,
+            testFile1.lastModified() == destination.lastModified());*/
+<span class="fc" id="L1236">    }</span>
+
+    @Test
+    public void testCopyToSelf() throws Exception {
+<span class="fc" id="L1240">        final File destination = new File(getTestDirectory(), &quot;copy3.txt&quot;);</span>
+        //Prepare a test file
+<span class="fc" id="L1242">        FileUtils.copyFile(testFile1, destination);</span>
+
+        try {
+<span class="nc" id="L1245">            FileUtils.copyFile(destination, destination);</span>
+<span class="nc" id="L1246">            fail(&quot;file copy to self should not be possible&quot;);</span>
+<span class="pc" id="L1247">        } catch (final IOException ioe) {</span>
+            //we want the exception, copy to self should be illegal
+        }
+<span class="fc" id="L1250">    }</span>
+
+    @Test
+    public void testCopyFile2WithoutFileDatePreservation() throws Exception {
+<span class="fc" id="L1254">        final File destination = new File(getTestDirectory(), &quot;copy2.txt&quot;);</span>
+
+        //Thread.sleep(LAST_MODIFIED_DELAY);
+        //This is to slow things down so we can catch if
+        //the lastModified date is not ok
+
+<span class="fc" id="L1260">        FileUtils.copyFile(testFile1, destination, false);</span>
+<span class="fc" id="L1261">        assertTrue(&quot;Check Exist&quot;, destination.exists());</span>
+<span class="fc" id="L1262">        assertEquals(&quot;Check Full copy&quot;, testFile2Size, destination.length());</span>
+        /* disabled: Thread.sleep doesn't work reliantly for this case
+        assertTrue(&quot;Check last modified date modified&quot;,
+            testFile1.lastModified() != destination.lastModified());*/
+<span class="fc" id="L1266">    }</span>
+
+    @Test
+    public void testCopyDirectoryToDirectory_NonExistingDest() throws Exception {
+<span class="pc bpc" id="L1270" title="1 of 2 branches missed.">        if (!testFile1.getParentFile().exists()) {</span>
+<span class="nc" id="L1271">            throw new IOException(&quot;Cannot create file &quot; + testFile1</span>
+<span class="nc" id="L1272">                    + &quot; as the parent directory does not exist&quot;);</span>
+        }
+<span class="fc" id="L1274">        final BufferedOutputStream output1 =</span>
+<span class="fc" id="L1275">                new BufferedOutputStream(new FileOutputStream(testFile1));</span>
+        try {
+<span class="fc" id="L1277">            TestUtils.generateTestData(output1, (long) 1234);</span>
+<span class="fc" id="L1278">        } finally {</span>
+<span class="fc" id="L1279">            IOUtils.closeQuietly(output1);</span>
+        }
+<span class="pc bpc" id="L1281" title="1 of 2 branches missed.">        if (!testFile2.getParentFile().exists()) {</span>
+<span class="nc" id="L1282">            throw new IOException(&quot;Cannot create file &quot; + testFile2</span>
+<span class="nc" id="L1283">                    + &quot; as the parent directory does not exist&quot;);</span>
+        }
+<span class="fc" id="L1285">        final BufferedOutputStream output =</span>
+<span class="fc" id="L1286">                new BufferedOutputStream(new FileOutputStream(testFile2));</span>
+        try {
+<span class="fc" id="L1288">            TestUtils.generateTestData(output, (long) 4321);</span>
+<span class="fc" id="L1289">        } finally {</span>
+<span class="fc" id="L1290">            IOUtils.closeQuietly(output);</span>
+        }
+<span class="fc" id="L1292">        final File srcDir = getTestDirectory();</span>
+<span class="fc" id="L1293">        final File subDir = new File(srcDir, &quot;sub&quot;);</span>
+<span class="fc" id="L1294">        subDir.mkdir();</span>
+<span class="fc" id="L1295">        final File subFile = new File(subDir, &quot;A.txt&quot;);</span>
+<span class="fc" id="L1296">        FileUtils.writeStringToFile(subFile, &quot;HELLO WORLD&quot;, &quot;UTF8&quot;);</span>
+<span class="fc" id="L1297">        final File destDir = new File(System.getProperty(&quot;java.io.tmpdir&quot;), &quot;tmp-FileUtilsTestCase&quot;);</span>
+<span class="fc" id="L1298">        FileUtils.deleteDirectory(destDir);</span>
+<span class="fc" id="L1299">        final File actualDestDir = new File(destDir, srcDir.getName());</span>
+
+<span class="fc" id="L1301">        FileUtils.copyDirectoryToDirectory(srcDir, destDir);</span>
+
+<span class="fc" id="L1303">        assertTrue(&quot;Check exists&quot;, destDir.exists());</span>
+<span class="fc" id="L1304">        assertTrue(&quot;Check exists&quot;, actualDestDir.exists());</span>
+<span class="fc" id="L1305">        final long srcSize = FileUtils.sizeOfDirectory(srcDir);</span>
+<span class="pc bpc" id="L1306" title="1 of 2 branches missed.">        assertTrue(&quot;Size &gt; 0&quot;, srcSize &gt; 0);</span>
+<span class="fc" id="L1307">        assertEquals(&quot;Check size&quot;, srcSize, FileUtils.sizeOfDirectory(actualDestDir));</span>
+<span class="fc" id="L1308">        assertTrue(new File(actualDestDir, &quot;sub/A.txt&quot;).exists());</span>
+<span class="fc" id="L1309">        FileUtils.deleteDirectory(destDir);</span>
+<span class="fc" id="L1310">    }</span>
+
+    @Test
+    public void testCopyDirectoryToNonExistingDest() throws Exception {
+<span class="pc bpc" id="L1314" title="1 of 2 branches missed.">        if (!testFile1.getParentFile().exists()) {</span>
+<span class="nc" id="L1315">            throw new IOException(&quot;Cannot create file &quot; + testFile1</span>
+<span class="nc" id="L1316">                    + &quot; as the parent directory does not exist&quot;);</span>
+        }
+<span class="fc" id="L1318">        final BufferedOutputStream output1 =</span>
+<span class="fc" id="L1319">                new BufferedOutputStream(new FileOutputStream(testFile1));</span>
+        try {
+<span class="fc" id="L1321">            TestUtils.generateTestData(output1, (long) 1234);</span>
+<span class="fc" id="L1322">        } finally {</span>
+<span class="fc" id="L1323">            IOUtils.closeQuietly(output1);</span>
+        }
+<span class="pc bpc" id="L1325" title="1 of 2 branches missed.">        if (!testFile2.getParentFile().exists()) {</span>
+<span class="nc" id="L1326">            throw new IOException(&quot;Cannot create file &quot; + testFile2</span>
+<span class="nc" id="L1327">                    + &quot; as the parent directory does not exist&quot;);</span>
+        }
+<span class="fc" id="L1329">        final BufferedOutputStream output =</span>
+<span class="fc" id="L1330">                new BufferedOutputStream(new FileOutputStream(testFile2));</span>
+        try {
+<span class="fc" id="L1332">            TestUtils.generateTestData(output, (long) 4321);</span>
+<span class="fc" id="L1333">        } finally {</span>
+<span class="fc" id="L1334">            IOUtils.closeQuietly(output);</span>
+        }
+<span class="fc" id="L1336">        final File srcDir = getTestDirectory();</span>
+<span class="fc" id="L1337">        final File subDir = new File(srcDir, &quot;sub&quot;);</span>
+<span class="fc" id="L1338">        subDir.mkdir();</span>
+<span class="fc" id="L1339">        final File subFile = new File(subDir, &quot;A.txt&quot;);</span>
+<span class="fc" id="L1340">        FileUtils.writeStringToFile(subFile, &quot;HELLO WORLD&quot;, &quot;UTF8&quot;);</span>
+<span class="fc" id="L1341">        final File destDir = new File(System.getProperty(&quot;java.io.tmpdir&quot;), &quot;tmp-FileUtilsTestCase&quot;);</span>
+<span class="fc" id="L1342">        FileUtils.deleteDirectory(destDir);</span>
+
+<span class="fc" id="L1344">        FileUtils.copyDirectory(srcDir, destDir);</span>
+
+<span class="fc" id="L1346">        assertTrue(&quot;Check exists&quot;, destDir.exists());</span>
+<span class="fc" id="L1347">        final long sizeOfSrcDirectory = FileUtils.sizeOfDirectory(srcDir);</span>
+<span class="pc bpc" id="L1348" title="1 of 2 branches missed.">        assertTrue(&quot;Size &gt; 0&quot;, sizeOfSrcDirectory &gt; 0);</span>
+<span class="fc" id="L1349">        assertEquals(&quot;Check size&quot;, sizeOfSrcDirectory, FileUtils.sizeOfDirectory(destDir));</span>
+<span class="fc" id="L1350">        assertTrue(new File(destDir, &quot;sub/A.txt&quot;).exists());</span>
+<span class="fc" id="L1351">        FileUtils.deleteDirectory(destDir);</span>
+<span class="fc" id="L1352">    }</span>
+
+    @Test
+    public void testCopyDirectoryToExistingDest() throws Exception {
+<span class="pc bpc" id="L1356" title="1 of 2 branches missed.">        if (!testFile1.getParentFile().exists()) {</span>
+<span class="nc" id="L1357">            throw new IOException(&quot;Cannot create file &quot; + testFile1</span>
+<span class="nc" id="L1358">                    + &quot; as the parent directory does not exist&quot;);</span>
+        }
+<span class="fc" id="L1360">        final BufferedOutputStream output1 =</span>
+<span class="fc" id="L1361">                new BufferedOutputStream(new FileOutputStream(testFile1));</span>
+        try {
+<span class="fc" id="L1363">            TestUtils.generateTestData(output1, (long) 1234);</span>
+<span class="fc" id="L1364">        } finally {</span>
+<span class="fc" id="L1365">            IOUtils.closeQuietly(output1);</span>
+        }
+<span class="pc bpc" id="L1367" title="1 of 2 branches missed.">        if (!testFile2.getParentFile().exists()) {</span>
+<span class="nc" id="L1368">            throw new IOException(&quot;Cannot create file &quot; + testFile2</span>
+<span class="nc" id="L1369">                    + &quot; as the parent directory does not exist&quot;);</span>
+        }
+<span class="fc" id="L1371">        final BufferedOutputStream output =</span>
+<span class="fc" id="L1372">                new BufferedOutputStream(new FileOutputStream(testFile2));</span>
+        try {
+<span class="fc" id="L1374">            TestUtils.generateTestData(output, (long) 4321);</span>
+<span class="fc" id="L1375">        } finally {</span>
+<span class="fc" id="L1376">            IOUtils.closeQuietly(output);</span>
+        }
+<span class="fc" id="L1378">        final File srcDir = getTestDirectory();</span>
+<span class="fc" id="L1379">        final File subDir = new File(srcDir, &quot;sub&quot;);</span>
+<span class="fc" id="L1380">        subDir.mkdir();</span>
+<span class="fc" id="L1381">        final File subFile = new File(subDir, &quot;A.txt&quot;);</span>
+<span class="fc" id="L1382">        FileUtils.writeStringToFile(subFile, &quot;HELLO WORLD&quot;, &quot;UTF8&quot;);</span>
+<span class="fc" id="L1383">        final File destDir = new File(System.getProperty(&quot;java.io.tmpdir&quot;), &quot;tmp-FileUtilsTestCase&quot;);</span>
+<span class="fc" id="L1384">        FileUtils.deleteDirectory(destDir);</span>
+<span class="fc" id="L1385">        destDir.mkdirs();</span>
+
+<span class="fc" id="L1387">        FileUtils.copyDirectory(srcDir, destDir);</span>
+
+<span class="fc" id="L1389">        final long srcSize = FileUtils.sizeOfDirectory(srcDir);</span>
+<span class="pc bpc" id="L1390" title="1 of 2 branches missed.">        assertTrue(&quot;Size &gt; 0&quot;, srcSize &gt; 0);</span>
+<span class="fc" id="L1391">        assertEquals(srcSize, FileUtils.sizeOfDirectory(destDir));</span>
+<span class="fc" id="L1392">        assertTrue(new File(destDir, &quot;sub/A.txt&quot;).exists());</span>
+<span class="fc" id="L1393">    }</span>
+
+    @Test
+    public void testCopyDirectoryFiltered() throws Exception {
+<span class="fc" id="L1397">        final File grandParentDir = new File(getTestDirectory(), &quot;grandparent&quot;);</span>
+<span class="fc" id="L1398">        final File parentDir = new File(grandParentDir, &quot;parent&quot;);</span>
+<span class="fc" id="L1399">        final File childDir = new File(parentDir, &quot;child&quot;);</span>
+<span class="fc" id="L1400">        createFilesForTestCopyDirectory(grandParentDir, parentDir, childDir);</span>
+
+<span class="fc" id="L1402">        final NameFileFilter filter = new NameFileFilter(new String[]{&quot;parent&quot;, &quot;child&quot;, &quot;file3.txt&quot;});</span>
+<span class="fc" id="L1403">        final File destDir = new File(getTestDirectory(), &quot;copydest&quot;);</span>
+
+<span class="fc" id="L1405">        FileUtils.copyDirectory(grandParentDir, destDir, filter);</span>
+<span class="fc" id="L1406">        final List&lt;File&gt; files = LIST_WALKER.list(destDir);</span>
+<span class="fc" id="L1407">        assertEquals(3, files.size());</span>
+<span class="fc" id="L1408">        assertEquals(&quot;parent&quot;, files.get(0).getName());</span>
+<span class="fc" id="L1409">        assertEquals(&quot;child&quot;, files.get(1).getName());</span>
+<span class="fc" id="L1410">        assertEquals(&quot;file3.txt&quot;, files.get(2).getName());</span>
+<span class="fc" id="L1411">    }</span>
+
+    @Test
+    public void testCopyDirectoryPreserveDates() throws Exception {
+<span class="fc" id="L1415">        final File source = new File(getTestDirectory(), &quot;source&quot;);</span>
+<span class="fc" id="L1416">        final File sourceDirectory = new File(source, &quot;directory&quot;);</span>
+<span class="fc" id="L1417">        final File sourceFile = new File(sourceDirectory, &quot;hello.txt&quot;);</span>
+
+        // Prepare source data
+<span class="fc" id="L1420">        source.mkdirs();</span>
+<span class="fc" id="L1421">        sourceDirectory.mkdir();</span>
+<span class="fc" id="L1422">        FileUtils.writeStringToFile(sourceFile, &quot;HELLO WORLD&quot;, &quot;UTF8&quot;);</span>
+        // Set dates in reverse order to avoid overwriting previous values
+        // Also, use full seconds (arguments are in ms) close to today
+        // but still highly unlikely to occur in the real world
+<span class="fc" id="L1426">        sourceFile.setLastModified(1000000002000L);</span>
+<span class="fc" id="L1427">        sourceDirectory.setLastModified(1000000001000L);</span>
+<span class="fc" id="L1428">        source.setLastModified(1000000000000L);</span>
+
+<span class="fc" id="L1430">        final File target = new File(getTestDirectory(), &quot;target&quot;);</span>
+<span class="fc" id="L1431">        final File targetDirectory = new File(target, &quot;directory&quot;);</span>
+<span class="fc" id="L1432">        final File targetFile = new File(targetDirectory, &quot;hello.txt&quot;);</span>
+
+        // Test with preserveFileDate disabled
+<span class="fc" id="L1435">        FileUtils.copyDirectory(source, target, false);</span>
+<span class="pc bpc" id="L1436" title="1 of 2 branches missed.">        assertTrue(1000000000000L != target.lastModified());</span>
+<span class="pc bpc" id="L1437" title="1 of 2 branches missed.">        assertTrue(1000000001000L != targetDirectory.lastModified());</span>
+<span class="pc bpc" id="L1438" title="1 of 2 branches missed.">        assertTrue(1000000002000L != targetFile.lastModified());</span>
+<span class="fc" id="L1439">        FileUtils.deleteDirectory(target);</span>
+
+        // Test with preserveFileDate enabled
+<span class="fc" id="L1442">        FileUtils.copyDirectory(source, target, true);</span>
+<span class="fc" id="L1443">        assertEquals(1000000000000L, target.lastModified());</span>
+<span class="fc" id="L1444">        assertEquals(1000000001000L, targetDirectory.lastModified());</span>
+<span class="fc" id="L1445">        assertEquals(1000000002000L, targetFile.lastModified());</span>
+<span class="fc" id="L1446">        FileUtils.deleteDirectory(target);</span>
+
+        // also if the target directory already exists (IO-190)
+<span class="fc" id="L1449">        target.mkdirs();</span>
+<span class="fc" id="L1450">        FileUtils.copyDirectory(source, target, true);</span>
+<span class="fc" id="L1451">        assertEquals(1000000000000L, target.lastModified());</span>
+<span class="fc" id="L1452">        assertEquals(1000000001000L, targetDirectory.lastModified());</span>
+<span class="fc" id="L1453">        assertEquals(1000000002000L, targetFile.lastModified());</span>
+<span class="fc" id="L1454">        FileUtils.deleteDirectory(target);</span>
+
+        // also if the target subdirectory already exists (IO-190)
+<span class="fc" id="L1457">        targetDirectory.mkdirs();</span>
+<span class="fc" id="L1458">        FileUtils.copyDirectory(source, target, true);</span>
+<span class="fc" id="L1459">        assertEquals(1000000000000L, target.lastModified());</span>
+<span class="fc" id="L1460">        assertEquals(1000000001000L, targetDirectory.lastModified());</span>
+<span class="fc" id="L1461">        assertEquals(1000000002000L, targetFile.lastModified());</span>
+<span class="fc" id="L1462">        FileUtils.deleteDirectory(target);</span>
+<span class="fc" id="L1463">    }</span>
+
+    /* Test for IO-141 */
+    @Test
+    public void testCopyDirectoryToChild() throws Exception {
+<span class="fc" id="L1468">        final File grandParentDir = new File(getTestDirectory(), &quot;grandparent&quot;);</span>
+<span class="fc" id="L1469">        final File parentDir = new File(grandParentDir, &quot;parent&quot;);</span>
+<span class="fc" id="L1470">        final File childDir = new File(parentDir, &quot;child&quot;);</span>
+<span class="fc" id="L1471">        createFilesForTestCopyDirectory(grandParentDir, parentDir, childDir);</span>
+
+<span class="fc" id="L1473">        final long expectedCount = LIST_WALKER.list(grandParentDir).size() +</span>
+<span class="fc" id="L1474">                LIST_WALKER.list(parentDir).size();</span>
+<span class="fc" id="L1475">        final long expectedSize = FileUtils.sizeOfDirectory(grandParentDir) +</span>
+<span class="fc" id="L1476">                FileUtils.sizeOfDirectory(parentDir);</span>
+<span class="fc" id="L1477">        FileUtils.copyDirectory(parentDir, childDir);</span>
+<span class="fc" id="L1478">        assertEquals(expectedCount, LIST_WALKER.list(grandParentDir).size());</span>
+<span class="fc" id="L1479">        assertEquals(expectedSize, FileUtils.sizeOfDirectory(grandParentDir));</span>
+<span class="pc bpc" id="L1480" title="1 of 2 branches missed.">        assertTrue(&quot;Count &gt; 0&quot;, expectedCount &gt; 0);</span>
+<span class="pc bpc" id="L1481" title="1 of 2 branches missed.">        assertTrue(&quot;Size &gt; 0&quot;, expectedSize &gt; 0);</span>
+<span class="fc" id="L1482">    }</span>
+
+    /* Test for IO-141 */
+    @Test
+    public void testCopyDirectoryToGrandChild() throws Exception {
+<span class="fc" id="L1487">        final File grandParentDir = new File(getTestDirectory(), &quot;grandparent&quot;);</span>
+<span class="fc" id="L1488">        final File parentDir = new File(grandParentDir, &quot;parent&quot;);</span>
+<span class="fc" id="L1489">        final File childDir = new File(parentDir, &quot;child&quot;);</span>
+<span class="fc" id="L1490">        createFilesForTestCopyDirectory(grandParentDir, parentDir, childDir);</span>
+
+<span class="fc" id="L1492">        final long expectedCount = LIST_WALKER.list(grandParentDir).size() * 2;</span>
+<span class="fc" id="L1493">        final long expectedSize = FileUtils.sizeOfDirectory(grandParentDir) * 2;</span>
+<span class="fc" id="L1494">        FileUtils.copyDirectory(grandParentDir, childDir);</span>
+<span class="fc" id="L1495">        assertEquals(expectedCount, LIST_WALKER.list(grandParentDir).size());</span>
+<span class="fc" id="L1496">        assertEquals(expectedSize, FileUtils.sizeOfDirectory(grandParentDir));</span>
+<span class="pc bpc" id="L1497" title="1 of 2 branches missed.">        assertTrue(&quot;Size &gt; 0&quot;, expectedSize &gt; 0);</span>
+<span class="fc" id="L1498">    }</span>
+
+    /* Test for IO-217 FileUtils.copyDirectoryToDirectory makes infinite loops */
+    @Test
+    public void testCopyDirectoryToItself() throws Exception {
+<span class="fc" id="L1503">        final File dir = new File(getTestDirectory(), &quot;itself&quot;);</span>
+<span class="fc" id="L1504">        dir.mkdirs();</span>
+<span class="fc" id="L1505">        FileUtils.copyDirectoryToDirectory(dir, dir);</span>
+<span class="fc" id="L1506">        assertEquals(1, LIST_WALKER.list(dir).size());</span>
+<span class="fc" id="L1507">    }</span>
+
+    private void createFilesForTestCopyDirectory(final File grandParentDir, final File parentDir, final File childDir) throws Exception {
+<span class="fc" id="L1510">        final File childDir2 = new File(parentDir, &quot;child2&quot;);</span>
+<span class="fc" id="L1511">        final File grandChildDir = new File(childDir, &quot;grandChild&quot;);</span>
+<span class="fc" id="L1512">        final File grandChild2Dir = new File(childDir2, &quot;grandChild2&quot;);</span>
+<span class="fc" id="L1513">        final File file1 = new File(grandParentDir, &quot;file1.txt&quot;);</span>
+<span class="fc" id="L1514">        final File file2 = new File(parentDir, &quot;file2.txt&quot;);</span>
+<span class="fc" id="L1515">        final File file3 = new File(childDir, &quot;file3.txt&quot;);</span>
+<span class="fc" id="L1516">        final File file4 = new File(childDir2, &quot;file4.txt&quot;);</span>
+<span class="fc" id="L1517">        final File file5 = new File(grandChildDir, &quot;file5.txt&quot;);</span>
+<span class="fc" id="L1518">        final File file6 = new File(grandChild2Dir, &quot;file6.txt&quot;);</span>
+<span class="fc" id="L1519">        FileUtils.deleteDirectory(grandParentDir);</span>
+<span class="fc" id="L1520">        grandChildDir.mkdirs();</span>
+<span class="fc" id="L1521">        grandChild2Dir.mkdirs();</span>
+<span class="fc" id="L1522">        FileUtils.writeStringToFile(file1, &quot;File 1 in grandparent&quot;, &quot;UTF8&quot;);</span>
+<span class="fc" id="L1523">        FileUtils.writeStringToFile(file2, &quot;File 2 in parent&quot;, &quot;UTF8&quot;);</span>
+<span class="fc" id="L1524">        FileUtils.writeStringToFile(file3, &quot;File 3 in child&quot;, &quot;UTF8&quot;);</span>
+<span class="fc" id="L1525">        FileUtils.writeStringToFile(file4, &quot;File 4 in child2&quot;, &quot;UTF8&quot;);</span>
+<span class="fc" id="L1526">        FileUtils.writeStringToFile(file5, &quot;File 5 in grandChild&quot;, &quot;UTF8&quot;);</span>
+<span class="fc" id="L1527">        FileUtils.writeStringToFile(file6, &quot;File 6 in grandChild2&quot;, &quot;UTF8&quot;);</span>
+<span class="fc" id="L1528">    }</span>
+
+    @Test
+    public void testCopyDirectoryErrors() throws Exception {
+        try {
+<span class="nc" id="L1533">            FileUtils.copyDirectory(null, null);</span>
+<span class="nc" id="L1534">            fail();</span>
+<span class="pc" id="L1535">        } catch (final NullPointerException ignore) {</span>
+        }
+        try {
+<span class="nc" id="L1538">            FileUtils.copyDirectory(new File(&quot;a&quot;), null);</span>
+<span class="nc" id="L1539">            fail();</span>
+<span class="pc" id="L1540">        } catch (final NullPointerException ignore) {</span>
+        }
+        try {
+<span class="nc" id="L1543">            FileUtils.copyDirectory(null, new File(&quot;a&quot;));</span>
+<span class="nc" id="L1544">            fail();</span>
+<span class="pc" id="L1545">        } catch (final NullPointerException ignore) {</span>
+        }
+        try {
+<span class="nc" id="L1548">            FileUtils.copyDirectory(new File(&quot;doesnt-exist&quot;), new File(&quot;a&quot;));</span>
+<span class="nc" id="L1549">            fail();</span>
+<span class="pc" id="L1550">        } catch (final IOException ignore) {</span>
+        }
+        try {
+<span class="nc" id="L1553">            FileUtils.copyDirectory(testFile1, new File(&quot;a&quot;));</span>
+<span class="nc" id="L1554">            fail();</span>
+<span class="pc" id="L1555">        } catch (final IOException ignore) {</span>
+        }
+        try {
+<span class="nc" id="L1558">            FileUtils.copyDirectory(getTestDirectory(), testFile1);</span>
+<span class="nc" id="L1559">            fail();</span>
+<span class="pc" id="L1560">        } catch (final IOException ignore) {</span>
+        }
+        try {
+<span class="nc" id="L1563">            FileUtils.copyDirectory(getTestDirectory(), getTestDirectory());</span>
+<span class="nc" id="L1564">            fail();</span>
+<span class="pc" id="L1565">        } catch (final IOException ignore) {</span>
+        }
+<span class="fc" id="L1567">    }</span>
+
+    // forceDelete
+
+    @Test
+    public void testForceDeleteAFile1() throws Exception {
+<span class="fc" id="L1573">        final File destination = new File(getTestDirectory(), &quot;copy1.txt&quot;);</span>
+<span class="fc" id="L1574">        destination.createNewFile();</span>
+<span class="fc" id="L1575">        assertTrue(&quot;Copy1.txt doesn't exist to delete&quot;, destination.exists());</span>
+<span class="fc" id="L1576">        FileUtils.forceDelete(destination);</span>
+<span class="pc bpc" id="L1577" title="1 of 2 branches missed.">        assertTrue(&quot;Check No Exist&quot;, !destination.exists());</span>
+<span class="fc" id="L1578">    }</span>
+
+    @Test
+    public void testForceDeleteAFile2() throws Exception {
+<span class="fc" id="L1582">        final File destination = new File(getTestDirectory(), &quot;copy2.txt&quot;);</span>
+<span class="fc" id="L1583">        destination.createNewFile();</span>
+<span class="fc" id="L1584">        assertTrue(&quot;Copy2.txt doesn't exist to delete&quot;, destination.exists());</span>
+<span class="fc" id="L1585">        FileUtils.forceDelete(destination);</span>
+<span class="pc bpc" id="L1586" title="1 of 2 branches missed.">        assertTrue(&quot;Check No Exist&quot;, !destination.exists());</span>
+<span class="fc" id="L1587">    }</span>
+
+    @Test
+    public void testForceDeleteAFile3() throws Exception {
+<span class="fc" id="L1591">        final File destination = new File(getTestDirectory(), &quot;no_such_file&quot;);</span>
+<span class="pc bpc" id="L1592" title="1 of 2 branches missed.">        assertTrue(&quot;Check No Exist&quot;, !destination.exists());</span>
+        try {
+<span class="nc" id="L1594">            FileUtils.forceDelete(destination);</span>
+<span class="nc" id="L1595">            fail(&quot;Should generate FileNotFoundException&quot;);</span>
+<span class="pc" id="L1596">        } catch (final FileNotFoundException ignored) {</span>
+        }
+<span class="fc" id="L1598">    }</span>
+
+    // copyFileToDirectory
+
+    @Test
+    public void testCopyFile1ToDir() throws Exception {
+<span class="fc" id="L1604">        final File directory = new File(getTestDirectory(), &quot;subdir&quot;);</span>
+<span class="pc bpc" id="L1605" title="1 of 2 branches missed.">        if (!directory.exists()) {</span>
+<span class="fc" id="L1606">            directory.mkdirs();</span>
+        }
+<span class="fc" id="L1608">        final File destination = new File(directory, testFile1.getName());</span>
+
+        //Thread.sleep(LAST_MODIFIED_DELAY);
+        //This is to slow things down so we can catch if
+        //the lastModified date is not ok
+
+<span class="fc" id="L1614">        FileUtils.copyFileToDirectory(testFile1, directory);</span>
+<span class="fc" id="L1615">        assertTrue(&quot;Check Exist&quot;, destination.exists());</span>
+<span class="fc" id="L1616">        assertEquals(&quot;Check Full copy&quot;, testFile1Size, destination.length());</span>
+        /* disabled: Thread.sleep doesn't work reliantly for this case
+        assertTrue(&quot;Check last modified date preserved&quot;,
+            testFile1.lastModified() == destination.lastModified());*/
+
+        try {
+<span class="nc" id="L1622">            FileUtils.copyFileToDirectory(destination, directory);</span>
+<span class="nc" id="L1623">            fail(&quot;Should not be able to copy a file into the same directory as itself&quot;);</span>
+<span class="pc" id="L1624">        } catch (final IOException ioe) {</span>
+            //we want that, cannot copy to the same directory as the original file
+        }
+<span class="fc" id="L1627">    }</span>
+
+    @Test
+    public void testCopyFile2ToDir() throws Exception {
+<span class="fc" id="L1631">        final File directory = new File(getTestDirectory(), &quot;subdir&quot;);</span>
+<span class="pc bpc" id="L1632" title="1 of 2 branches missed.">        if (!directory.exists()) {</span>
+<span class="fc" id="L1633">            directory.mkdirs();</span>
+        }
+<span class="fc" id="L1635">        final File destination = new File(directory, testFile1.getName());</span>
+
+        //Thread.sleep(LAST_MODIFIED_DELAY);
+        //This is to slow things down so we can catch if
+        //the lastModified date is not ok
+
+<span class="fc" id="L1641">        FileUtils.copyFileToDirectory(testFile1, directory);</span>
+<span class="fc" id="L1642">        assertTrue(&quot;Check Exist&quot;, destination.exists());</span>
+<span class="fc" id="L1643">        assertEquals(&quot;Check Full copy&quot;, testFile2Size, destination.length());</span>
+        /* disabled: Thread.sleep doesn't work reliantly for this case
+        assertTrue(&quot;Check last modified date preserved&quot;,
+            testFile1.lastModified() == destination.lastModified());*/
+<span class="fc" id="L1647">    }</span>
+
+    // forceDelete
+
+    @Test
+    public void testForceDeleteDir() throws Exception {
+<span class="fc" id="L1653">        final File testDirectory = getTestDirectory();</span>
+<span class="fc" id="L1654">        FileUtils.forceDelete(testDirectory.getParentFile());</span>
+<span class="fc" id="L1655">        assertTrue(</span>
+<span class="fc" id="L1656">                &quot;Check No Exist&quot;,</span>
+<span class="pc bpc" id="L1657" title="1 of 2 branches missed.">                !testDirectory.getParentFile().exists());</span>
+<span class="fc" id="L1658">    }</span>
+
+    /*
+     *  Test the FileUtils implementation.
+     */
+    @Test
+    public void testFileUtils() throws Exception {
+        // Loads file from classpath
+<span class="fc" id="L1666">        final File file1 = new File(getTestDirectory(), &quot;test.txt&quot;);</span>
+<span class="fc" id="L1667">        final String filename = file1.getAbsolutePath();</span>
+
+        //Create test file on-the-fly (used to be in CVS)
+<span class="fc" id="L1670">        final OutputStream out = new java.io.FileOutputStream(file1);</span>
+        try {
+<span class="fc" id="L1672">            out.write(&quot;This is a test&quot;.getBytes(&quot;UTF-8&quot;));</span>
+<span class="fc" id="L1673">        } finally {</span>
+<span class="fc" id="L1674">            out.close();</span>
+        }
+
+<span class="fc" id="L1677">        final File file2 = new File(getTestDirectory(), &quot;test2.txt&quot;);</span>
+
+<span class="fc" id="L1679">        FileUtils.writeStringToFile(file2, filename, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L1680">        assertTrue(file2.exists());</span>
+<span class="pc bpc" id="L1681" title="1 of 2 branches missed.">        assertTrue(file2.length() &gt; 0);</span>
+
+<span class="fc" id="L1683">        final String file2contents = FileUtils.readFileToString(file2, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L1684">        assertTrue(</span>
+<span class="fc" id="L1685">                &quot;Second file's contents correct&quot;,</span>
+<span class="fc" id="L1686">                filename.equals(file2contents));</span>
+
+<span class="fc" id="L1688">        assertTrue(file2.delete());</span>
+
+<span class="fc" id="L1690">        final String contents = FileUtils.readFileToString(new File(filename), &quot;UTF-8&quot;);</span>
+<span class="fc" id="L1691">        assertEquals(&quot;FileUtils.fileRead()&quot;, &quot;This is a test&quot;, contents);</span>
+
+<span class="fc" id="L1693">    }</span>
+
+    @Test
+    public void testTouch() throws IOException {
+<span class="fc" id="L1697">        final File file = new File(getTestDirectory(), &quot;touch.txt&quot;);</span>
+<span class="pc bpc" id="L1698" title="1 of 2 branches missed.">        if (file.exists()) {</span>
+<span class="nc" id="L1699">            file.delete();</span>
+        }
+<span class="pc bpc" id="L1701" title="1 of 2 branches missed.">        assertTrue(&quot;Bad test: test file still exists&quot;, !file.exists());</span>
+<span class="fc" id="L1702">        FileUtils.touch(file);</span>
+<span class="fc" id="L1703">        assertTrue(&quot;FileUtils.touch() created file&quot;, file.exists());</span>
+<span class="fc" id="L1704">        final FileOutputStream out = new FileOutputStream(file);</span>
+<span class="fc" id="L1705">        assertEquals(&quot;Created empty file.&quot;, 0, file.length());</span>
+<span class="fc" id="L1706">        out.write(0);</span>
+<span class="fc" id="L1707">        out.close();</span>
+<span class="fc" id="L1708">        assertEquals(&quot;Wrote one byte to file&quot;, 1, file.length());</span>
+<span class="fc" id="L1709">        final long y2k = new GregorianCalendar(2000, 0, 1).getTime().getTime();</span>
+<span class="fc" id="L1710">        final boolean res = file.setLastModified(y2k);  // 0L fails on Win98</span>
+<span class="fc" id="L1711">        assertEquals(&quot;Bad test: set lastModified failed&quot;, true, res);</span>
+<span class="fc" id="L1712">        assertEquals(&quot;Bad test: set lastModified set incorrect value&quot;, y2k, file.lastModified());</span>
+<span class="fc" id="L1713">        final long now = System.currentTimeMillis();</span>
+<span class="fc" id="L1714">        FileUtils.touch(file);</span>
+<span class="fc" id="L1715">        assertEquals(&quot;FileUtils.touch() didn't empty the file.&quot;, 1, file.length());</span>
+<span class="pc bpc" id="L1716" title="1 of 2 branches missed.">        assertEquals(&quot;FileUtils.touch() changed lastModified&quot;, false, y2k == file.lastModified());</span>
+<span class="pc bpc" id="L1717" title="1 of 2 branches missed.">        assertEquals(&quot;FileUtils.touch() changed lastModified to more than now-3s&quot;, true, file.lastModified() &gt;= now - 3000);</span>
+<span class="pc bpc" id="L1718" title="1 of 2 branches missed.">        assertEquals(&quot;FileUtils.touch() changed lastModified to less than now+3s&quot;, true, file.lastModified() &lt;= now + 3000);</span>
+<span class="fc" id="L1719">    }</span>
+
+    @Test
+    public void testListFiles() throws Exception {
+<span class="fc" id="L1723">        final File srcDir = getTestDirectory();</span>
+<span class="fc" id="L1724">        final File subDir = new File(srcDir, &quot;list_test&quot;);</span>
+<span class="fc" id="L1725">        subDir.mkdir();</span>
+
+<span class="fc" id="L1727">        final File subDir2 = new File(subDir, &quot;subdir&quot;);</span>
+<span class="fc" id="L1728">        subDir2.mkdir();</span>
+
+<span class="fc" id="L1730">        final String[] fileNames = {&quot;a.txt&quot;, &quot;b.txt&quot;, &quot;c.txt&quot;, &quot;d.txt&quot;, &quot;e.txt&quot;, &quot;f.txt&quot;};</span>
+<span class="fc" id="L1731">        final int[] fileSizes = {123, 234, 345, 456, 678, 789};</span>
+
+<span class="fc bfc" id="L1733" title="All 2 branches covered.">        for (int i = 0; i &lt; fileNames.length; ++i) {</span>
+<span class="fc" id="L1734">            final File theFile = new File(subDir, fileNames[i]);</span>
+<span class="pc bpc" id="L1735" title="1 of 2 branches missed.">            if (!theFile.getParentFile().exists()) {</span>
+<span class="nc" id="L1736">                throw new IOException(&quot;Cannot create file &quot; + theFile</span>
+<span class="nc" id="L1737">                        + &quot; as the parent directory does not exist&quot;);</span>
+            }
+<span class="fc" id="L1739">            final BufferedOutputStream output =</span>
+<span class="fc" id="L1740">                    new BufferedOutputStream(new FileOutputStream(theFile));</span>
+            try {
+<span class="fc" id="L1742">                TestUtils.generateTestData(output, (long) fileSizes[i]);</span>
+<span class="fc" id="L1743">            } finally {</span>
+<span class="fc" id="L1744">                IOUtils.closeQuietly(output);</span>
+            }
+        }
+
+<span class="fc" id="L1748">        final Collection&lt;File&gt; files = FileUtils.listFiles(subDir,</span>
+<span class="fc" id="L1749">                new WildcardFileFilter(&quot;*.*&quot;),</span>
+<span class="fc" id="L1750">                new WildcardFileFilter(&quot;*&quot;));</span>
+
+<span class="fc" id="L1752">        final int count = files.size();</span>
+<span class="fc" id="L1753">        final Object[] fileObjs = files.toArray();</span>
+
+<span class="fc" id="L1755">        assertEquals(fileNames.length, files.size());</span>
+
+<span class="fc" id="L1757">        final Map&lt;String, String&gt; foundFileNames = new HashMap&lt;String, String&gt;();</span>
+
+<span class="fc bfc" id="L1759" title="All 2 branches covered.">        for (int i = 0; i &lt; count; ++i) {</span>
+<span class="fc" id="L1760">            boolean found = false;</span>
+<span class="pc bpc" id="L1761" title="1 of 4 branches missed.">            for (int j = 0; !found &amp;&amp; j &lt; fileNames.length; ++j) {</span>
+<span class="fc bfc" id="L1762" title="All 2 branches covered.">                if (fileNames[j].equals(((File) fileObjs[i]).getName())) {</span>
+<span class="fc" id="L1763">                    foundFileNames.put(fileNames[j], fileNames[j]);</span>
+<span class="fc" id="L1764">                    found = true;</span>
+                }
+            }
+        }
+
+<span class="fc" id="L1769">        assertEquals(foundFileNames.size(), fileNames.length);</span>
+
+<span class="fc" id="L1771">        subDir.delete();</span>
+<span class="fc" id="L1772">    }</span>
+
+    @Test
+    public void testListFilesWithDirs() throws IOException {
+<span class="fc" id="L1776">        final File srcDir = getTestDirectory();</span>
+
+<span class="fc" id="L1778">        final File subDir1 = new File(srcDir, &quot;subdir&quot;);</span>
+<span class="fc" id="L1779">        subDir1.mkdir();</span>
+
+<span class="fc" id="L1781">        final File subDir2 = new File(subDir1, &quot;subdir2&quot;);</span>
+<span class="fc" id="L1782">        subDir2.mkdir();</span>
+
+<span class="fc" id="L1784">        final File someFile = new File(subDir2, &quot;a.txt&quot;);</span>
+<span class="pc bpc" id="L1785" title="1 of 2 branches missed.">        if (!someFile.getParentFile().exists()) {</span>
+<span class="nc" id="L1786">            throw new IOException(&quot;Cannot create file &quot; + someFile</span>
+<span class="nc" id="L1787">                    + &quot; as the parent directory does not exist&quot;);</span>
+        }
+<span class="fc" id="L1789">        final BufferedOutputStream output =</span>
+<span class="fc" id="L1790">                new BufferedOutputStream(new FileOutputStream(someFile));</span>
+        try {
+<span class="fc" id="L1792">            TestUtils.generateTestData(output, (long) 100);</span>
+<span class="fc" id="L1793">        } finally {</span>
+<span class="fc" id="L1794">            IOUtils.closeQuietly(output);</span>
+        }
+
+<span class="fc" id="L1797">        final File subDir3 = new File(subDir2, &quot;subdir3&quot;);</span>
+<span class="fc" id="L1798">        subDir3.mkdir();</span>
+
+<span class="fc" id="L1800">        final Collection&lt;File&gt; files = FileUtils.listFilesAndDirs(subDir1,</span>
+<span class="fc" id="L1801">                new WildcardFileFilter(&quot;*.*&quot;), new WildcardFileFilter(&quot;*&quot;));</span>
+
+<span class="fc" id="L1803">        assertEquals(4, files.size());</span>
+<span class="fc" id="L1804">        assertTrue(&quot;Should contain the directory.&quot;, files.contains(subDir1));</span>
+<span class="fc" id="L1805">        assertTrue(&quot;Should contain the directory.&quot;, files.contains(subDir2));</span>
+<span class="fc" id="L1806">        assertTrue(&quot;Should contain the file.&quot;, files.contains(someFile));</span>
+<span class="fc" id="L1807">        assertTrue(&quot;Should contain the directory.&quot;, files.contains(subDir3));</span>
+
+<span class="fc" id="L1809">        subDir1.delete();</span>
+<span class="fc" id="L1810">    }</span>
+
+    @Test
+    public void testIterateFiles() throws Exception {
+<span class="fc" id="L1814">        final File srcDir = getTestDirectory();</span>
+<span class="fc" id="L1815">        final File subDir = new File(srcDir, &quot;list_test&quot;);</span>
+<span class="fc" id="L1816">        subDir.mkdir();</span>
+
+<span class="fc" id="L1818">        final String[] fileNames = {&quot;a.txt&quot;, &quot;b.txt&quot;, &quot;c.txt&quot;, &quot;d.txt&quot;, &quot;e.txt&quot;, &quot;f.txt&quot;};</span>
+<span class="fc" id="L1819">        final int[] fileSizes = {123, 234, 345, 456, 678, 789};</span>
+
+<span class="fc bfc" id="L1821" title="All 2 branches covered.">        for (int i = 0; i &lt; fileNames.length; ++i) {</span>
+<span class="fc" id="L1822">            final File theFile = new File(subDir, fileNames[i]);</span>
+<span class="pc bpc" id="L1823" title="1 of 2 branches missed.">            if (!theFile.getParentFile().exists()) {</span>
+<span class="nc" id="L1824">                throw new IOException(&quot;Cannot create file &quot; + theFile</span>
+<span class="nc" id="L1825">                        + &quot; as the parent directory does not exist&quot;);</span>
+            }
+<span class="fc" id="L1827">            final BufferedOutputStream output =</span>
+<span class="fc" id="L1828">                    new BufferedOutputStream(new FileOutputStream(theFile));</span>
+            try {
+<span class="fc" id="L1830">                TestUtils.generateTestData(output, (long) fileSizes[i]);</span>
+<span class="fc" id="L1831">            } finally {</span>
+<span class="fc" id="L1832">                IOUtils.closeQuietly(output);</span>
+            }
+        }
+
+<span class="fc" id="L1836">        final Iterator&lt;File&gt; files = FileUtils.iterateFiles(subDir,</span>
+<span class="fc" id="L1837">                new WildcardFileFilter(&quot;*.*&quot;),</span>
+<span class="fc" id="L1838">                new WildcardFileFilter(&quot;*&quot;));</span>
+
+<span class="fc" id="L1840">        final Map&lt;String, String&gt; foundFileNames = new HashMap&lt;String, String&gt;();</span>
+
+<span class="fc bfc" id="L1842" title="All 2 branches covered.">        while (files.hasNext()) {</span>
+<span class="fc" id="L1843">            boolean found = false;</span>
+<span class="fc" id="L1844">            final String fileName = files.next().getName();</span>
+
+<span class="pc bpc" id="L1846" title="1 of 4 branches missed.">            for (int j = 0; !found &amp;&amp; j &lt; fileNames.length; ++j) {</span>
+<span class="fc bfc" id="L1847" title="All 2 branches covered.">                if (fileNames[j].equals(fileName)) {</span>
+<span class="fc" id="L1848">                    foundFileNames.put(fileNames[j], fileNames[j]);</span>
+<span class="fc" id="L1849">                    found = true;</span>
+                }
+            }
+        }
+
+<span class="fc" id="L1854">        assertEquals(foundFileNames.size(), fileNames.length);</span>
+
+<span class="fc" id="L1856">        subDir.delete();</span>
+<span class="fc" id="L1857">    }</span>
+
+    @Test
+    public void testIterateFilesAndDirs() throws IOException {
+<span class="fc" id="L1861">        final File srcDir = getTestDirectory();</span>
+
+<span class="fc" id="L1863">        final File subDir1 = new File(srcDir, &quot;subdir&quot;);</span>
+<span class="fc" id="L1864">        subDir1.mkdir();</span>
+
+<span class="fc" id="L1866">        final File subDir2 = new File(subDir1, &quot;subdir2&quot;);</span>
+<span class="fc" id="L1867">        subDir2.mkdir();</span>
+
+<span class="fc" id="L1869">        final File someFile = new File(subDir2, &quot;a.txt&quot;);</span>
+<span class="pc bpc" id="L1870" title="1 of 2 branches missed.">        if (!someFile.getParentFile().exists()) {</span>
+<span class="nc" id="L1871">            throw new IOException(&quot;Cannot create file &quot; + someFile</span>
+<span class="nc" id="L1872">                    + &quot; as the parent directory does not exist&quot;);</span>
+        }
+<span class="fc" id="L1874">        final BufferedOutputStream output =</span>
+<span class="fc" id="L1875">                new BufferedOutputStream(new FileOutputStream(someFile));</span>
+        try {
+<span class="fc" id="L1877">            TestUtils.generateTestData(output, (long) 100);</span>
+<span class="fc" id="L1878">        } finally {</span>
+<span class="fc" id="L1879">            IOUtils.closeQuietly(output);</span>
+        }
+
+<span class="fc" id="L1882">        final File subDir3 = new File(subDir2, &quot;subdir3&quot;);</span>
+<span class="fc" id="L1883">        subDir3.mkdir();</span>
+
+<span class="fc" id="L1885">        final Collection&lt;File&gt; filesAndDirs = Arrays.asList(subDir1, subDir2, someFile, subDir3);</span>
+
+<span class="fc" id="L1887">        int filesCount = 0;</span>
+<span class="fc" id="L1888">        final Iterator&lt;File&gt; files = FileUtils.iterateFilesAndDirs(subDir1,</span>
+<span class="fc" id="L1889">                new WildcardFileFilter(&quot;*.*&quot;),</span>
+<span class="fc" id="L1890">                new WildcardFileFilter(&quot;*&quot;));</span>
+<span class="fc bfc" id="L1891" title="All 2 branches covered.">        while (files.hasNext()) {</span>
+<span class="fc" id="L1892">            filesCount++;</span>
+<span class="fc" id="L1893">            final File file = files.next();</span>
+<span class="fc" id="L1894">            assertTrue(&quot;Should contain the directory/file&quot;, filesAndDirs.contains(file));</span>
+        }
+
+<span class="fc" id="L1897">        assertEquals(filesCount, filesAndDirs.size());</span>
+<span class="fc" id="L1898">    }</span>
+
+    @Test
+    public void testReadFileToStringWithDefaultEncoding() throws Exception {
+<span class="fc" id="L1902">        final File file = new File(getTestDirectory(), &quot;read.obj&quot;);</span>
+<span class="fc" id="L1903">        final FileOutputStream out = new FileOutputStream(file);</span>
+<span class="fc" id="L1904">        final byte[] text = &quot;Hello /u1234&quot;.getBytes();</span>
+<span class="fc" id="L1905">        out.write(text);</span>
+<span class="fc" id="L1906">        out.close();</span>
+
+<span class="fc" id="L1908">        final String data = FileUtils.readFileToString(file);</span>
+<span class="fc" id="L1909">        assertEquals(&quot;Hello /u1234&quot;, data);</span>
+<span class="fc" id="L1910">    }</span>
+
+    @Test
+    public void testReadFileToStringWithEncoding() throws Exception {
+<span class="fc" id="L1914">        final File file = new File(getTestDirectory(), &quot;read.obj&quot;);</span>
+<span class="fc" id="L1915">        final FileOutputStream out = new FileOutputStream(file);</span>
+<span class="fc" id="L1916">        final byte[] text = &quot;Hello /u1234&quot;.getBytes(&quot;UTF8&quot;);</span>
+<span class="fc" id="L1917">        out.write(text);</span>
+<span class="fc" id="L1918">        out.close();</span>
+
+<span class="fc" id="L1920">        final String data = FileUtils.readFileToString(file, &quot;UTF8&quot;);</span>
+<span class="fc" id="L1921">        assertEquals(&quot;Hello /u1234&quot;, data);</span>
+<span class="fc" id="L1922">    }</span>
+
+    @Test
+    public void testReadFileToByteArray() throws Exception {
+<span class="fc" id="L1926">        final File file = new File(getTestDirectory(), &quot;read.txt&quot;);</span>
+<span class="fc" id="L1927">        final FileOutputStream out = new FileOutputStream(file);</span>
+<span class="fc" id="L1928">        out.write(11);</span>
+<span class="fc" id="L1929">        out.write(21);</span>
+<span class="fc" id="L1930">        out.write(31);</span>
+<span class="fc" id="L1931">        out.close();</span>
+
+<span class="fc" id="L1933">        final byte[] data = FileUtils.readFileToByteArray(file);</span>
+<span class="fc" id="L1934">        assertEquals(3, data.length);</span>
+<span class="fc" id="L1935">        assertEquals(11, data[0]);</span>
+<span class="fc" id="L1936">        assertEquals(21, data[1]);</span>
+<span class="fc" id="L1937">        assertEquals(31, data[2]);</span>
+<span class="fc" id="L1938">    }</span>
+
+    @Test
+    public void testReadLines() throws Exception {
+<span class="fc" id="L1942">        final File file = TestUtils.newFile(getTestDirectory(), &quot;lines.txt&quot;);</span>
+        try {
+<span class="fc" id="L1944">            final String[] data = new String[]{&quot;hello&quot;, &quot;/u1234&quot;, &quot;&quot;, &quot;this is&quot;, &quot;some text&quot;};</span>
+<span class="fc" id="L1945">            TestUtils.createLineBasedFile(file, data);</span>
+
+<span class="fc" id="L1947">            final List&lt;String&gt; lines = FileUtils.readLines(file, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L1948">            assertEquals(Arrays.asList(data), lines);</span>
+<span class="fc" id="L1949">        } finally {</span>
+<span class="fc" id="L1950">            TestUtils.deleteFile(file);</span>
+        }
+<span class="fc" id="L1952">    }</span>
+
+    @Test
+    public void testWriteStringToFile1() throws Exception {
+<span class="fc" id="L1956">        final File file = new File(getTestDirectory(), &quot;write.txt&quot;);</span>
+<span class="fc" id="L1957">        FileUtils.writeStringToFile(file, &quot;Hello /u1234&quot;, &quot;UTF8&quot;);</span>
+<span class="fc" id="L1958">        final byte[] text = &quot;Hello /u1234&quot;.getBytes(&quot;UTF8&quot;);</span>
+<span class="fc" id="L1959">        TestUtils.assertEqualContent(text, file);</span>
+<span class="fc" id="L1960">    }</span>
+
+    @Test
+    public void testWriteStringToFile2() throws Exception {
+<span class="fc" id="L1964">        final File file = new File(getTestDirectory(), &quot;write.txt&quot;);</span>
+<span class="fc" id="L1965">        FileUtils.writeStringToFile(file, &quot;Hello /u1234&quot;, (String) null);</span>
+<span class="fc" id="L1966">        final byte[] text = &quot;Hello /u1234&quot;.getBytes();</span>
+<span class="fc" id="L1967">        TestUtils.assertEqualContent(text, file);</span>
+<span class="fc" id="L1968">    }</span>
+
+    @Test
+    public void testWriteStringToFile3() throws Exception {
+<span class="fc" id="L1972">        final File file = new File(getTestDirectory(), &quot;write.txt&quot;);</span>
+<span class="fc" id="L1973">        FileUtils.writeStringToFile(file, &quot;Hello /u1234&quot;, (Charset) null);</span>
+<span class="fc" id="L1974">        final byte[] text = &quot;Hello /u1234&quot;.getBytes();</span>
+<span class="fc" id="L1975">        TestUtils.assertEqualContent(text, file);</span>
+<span class="fc" id="L1976">    }</span>
+
+    @Test
+    public void testWriteCharSequence1() throws Exception {
+<span class="fc" id="L1980">        final File file = new File(getTestDirectory(), &quot;write.txt&quot;);</span>
+<span class="fc" id="L1981">        FileUtils.write(file, &quot;Hello /u1234&quot;, &quot;UTF8&quot;);</span>
+<span class="fc" id="L1982">        final byte[] text = &quot;Hello /u1234&quot;.getBytes(&quot;UTF8&quot;);</span>
+<span class="fc" id="L1983">        TestUtils.assertEqualContent(text, file);</span>
+<span class="fc" id="L1984">    }</span>
+
+    @Test
+    public void testWriteCharSequence2() throws Exception {
+<span class="fc" id="L1988">        final File file = new File(getTestDirectory(), &quot;write.txt&quot;);</span>
+<span class="fc" id="L1989">        FileUtils.write(file, &quot;Hello /u1234&quot;, (String) null);</span>
+<span class="fc" id="L1990">        final byte[] text = &quot;Hello /u1234&quot;.getBytes();</span>
+<span class="fc" id="L1991">        TestUtils.assertEqualContent(text, file);</span>
+<span class="fc" id="L1992">    }</span>
+
+    @Test
+    public void testWriteByteArrayToFile() throws Exception {
+<span class="fc" id="L1996">        final File file = new File(getTestDirectory(), &quot;write.obj&quot;);</span>
+<span class="fc" id="L1997">        final byte[] data = new byte[]{11, 21, 31};</span>
+<span class="fc" id="L1998">        FileUtils.writeByteArrayToFile(file, data);</span>
+<span class="fc" id="L1999">        TestUtils.assertEqualContent(data, file);</span>
+<span class="fc" id="L2000">    }</span>
+
+    @Test
+    public void testWriteByteArrayToFile_WithOffsetAndLength() throws Exception {
+<span class="fc" id="L2004">        final File file = new File(getTestDirectory(), &quot;write.obj&quot;);</span>
+<span class="fc" id="L2005">        final byte[] data = new byte[]{11, 21, 32, 41, 51};</span>
+<span class="fc" id="L2006">        final byte[] writtenData = new byte[3];</span>
+<span class="fc" id="L2007">        System.arraycopy(data, 1, writtenData, 0, 3);</span>
+<span class="fc" id="L2008">        FileUtils.writeByteArrayToFile(file, data, 1, 3);</span>
+<span class="fc" id="L2009">        TestUtils.assertEqualContent(writtenData, file);</span>
+<span class="fc" id="L2010">    }</span>
+
+    @Test
+    public void testWriteLines_4arg() throws Exception {
+<span class="fc" id="L2014">        final Object[] data = new Object[]{</span>
+<span class="fc" id="L2015">                &quot;hello&quot;, new StringBuffer(&quot;world&quot;), &quot;&quot;, &quot;this is&quot;, null, &quot;some text&quot;};</span>
+<span class="fc" id="L2016">        final List&lt;Object&gt; list = Arrays.asList(data);</span>
+
+<span class="fc" id="L2018">        final File file = TestUtils.newFile(getTestDirectory(), &quot;lines.txt&quot;);</span>
+<span class="fc" id="L2019">        FileUtils.writeLines(file, &quot;US-ASCII&quot;, list, &quot;*&quot;);</span>
+
+<span class="fc" id="L2021">        final String expected = &quot;hello*world**this is**some text*&quot;;</span>
+<span class="fc" id="L2022">        final String actual = FileUtils.readFileToString(file, &quot;US-ASCII&quot;);</span>
+<span class="fc" id="L2023">        assertEquals(expected, actual);</span>
+<span class="fc" id="L2024">    }</span>
+
+    @Test
+    public void testWriteLines_4arg_Writer_nullData() throws Exception {
+<span class="fc" id="L2028">        final File file = TestUtils.newFile(getTestDirectory(), &quot;lines.txt&quot;);</span>
+<span class="fc" id="L2029">        FileUtils.writeLines(file, &quot;US-ASCII&quot;, null, &quot;*&quot;);</span>
+
+<span class="fc" id="L2031">        assertEquals(&quot;Sizes differ&quot;, 0, file.length());</span>
+<span class="fc" id="L2032">    }</span>
+
+    @Test
+    public void testWriteLines_4arg_nullSeparator() throws Exception {
+<span class="fc" id="L2036">        final Object[] data = new Object[]{</span>
+<span class="fc" id="L2037">                &quot;hello&quot;, new StringBuffer(&quot;world&quot;), &quot;&quot;, &quot;this is&quot;, null, &quot;some text&quot;};</span>
+<span class="fc" id="L2038">        final List&lt;Object&gt; list = Arrays.asList(data);</span>
+
+<span class="fc" id="L2040">        final File file = TestUtils.newFile(getTestDirectory(), &quot;lines.txt&quot;);</span>
+<span class="fc" id="L2041">        FileUtils.writeLines(file, &quot;US-ASCII&quot;, list, null);</span>
+
+<span class="fc" id="L2043">        final String expected = &quot;hello&quot; + IOUtils.LINE_SEPARATOR + &quot;world&quot; + IOUtils.LINE_SEPARATOR +</span>
+<span class="fc" id="L2044">                IOUtils.LINE_SEPARATOR + &quot;this is&quot; + IOUtils.LINE_SEPARATOR +</span>
+<span class="fc" id="L2045">                IOUtils.LINE_SEPARATOR + &quot;some text&quot; + IOUtils.LINE_SEPARATOR;</span>
+<span class="fc" id="L2046">        final String actual = FileUtils.readFileToString(file, &quot;US-ASCII&quot;);</span>
+<span class="fc" id="L2047">        assertEquals(expected, actual);</span>
+<span class="fc" id="L2048">    }</span>
+
+    @Test
+    public void testWriteLines_3arg_nullSeparator() throws Exception {
+<span class="fc" id="L2052">        final Object[] data = new Object[]{</span>
+<span class="fc" id="L2053">                &quot;hello&quot;, new StringBuffer(&quot;world&quot;), &quot;&quot;, &quot;this is&quot;, null, &quot;some text&quot;};</span>
+<span class="fc" id="L2054">        final List&lt;Object&gt; list = Arrays.asList(data);</span>
+
+<span class="fc" id="L2056">        final File file = TestUtils.newFile(getTestDirectory(), &quot;lines.txt&quot;);</span>
+<span class="fc" id="L2057">        FileUtils.writeLines(file, &quot;US-ASCII&quot;, list);</span>
+
+<span class="fc" id="L2059">        final String expected = &quot;hello&quot; + IOUtils.LINE_SEPARATOR + &quot;world&quot; + IOUtils.LINE_SEPARATOR +</span>
+<span class="fc" id="L2060">                IOUtils.LINE_SEPARATOR + &quot;this is&quot; + IOUtils.LINE_SEPARATOR +</span>
+<span class="fc" id="L2061">                IOUtils.LINE_SEPARATOR + &quot;some text&quot; + IOUtils.LINE_SEPARATOR;</span>
+<span class="fc" id="L2062">        final String actual = FileUtils.readFileToString(file, &quot;US-ASCII&quot;);</span>
+<span class="fc" id="L2063">        assertEquals(expected, actual);</span>
+<span class="fc" id="L2064">    }</span>
+
+    @Test
+    public void testWriteLines_5argsWithAppendOptionTrue_ShouldNotDeletePreviousFileLines() throws Exception {
+<span class="fc" id="L2068">        final File file = TestUtils.newFile(getTestDirectory(), &quot;lines.txt&quot;);</span>
+<span class="fc" id="L2069">        FileUtils.writeStringToFile(file, &quot;This line was there before you...&quot;);</span>
+
+<span class="fc" id="L2071">        final List&lt;String&gt; linesToAppend = Arrays.asList(&quot;my first line&quot;, &quot;The second Line&quot;);</span>
+<span class="fc" id="L2072">        FileUtils.writeLines(file, null, linesToAppend, null, true);</span>
+
+<span class="fc" id="L2074">        final String expected = &quot;This line was there before you...&quot;</span>
+                + &quot;my first line&quot;
+<span class="fc" id="L2076">                + IOUtils.LINE_SEPARATOR + &quot;The second Line&quot;</span>
+<span class="fc" id="L2077">                + IOUtils.LINE_SEPARATOR;</span>
+<span class="fc" id="L2078">        final String actual = FileUtils.readFileToString(file);</span>
+<span class="fc" id="L2079">        assertEquals(expected, actual);</span>
+<span class="fc" id="L2080">    }</span>
+
+    @Test
+    public void testWriteLines_5argsWithAppendOptionFalse_ShouldDeletePreviousFileLines() throws Exception {
+<span class="fc" id="L2084">        final File file = TestUtils.newFile(getTestDirectory(), &quot;lines.txt&quot;);</span>
+<span class="fc" id="L2085">        FileUtils.writeStringToFile(file, &quot;This line was there before you...&quot;);</span>
+
+<span class="fc" id="L2087">        final List&lt;String&gt; linesToAppend = Arrays.asList(&quot;my first line&quot;, &quot;The second Line&quot;);</span>
+<span class="fc" id="L2088">        FileUtils.writeLines(file, null, linesToAppend, null, false);</span>
+
+<span class="fc" id="L2090">        final String expected = &quot;my first line&quot;</span>
+<span class="fc" id="L2091">                + IOUtils.LINE_SEPARATOR + &quot;The second Line&quot;</span>
+<span class="fc" id="L2092">                + IOUtils.LINE_SEPARATOR;</span>
+<span class="fc" id="L2093">        final String actual = FileUtils.readFileToString(file);</span>
+<span class="fc" id="L2094">        assertEquals(expected, actual);</span>
+<span class="fc" id="L2095">    }</span>
+
+    @Test
+    public void testWriteLines_4argsWithAppendOptionTrue_ShouldNotDeletePreviousFileLines() throws Exception {
+<span class="fc" id="L2099">        final File file = TestUtils.newFile(getTestDirectory(), &quot;lines.txt&quot;);</span>
+<span class="fc" id="L2100">        FileUtils.writeStringToFile(file, &quot;This line was there before you...&quot;);</span>
+
+<span class="fc" id="L2102">        final List&lt;String&gt; linesToAppend = Arrays.asList(&quot;my first line&quot;, &quot;The second Line&quot;);</span>
+<span class="fc" id="L2103">        FileUtils.writeLines(file, linesToAppend, null, true);</span>
+
+<span class="fc" id="L2105">        final String expected = &quot;This line was there before you...&quot;</span>
+                + &quot;my first line&quot;
+<span class="fc" id="L2107">                + IOUtils.LINE_SEPARATOR + &quot;The second Line&quot;</span>
+<span class="fc" id="L2108">                + IOUtils.LINE_SEPARATOR;</span>
+<span class="fc" id="L2109">        final String actual = FileUtils.readFileToString(file);</span>
+<span class="fc" id="L2110">        assertEquals(expected, actual);</span>
+<span class="fc" id="L2111">    }</span>
+
+    @Test
+    public void testWriteLines_4argsWithAppendOptionFalse_ShouldDeletePreviousFileLines() throws Exception {
+<span class="fc" id="L2115">        final File file = TestUtils.newFile(getTestDirectory(), &quot;lines.txt&quot;);</span>
+<span class="fc" id="L2116">        FileUtils.writeStringToFile(file, &quot;This line was there before you...&quot;);</span>
+
+<span class="fc" id="L2118">        final List&lt;String&gt; linesToAppend = Arrays.asList(&quot;my first line&quot;, &quot;The second Line&quot;);</span>
+<span class="fc" id="L2119">        FileUtils.writeLines(file, linesToAppend, null, false);</span>
+
+<span class="fc" id="L2121">        final String expected = &quot;my first line&quot;</span>
+<span class="fc" id="L2122">                + IOUtils.LINE_SEPARATOR + &quot;The second Line&quot;</span>
+<span class="fc" id="L2123">                + IOUtils.LINE_SEPARATOR;</span>
+<span class="fc" id="L2124">        final String actual = FileUtils.readFileToString(file);</span>
+<span class="fc" id="L2125">        assertEquals(expected, actual);</span>
+<span class="fc" id="L2126">    }</span>
+
+
+    @Test
+    public void testWriteLinesEncoding_WithAppendOptionTrue_ShouldNotDeletePreviousFileLines() throws Exception {
+<span class="fc" id="L2131">        final File file = TestUtils.newFile(getTestDirectory(), &quot;lines.txt&quot;);</span>
+<span class="fc" id="L2132">        FileUtils.writeStringToFile(file, &quot;This line was there before you...&quot;);</span>
+
+<span class="fc" id="L2134">        final List&lt;String&gt; linesToAppend = Arrays.asList(&quot;my first line&quot;, &quot;The second Line&quot;);</span>
+<span class="fc" id="L2135">        FileUtils.writeLines(file, null, linesToAppend, true);</span>
+
+<span class="fc" id="L2137">        final String expected = &quot;This line was there before you...&quot;</span>
+                + &quot;my first line&quot;
+<span class="fc" id="L2139">                + IOUtils.LINE_SEPARATOR + &quot;The second Line&quot;</span>
+<span class="fc" id="L2140">                + IOUtils.LINE_SEPARATOR;</span>
+<span class="fc" id="L2141">        final String actual = FileUtils.readFileToString(file);</span>
+<span class="fc" id="L2142">        assertEquals(expected, actual);</span>
+<span class="fc" id="L2143">    }</span>
+
+    @Test
+    public void testWriteLinesEncoding_WithAppendOptionFalse_ShouldDeletePreviousFileLines() throws Exception {
+<span class="fc" id="L2147">        final File file = TestUtils.newFile(getTestDirectory(), &quot;lines.txt&quot;);</span>
+<span class="fc" id="L2148">        FileUtils.writeStringToFile(file, &quot;This line was there before you...&quot;);</span>
+
+<span class="fc" id="L2150">        final List&lt;String&gt; linesToAppend = Arrays.asList(&quot;my first line&quot;, &quot;The second Line&quot;);</span>
+<span class="fc" id="L2151">        FileUtils.writeLines(file, null, linesToAppend, false);</span>
+
+<span class="fc" id="L2153">        final String expected = &quot;my first line&quot;</span>
+<span class="fc" id="L2154">                + IOUtils.LINE_SEPARATOR + &quot;The second Line&quot;</span>
+<span class="fc" id="L2155">                + IOUtils.LINE_SEPARATOR;</span>
+<span class="fc" id="L2156">        final String actual = FileUtils.readFileToString(file);</span>
+<span class="fc" id="L2157">        assertEquals(expected, actual);</span>
+<span class="fc" id="L2158">    }</span>
+
+    @Test
+    public void testWriteLines_3argsWithAppendOptionTrue_ShouldNotDeletePreviousFileLines() throws Exception {
+<span class="fc" id="L2162">        final File file = TestUtils.newFile(getTestDirectory(), &quot;lines.txt&quot;);</span>
+<span class="fc" id="L2163">        FileUtils.writeStringToFile(file, &quot;This line was there before you...&quot;);</span>
+
+<span class="fc" id="L2165">        final List&lt;String&gt; linesToAppend = Arrays.asList(&quot;my first line&quot;, &quot;The second Line&quot;);</span>
+<span class="fc" id="L2166">        FileUtils.writeLines(file, linesToAppend, true);</span>
+
+<span class="fc" id="L2168">        final String expected = &quot;This line was there before you...&quot;</span>
+                + &quot;my first line&quot;
+<span class="fc" id="L2170">                + IOUtils.LINE_SEPARATOR + &quot;The second Line&quot;</span>
+<span class="fc" id="L2171">                + IOUtils.LINE_SEPARATOR;</span>
+<span class="fc" id="L2172">        final String actual = FileUtils.readFileToString(file);</span>
+<span class="fc" id="L2173">        assertEquals(expected, actual);</span>
+<span class="fc" id="L2174">    }</span>
+
+    @Test
+    public void testWriteLines_3argsWithAppendOptionFalse_ShouldDeletePreviousFileLines() throws Exception {
+<span class="fc" id="L2178">        final File file = TestUtils.newFile(getTestDirectory(), &quot;lines.txt&quot;);</span>
+<span class="fc" id="L2179">        FileUtils.writeStringToFile(file, &quot;This line was there before you...&quot;);</span>
+
+<span class="fc" id="L2181">        final List&lt;String&gt; linesToAppend = Arrays.asList(&quot;my first line&quot;, &quot;The second Line&quot;);</span>
+<span class="fc" id="L2182">        FileUtils.writeLines(file, linesToAppend, false);</span>
+
+<span class="fc" id="L2184">        final String expected = &quot;my first line&quot;</span>
+<span class="fc" id="L2185">                + IOUtils.LINE_SEPARATOR + &quot;The second Line&quot;</span>
+<span class="fc" id="L2186">                + IOUtils.LINE_SEPARATOR;</span>
+<span class="fc" id="L2187">        final String actual = FileUtils.readFileToString(file);</span>
+<span class="fc" id="L2188">        assertEquals(expected, actual);</span>
+<span class="fc" id="L2189">    }</span>
+
+    @Test
+    public void testWriteStringToFileWithEncoding_WithAppendOptionTrue_ShouldNotDeletePreviousFileLines() throws Exception {
+<span class="fc" id="L2193">        final File file = TestUtils.newFile(getTestDirectory(), &quot;lines.txt&quot;);</span>
+<span class="fc" id="L2194">        FileUtils.writeStringToFile(file, &quot;This line was there before you...&quot;);</span>
+
+<span class="fc" id="L2196">        FileUtils.writeStringToFile(file, &quot;this is brand new data&quot;, (String) null, true);</span>
+
+<span class="fc" id="L2198">        final String expected = &quot;This line was there before you...&quot;</span>
+                + &quot;this is brand new data&quot;;
+<span class="fc" id="L2200">        final String actual = FileUtils.readFileToString(file);</span>
+<span class="fc" id="L2201">        assertEquals(expected, actual);</span>
+<span class="fc" id="L2202">    }</span>
+
+    @Test
+    public void testWriteStringToFileWithEncoding_WithAppendOptionFalse_ShouldDeletePreviousFileLines() throws Exception {
+<span class="fc" id="L2206">        final File file = TestUtils.newFile(getTestDirectory(), &quot;lines.txt&quot;);</span>
+<span class="fc" id="L2207">        FileUtils.writeStringToFile(file, &quot;This line was there before you...&quot;);</span>
+
+<span class="fc" id="L2209">        FileUtils.writeStringToFile(file, &quot;this is brand new data&quot;, (String) null, false);</span>
+
+<span class="fc" id="L2211">        final String expected = &quot;this is brand new data&quot;;</span>
+<span class="fc" id="L2212">        final String actual = FileUtils.readFileToString(file);</span>
+<span class="fc" id="L2213">        assertEquals(expected, actual);</span>
+<span class="fc" id="L2214">    }</span>
+
+    @Test
+    public void testWriteStringToFile_WithAppendOptionTrue_ShouldNotDeletePreviousFileLines() throws Exception {
+<span class="fc" id="L2218">        final File file = TestUtils.newFile(getTestDirectory(), &quot;lines.txt&quot;);</span>
+<span class="fc" id="L2219">        FileUtils.writeStringToFile(file, &quot;This line was there before you...&quot;);</span>
+
+<span class="fc" id="L2221">        FileUtils.writeStringToFile(file, &quot;this is brand new data&quot;, true);</span>
+
+<span class="fc" id="L2223">        final String expected = &quot;This line was there before you...&quot;</span>
+                + &quot;this is brand new data&quot;;
+<span class="fc" id="L2225">        final String actual = FileUtils.readFileToString(file);</span>
+<span class="fc" id="L2226">        assertEquals(expected, actual);</span>
+<span class="fc" id="L2227">    }</span>
+
+    @Test
+    public void testWriteStringToFile_WithAppendOptionFalse_ShouldDeletePreviousFileLines() throws Exception {
+<span class="fc" id="L2231">        final File file = TestUtils.newFile(getTestDirectory(), &quot;lines.txt&quot;);</span>
+<span class="fc" id="L2232">        FileUtils.writeStringToFile(file, &quot;This line was there before you...&quot;);</span>
+
+<span class="fc" id="L2234">        FileUtils.writeStringToFile(file, &quot;this is brand new data&quot;, false);</span>
+
+<span class="fc" id="L2236">        final String expected = &quot;this is brand new data&quot;;</span>
+<span class="fc" id="L2237">        final String actual = FileUtils.readFileToString(file);</span>
+<span class="fc" id="L2238">        assertEquals(expected, actual);</span>
+<span class="fc" id="L2239">    }</span>
+
+    @Test
+    public void testWriteWithEncoding_WithAppendOptionTrue_ShouldNotDeletePreviousFileLines() throws Exception {
+<span class="fc" id="L2243">        final File file = TestUtils.newFile(getTestDirectory(), &quot;lines.txt&quot;);</span>
+<span class="fc" id="L2244">        FileUtils.writeStringToFile(file, &quot;This line was there before you...&quot;);</span>
+
+<span class="fc" id="L2246">        FileUtils.write(file, &quot;this is brand new data&quot;, (String) null, true);</span>
+
+<span class="fc" id="L2248">        final String expected = &quot;This line was there before you...&quot;</span>
+                + &quot;this is brand new data&quot;;
+<span class="fc" id="L2250">        final String actual = FileUtils.readFileToString(file);</span>
+<span class="fc" id="L2251">        assertEquals(expected, actual);</span>
+<span class="fc" id="L2252">    }</span>
+
+    @Test
+    public void testWriteWithEncoding_WithAppendOptionFalse_ShouldDeletePreviousFileLines() throws Exception {
+<span class="fc" id="L2256">        final File file = TestUtils.newFile(getTestDirectory(), &quot;lines.txt&quot;);</span>
+<span class="fc" id="L2257">        FileUtils.writeStringToFile(file, &quot;This line was there before you...&quot;);</span>
+
+<span class="fc" id="L2259">        FileUtils.write(file, &quot;this is brand new data&quot;, (String) null, false);</span>
+
+<span class="fc" id="L2261">        final String expected = &quot;this is brand new data&quot;;</span>
+<span class="fc" id="L2262">        final String actual = FileUtils.readFileToString(file);</span>
+<span class="fc" id="L2263">        assertEquals(expected, actual);</span>
+<span class="fc" id="L2264">    }</span>
+
+    @Test
+    public void testWrite_WithAppendOptionTrue_ShouldNotDeletePreviousFileLines() throws Exception {
+<span class="fc" id="L2268">        final File file = TestUtils.newFile(getTestDirectory(), &quot;lines.txt&quot;);</span>
+<span class="fc" id="L2269">        FileUtils.writeStringToFile(file, &quot;This line was there before you...&quot;);</span>
+
+<span class="fc" id="L2271">        FileUtils.write(file, &quot;this is brand new data&quot;, true);</span>
+
+<span class="fc" id="L2273">        final String expected = &quot;This line was there before you...&quot;</span>
+                + &quot;this is brand new data&quot;;
+<span class="fc" id="L2275">        final String actual = FileUtils.readFileToString(file);</span>
+<span class="fc" id="L2276">        assertEquals(expected, actual);</span>
+<span class="fc" id="L2277">    }</span>
+
+    @Test
+    public void testWrite_WithAppendOptionFalse_ShouldDeletePreviousFileLines() throws Exception {
+<span class="fc" id="L2281">        final File file = TestUtils.newFile(getTestDirectory(), &quot;lines.txt&quot;);</span>
+<span class="fc" id="L2282">        FileUtils.writeStringToFile(file, &quot;This line was there before you...&quot;);</span>
+
+<span class="fc" id="L2284">        FileUtils.write(file, &quot;this is brand new data&quot;, false);</span>
+
+<span class="fc" id="L2286">        final String expected = &quot;this is brand new data&quot;;</span>
+<span class="fc" id="L2287">        final String actual = FileUtils.readFileToString(file);</span>
+<span class="fc" id="L2288">        assertEquals(expected, actual);</span>
+<span class="fc" id="L2289">    }</span>
+
+    @Test
+    public void testWriteByteArrayToFile_WithAppendOptionTrue_ShouldNotDeletePreviousFileLines() throws Exception {
+<span class="fc" id="L2293">        final File file = TestUtils.newFile(getTestDirectory(), &quot;lines.txt&quot;);</span>
+<span class="fc" id="L2294">        FileUtils.writeStringToFile(file, &quot;This line was there before you...&quot;);</span>
+
+<span class="fc" id="L2296">        FileUtils.writeByteArrayToFile(file, &quot;this is brand new data&quot;.getBytes(), true);</span>
+
+<span class="fc" id="L2298">        final String expected = &quot;This line was there before you...&quot;</span>
+                + &quot;this is brand new data&quot;;
+<span class="fc" id="L2300">        final String actual = FileUtils.readFileToString(file);</span>
+<span class="fc" id="L2301">        assertEquals(expected, actual);</span>
+<span class="fc" id="L2302">    }</span>
+
+    @Test
+    public void testWriteByteArrayToFile_WithAppendOptionFalse_ShouldDeletePreviousFileLines() throws Exception {
+<span class="fc" id="L2306">        final File file = TestUtils.newFile(getTestDirectory(), &quot;lines.txt&quot;);</span>
+<span class="fc" id="L2307">        FileUtils.writeStringToFile(file, &quot;This line was there before you...&quot;);</span>
+
+<span class="fc" id="L2309">        FileUtils.writeByteArrayToFile(file, &quot;this is brand new data&quot;.getBytes(), false);</span>
+
+<span class="fc" id="L2311">        final String expected = &quot;this is brand new data&quot;;</span>
+<span class="fc" id="L2312">        final String actual = FileUtils.readFileToString(file);</span>
+<span class="fc" id="L2313">        assertEquals(expected, actual);</span>
+<span class="fc" id="L2314">    }</span>
+
+    @Test
+    public void testWriteByteArrayToFile_WithOffsetAndLength_WithAppendOptionTrue_ShouldNotDeletePreviousFileLines() throws Exception {
+<span class="fc" id="L2318">        final File file = TestUtils.newFile(getTestDirectory(), &quot;lines.txt&quot;);</span>
+<span class="fc" id="L2319">        FileUtils.writeStringToFile(file, &quot;This line was there before you...&quot;);</span>
+
+<span class="fc" id="L2321">        final byte[] data = &quot;SKIP_THIS_this is brand new data_AND_SKIP_THIS&quot;.getBytes(Charsets.UTF_8);</span>
+<span class="fc" id="L2322">        FileUtils.writeByteArrayToFile(file, data, 10, 22, true);</span>
+
+<span class="fc" id="L2324">        final String expected = &quot;This line was there before you...&quot; + &quot;this is brand new data&quot;;</span>
+<span class="fc" id="L2325">        final String actual = FileUtils.readFileToString(file, Charsets.UTF_8);</span>
+<span class="fc" id="L2326">        assertEquals(expected, actual);</span>
+<span class="fc" id="L2327">    }</span>
+
+    @Test
+    public void testWriteByteArrayToFile_WithOffsetAndLength_WithAppendOptionTrue_ShouldDeletePreviousFileLines() throws Exception {
+<span class="fc" id="L2331">        final File file = TestUtils.newFile(getTestDirectory(), &quot;lines.txt&quot;);</span>
+<span class="fc" id="L2332">        FileUtils.writeStringToFile(file, &quot;This line was there before you...&quot;);</span>
+
+<span class="fc" id="L2334">        final byte[] data = &quot;SKIP_THIS_this is brand new data_AND_SKIP_THIS&quot;.getBytes(Charsets.UTF_8);</span>
+<span class="fc" id="L2335">        FileUtils.writeByteArrayToFile(file, data, 10, 22, false);</span>
+
+<span class="fc" id="L2337">        final String expected = &quot;this is brand new data&quot;;</span>
+<span class="fc" id="L2338">        final String actual = FileUtils.readFileToString(file, Charsets.UTF_8);</span>
+<span class="fc" id="L2339">        assertEquals(expected, actual);</span>
+<span class="fc" id="L2340">    }</span>
+
+    //-----------------------------------------------------------------------
+    @Test
+    public void testChecksumCRC32() throws Exception {
+        // create a test file
+<span class="fc" id="L2346">        final String text = &quot;Imagination is more important than knowledge - Einstein&quot;;</span>
+<span class="fc" id="L2347">        final File file = new File(getTestDirectory(), &quot;checksum-test.txt&quot;);</span>
+<span class="fc" id="L2348">        FileUtils.writeStringToFile(file, text, &quot;US-ASCII&quot;);</span>
+
+        // compute the expected checksum
+<span class="fc" id="L2351">        final Checksum expectedChecksum = new CRC32();</span>
+<span class="fc" id="L2352">        expectedChecksum.update(text.getBytes(&quot;US-ASCII&quot;), 0, text.length());</span>
+<span class="fc" id="L2353">        final long expectedValue = expectedChecksum.getValue();</span>
+
+        // compute the checksum of the file
+<span class="fc" id="L2356">        final long resultValue = FileUtils.checksumCRC32(file);</span>
+
+<span class="fc" id="L2358">        assertEquals(expectedValue, resultValue);</span>
+<span class="fc" id="L2359">    }</span>
+
+    @Test
+    public void testChecksum() throws Exception {
+        // create a test file
+<span class="fc" id="L2364">        final String text = &quot;Imagination is more important than knowledge - Einstein&quot;;</span>
+<span class="fc" id="L2365">        final File file = new File(getTestDirectory(), &quot;checksum-test.txt&quot;);</span>
+<span class="fc" id="L2366">        FileUtils.writeStringToFile(file, text, &quot;US-ASCII&quot;);</span>
+
+        // compute the expected checksum
+<span class="fc" id="L2369">        final Checksum expectedChecksum = new CRC32();</span>
+<span class="fc" id="L2370">        expectedChecksum.update(text.getBytes(&quot;US-ASCII&quot;), 0, text.length());</span>
+<span class="fc" id="L2371">        final long expectedValue = expectedChecksum.getValue();</span>
+
+        // compute the checksum of the file
+<span class="fc" id="L2374">        final Checksum testChecksum = new CRC32();</span>
+<span class="fc" id="L2375">        final Checksum resultChecksum = FileUtils.checksum(file, testChecksum);</span>
+<span class="fc" id="L2376">        final long resultValue = resultChecksum.getValue();</span>
+
+<span class="fc" id="L2378">        assertSame(testChecksum, resultChecksum);</span>
+<span class="fc" id="L2379">        assertEquals(expectedValue, resultValue);</span>
+<span class="fc" id="L2380">    }</span>
+
+    @Test
+    public void testChecksumOnNullFile() throws Exception {
+        try {
+<span class="nc" id="L2385">            FileUtils.checksum(null, new CRC32());</span>
+<span class="nc" id="L2386">            fail();</span>
+<span class="pc" id="L2387">        } catch (final NullPointerException ex) {</span>
+            // expected
+        }
+<span class="fc" id="L2390">    }</span>
+
+    @Test
+    public void testChecksumOnNullChecksum() throws Exception {
+        // create a test file
+<span class="fc" id="L2395">        final String text = &quot;Imagination is more important than knowledge - Einstein&quot;;</span>
+<span class="fc" id="L2396">        final File file = new File(getTestDirectory(), &quot;checksum-test.txt&quot;);</span>
+<span class="fc" id="L2397">        FileUtils.writeStringToFile(file, text, &quot;US-ASCII&quot;);</span>
+        try {
+<span class="nc" id="L2399">            FileUtils.checksum(file, null);</span>
+<span class="nc" id="L2400">            fail();</span>
+<span class="pc" id="L2401">        } catch (final NullPointerException ex) {</span>
+            // expected
+        }
+<span class="fc" id="L2404">    }</span>
+
+    @Test
+    public void testChecksumOnDirectory() throws Exception {
+        try {
+<span class="nc" id="L2409">            FileUtils.checksum(new File(&quot;.&quot;), new CRC32());</span>
+<span class="nc" id="L2410">            fail();</span>
+<span class="pc" id="L2411">        } catch (final IllegalArgumentException ex) {</span>
+            // expected
+        }
+<span class="fc" id="L2414">    }</span>
+
+    @Test
+    public void testChecksumDouble() throws Exception {
+        // create a test file
+<span class="fc" id="L2419">        final String text1 = &quot;Imagination is more important than knowledge - Einstein&quot;;</span>
+<span class="fc" id="L2420">        final File file1 = new File(getTestDirectory(), &quot;checksum-test.txt&quot;);</span>
+<span class="fc" id="L2421">        FileUtils.writeStringToFile(file1, text1, &quot;US-ASCII&quot;);</span>
+
+        // create a second test file
+<span class="fc" id="L2424">        final String text2 = &quot;To be or not to be - Shakespeare&quot;;</span>
+<span class="fc" id="L2425">        final File file2 = new File(getTestDirectory(), &quot;checksum-test2.txt&quot;);</span>
+<span class="fc" id="L2426">        FileUtils.writeStringToFile(file2, text2, &quot;US-ASCII&quot;);</span>
+
+        // compute the expected checksum
+<span class="fc" id="L2429">        final Checksum expectedChecksum = new CRC32();</span>
+<span class="fc" id="L2430">        expectedChecksum.update(text1.getBytes(&quot;US-ASCII&quot;), 0, text1.length());</span>
+<span class="fc" id="L2431">        expectedChecksum.update(text2.getBytes(&quot;US-ASCII&quot;), 0, text2.length());</span>
+<span class="fc" id="L2432">        final long expectedValue = expectedChecksum.getValue();</span>
+
+        // compute the checksum of the file
+<span class="fc" id="L2435">        final Checksum testChecksum = new CRC32();</span>
+<span class="fc" id="L2436">        FileUtils.checksum(file1, testChecksum);</span>
+<span class="fc" id="L2437">        FileUtils.checksum(file2, testChecksum);</span>
+<span class="fc" id="L2438">        final long resultValue = testChecksum.getValue();</span>
+
+<span class="fc" id="L2440">        assertEquals(expectedValue, resultValue);</span>
+<span class="fc" id="L2441">    }</span>
+
+    @Test
+    public void testDeleteDirectoryWithNonDirectory() throws Exception {
+        try {
+<span class="nc" id="L2446">            FileUtils.deleteDirectory(testFile1);</span>
+<span class="nc" id="L2447">            fail();</span>
+<span class="pc" id="L2448">        } catch (final IllegalArgumentException ex) {</span>
+            // expected
+        }
+<span class="fc" id="L2451">    }</span>
+
+    @Test
+    public void testDeleteQuietlyForNull() {
+        try {
+<span class="fc" id="L2456">            FileUtils.deleteQuietly(null);</span>
+<span class="pc" id="L2457">        } catch (final Exception ex) {</span>
+<span class="nc" id="L2458">            fail(ex.getMessage());</span>
+        }
+<span class="fc" id="L2460">    }</span>
+
+    @Test
+    public void testDeleteQuietlyDir() throws IOException {
+<span class="fc" id="L2464">        final File testDirectory = new File(getTestDirectory(), &quot;testDeleteQuietlyDir&quot;);</span>
+<span class="fc" id="L2465">        final File testFile = new File(testDirectory, &quot;testDeleteQuietlyFile&quot;);</span>
+<span class="fc" id="L2466">        testDirectory.mkdirs();</span>
+<span class="pc bpc" id="L2467" title="1 of 2 branches missed.">        if (!testFile.getParentFile().exists()) {</span>
+<span class="nc" id="L2468">            throw new IOException(&quot;Cannot create file &quot; + testFile</span>
+<span class="nc" id="L2469">                    + &quot; as the parent directory does not exist&quot;);</span>
+        }
+<span class="fc" id="L2471">        final BufferedOutputStream output =</span>
+<span class="fc" id="L2472">                new BufferedOutputStream(new FileOutputStream(testFile));</span>
+        try {
+<span class="fc" id="L2474">            TestUtils.generateTestData(output, (long) 0);</span>
+<span class="fc" id="L2475">        } finally {</span>
+<span class="fc" id="L2476">            IOUtils.closeQuietly(output);</span>
+        }
+
+<span class="fc" id="L2479">        assertTrue(testDirectory.exists());</span>
+<span class="fc" id="L2480">        assertTrue(testFile.exists());</span>
+<span class="fc" id="L2481">        FileUtils.deleteQuietly(testDirectory);</span>
+<span class="fc" id="L2482">        assertFalse(&quot;Check No Exist&quot;, testDirectory.exists());</span>
+<span class="fc" id="L2483">        assertFalse(&quot;Check No Exist&quot;, testFile.exists());</span>
+<span class="fc" id="L2484">    }</span>
+
+    @Test
+    public void testDeleteQuietlyFile() throws IOException {
+<span class="fc" id="L2488">        final File testFile = new File(getTestDirectory(), &quot;testDeleteQuietlyFile&quot;);</span>
+<span class="pc bpc" id="L2489" title="1 of 2 branches missed.">        if (!testFile.getParentFile().exists()) {</span>
+<span class="nc" id="L2490">            throw new IOException(&quot;Cannot create file &quot; + testFile</span>
+<span class="nc" id="L2491">                    + &quot; as the parent directory does not exist&quot;);</span>
+        }
+<span class="fc" id="L2493">        final BufferedOutputStream output =</span>
+<span class="fc" id="L2494">                new BufferedOutputStream(new FileOutputStream(testFile));</span>
+        try {
+<span class="fc" id="L2496">            TestUtils.generateTestData(output, (long) 0);</span>
+<span class="fc" id="L2497">        } finally {</span>
+<span class="fc" id="L2498">            IOUtils.closeQuietly(output);</span>
+        }
+
+<span class="fc" id="L2501">        assertTrue(testFile.exists());</span>
+<span class="fc" id="L2502">        FileUtils.deleteQuietly(testFile);</span>
+<span class="fc" id="L2503">        assertFalse(&quot;Check No Exist&quot;, testFile.exists());</span>
+<span class="fc" id="L2504">    }</span>
+
+    @Test
+    public void testDeleteQuietlyNonExistent() {
+<span class="fc" id="L2508">        final File testFile = new File(&quot;testDeleteQuietlyNonExistent&quot;);</span>
+<span class="fc" id="L2509">        assertFalse(testFile.exists());</span>
+
+        try {
+<span class="fc" id="L2512">            FileUtils.deleteQuietly(testFile);</span>
+<span class="pc" id="L2513">        } catch (final Exception ex) {</span>
+<span class="nc" id="L2514">            fail(ex.getMessage());</span>
+        }
+<span class="fc" id="L2516">    }</span>
+
+    @Test
+    public void testMoveFile_Rename() throws Exception {
+<span class="fc" id="L2520">        final File destination = new File(getTestDirectory(), &quot;move1.txt&quot;);</span>
+
+<span class="fc" id="L2522">        FileUtils.moveFile(testFile1, destination);</span>
+<span class="fc" id="L2523">        assertTrue(&quot;Check Exist&quot;, destination.exists());</span>
+<span class="pc bpc" id="L2524" title="1 of 2 branches missed.">        assertTrue(&quot;Original deleted&quot;, !testFile1.exists());</span>
+<span class="fc" id="L2525">    }</span>
+
+    @Test
+    public void testMoveFile_CopyDelete() throws Exception {
+<span class="fc" id="L2529">        final File destination = new File(getTestDirectory(), &quot;move2.txt&quot;);</span>
+<span class="fc" id="L2530">        final File src = new File(testFile1.getAbsolutePath()) {</span>
+            private static final long serialVersionUID = 1L;
+
+            // Force renameTo to fail, as if destination is on another
+            // filesystem
+            @Override
+            public boolean renameTo(final File f) {
+<span class="fc" id="L2537">                return false;</span>
+            }
+        };
+<span class="fc" id="L2540">        FileUtils.moveFile(src, destination);</span>
+<span class="fc" id="L2541">        assertTrue(&quot;Check Exist&quot;, destination.exists());</span>
+<span class="pc bpc" id="L2542" title="1 of 2 branches missed.">        assertTrue(&quot;Original deleted&quot;, !src.exists());</span>
+<span class="fc" id="L2543">    }</span>
+
+
+    @Test
+    public void testMoveFile_CopyDelete_Failed() throws Exception {
+<span class="fc" id="L2548">        final File destination = new File(getTestDirectory(), &quot;move3.txt&quot;);</span>
+<span class="fc" id="L2549">        final File src = new File(testFile1.getAbsolutePath()) {</span>
+            private static final long serialVersionUID = 1L;
+
+            // Force renameTo to fail, as if destination is on another
+            // filesystem
+            @Override
+            public boolean renameTo(final File f) {
+<span class="fc" id="L2556">                return false;</span>
+            }
+
+            // Force delete failure
+            @Override
+            public boolean delete() {
+<span class="fc" id="L2562">                return false;</span>
+            }
+
+        };
+        try {
+<span class="nc" id="L2567">            FileUtils.moveFile(src, destination);</span>
+<span class="nc" id="L2568">            fail(&quot;move should have failed as src has not been deleted&quot;);</span>
+<span class="pc" id="L2569">        } catch (final IOException e) {</span>
+            // exepected
+<span class="pc bpc" id="L2571" title="1 of 2 branches missed.">            assertTrue(&quot;Check Rollback&quot;, !destination.exists());</span>
+<span class="fc" id="L2572">            assertTrue(&quot;Original exists&quot;, src.exists());</span>
+        }
+<span class="fc" id="L2574">    }</span>
+
+    @Test
+    public void testMoveFile_Errors() throws Exception {
+        try {
+<span class="nc" id="L2579">            FileUtils.moveFile(null, new File(&quot;foo&quot;));</span>
+<span class="nc" id="L2580">            fail(&quot;Expected NullPointerException when source is null&quot;);</span>
+<span class="pc" id="L2581">        } catch (final NullPointerException e) {</span>
+            // expected
+        }
+        try {
+<span class="nc" id="L2585">            FileUtils.moveFile(new File(&quot;foo&quot;), null);</span>
+<span class="nc" id="L2586">            fail(&quot;Expected NullPointerException when destination is null&quot;);</span>
+<span class="pc" id="L2587">        } catch (final NullPointerException e) {</span>
+            // expected
+        }
+        try {
+<span class="nc" id="L2591">            FileUtils.moveFile(new File(&quot;nonexistant&quot;), new File(&quot;foo&quot;));</span>
+<span class="nc" id="L2592">            fail(&quot;Expected FileNotFoundException for source&quot;);</span>
+<span class="pc" id="L2593">        } catch (final FileNotFoundException e) {</span>
+            // expected
+        }
+        try {
+<span class="nc" id="L2597">            FileUtils.moveFile(getTestDirectory(), new File(&quot;foo&quot;));</span>
+<span class="nc" id="L2598">            fail(&quot;Expected IOException when source is a directory&quot;);</span>
+<span class="pc" id="L2599">        } catch (final IOException e) {</span>
+            // expected
+        }
+<span class="fc" id="L2602">        final File testSourceFile = new File(getTestDirectory(), &quot;testMoveFileSource&quot;);</span>
+<span class="fc" id="L2603">        final File testDestFile = new File(getTestDirectory(), &quot;testMoveFileSource&quot;);</span>
+<span class="pc bpc" id="L2604" title="1 of 2 branches missed.">        if (!testSourceFile.getParentFile().exists()) {</span>
+<span class="nc" id="L2605">            throw new IOException(&quot;Cannot create file &quot; + testSourceFile</span>
+<span class="nc" id="L2606">                    + &quot; as the parent directory does not exist&quot;);</span>
+        }
+<span class="fc" id="L2608">        final BufferedOutputStream output1 =</span>
+<span class="fc" id="L2609">                new BufferedOutputStream(new FileOutputStream(testSourceFile));</span>
+        try {
+<span class="fc" id="L2611">            TestUtils.generateTestData(output1, (long) 0);</span>
+<span class="fc" id="L2612">        } finally {</span>
+<span class="fc" id="L2613">            IOUtils.closeQuietly(output1);</span>
+        }
+<span class="pc bpc" id="L2615" title="1 of 2 branches missed.">        if (!testDestFile.getParentFile().exists()) {</span>
+<span class="nc" id="L2616">            throw new IOException(&quot;Cannot create file &quot; + testDestFile</span>
+<span class="nc" id="L2617">                    + &quot; as the parent directory does not exist&quot;);</span>
+        }
+<span class="fc" id="L2619">        final BufferedOutputStream output =</span>
+<span class="fc" id="L2620">                new BufferedOutputStream(new FileOutputStream(testDestFile));</span>
+        try {
+<span class="fc" id="L2622">            TestUtils.generateTestData(output, (long) 0);</span>
+<span class="fc" id="L2623">        } finally {</span>
+<span class="fc" id="L2624">            IOUtils.closeQuietly(output);</span>
+        }
+        try {
+<span class="nc" id="L2627">            FileUtils.moveFile(testSourceFile, testDestFile);</span>
+<span class="nc" id="L2628">            fail(&quot;Expected FileExistsException when dest already exists&quot;);</span>
+<span class="pc" id="L2629">        } catch (final FileExistsException e) {</span>
+            // expected
+        }
+
+<span class="fc" id="L2633">    }</span>
+
+    @Test
+    public void testMoveFileToDirectory() throws Exception {
+<span class="fc" id="L2637">        final File destDir = new File(getTestDirectory(), &quot;moveFileDestDir&quot;);</span>
+<span class="fc" id="L2638">        final File movedFile = new File(destDir, testFile1.getName());</span>
+<span class="fc" id="L2639">        assertFalse(&quot;Check Exist before&quot;, destDir.exists());</span>
+<span class="fc" id="L2640">        assertFalse(&quot;Check Exist before&quot;, movedFile.exists());</span>
+
+<span class="fc" id="L2642">        FileUtils.moveFileToDirectory(testFile1, destDir, true);</span>
+<span class="fc" id="L2643">        assertTrue(&quot;Check Exist after&quot;, movedFile.exists());</span>
+<span class="pc bpc" id="L2644" title="1 of 2 branches missed.">        assertTrue(&quot;Original deleted&quot;, !testFile1.exists());</span>
+<span class="fc" id="L2645">    }</span>
+
+    @Test
+    public void testMoveFileToDirectory_Errors() throws Exception {
+        try {
+<span class="nc" id="L2650">            FileUtils.moveFileToDirectory(null, new File(&quot;foo&quot;), true);</span>
+<span class="nc" id="L2651">            fail(&quot;Expected NullPointerException when source is null&quot;);</span>
+<span class="pc" id="L2652">        } catch (final NullPointerException e) {</span>
+            // expected
+        }
+        try {
+<span class="nc" id="L2656">            FileUtils.moveFileToDirectory(new File(&quot;foo&quot;), null, true);</span>
+<span class="nc" id="L2657">            fail(&quot;Expected NullPointerException when destination is null&quot;);</span>
+<span class="pc" id="L2658">        } catch (final NullPointerException e) {</span>
+            // expected
+        }
+<span class="fc" id="L2661">        final File testFile1 = new File(getTestDirectory(), &quot;testMoveFileFile1&quot;);</span>
+<span class="fc" id="L2662">        final File testFile2 = new File(getTestDirectory(), &quot;testMoveFileFile2&quot;);</span>
+<span class="pc bpc" id="L2663" title="1 of 2 branches missed.">        if (!testFile1.getParentFile().exists()) {</span>
+<span class="nc" id="L2664">            throw new IOException(&quot;Cannot create file &quot; + testFile1</span>
+<span class="nc" id="L2665">                    + &quot; as the parent directory does not exist&quot;);</span>
+        }
+<span class="fc" id="L2667">        final BufferedOutputStream output1 =</span>
+<span class="fc" id="L2668">                new BufferedOutputStream(new FileOutputStream(testFile1));</span>
+        try {
+<span class="fc" id="L2670">            TestUtils.generateTestData(output1, (long) 0);</span>
+<span class="fc" id="L2671">        } finally {</span>
+<span class="fc" id="L2672">            IOUtils.closeQuietly(output1);</span>
+        }
+<span class="pc bpc" id="L2674" title="1 of 2 branches missed.">        if (!testFile2.getParentFile().exists()) {</span>
+<span class="nc" id="L2675">            throw new IOException(&quot;Cannot create file &quot; + testFile2</span>
+<span class="nc" id="L2676">                    + &quot; as the parent directory does not exist&quot;);</span>
+        }
+<span class="fc" id="L2678">        final BufferedOutputStream output =</span>
+<span class="fc" id="L2679">                new BufferedOutputStream(new FileOutputStream(testFile2));</span>
+        try {
+<span class="fc" id="L2681">            TestUtils.generateTestData(output, (long) 0);</span>
+<span class="fc" id="L2682">        } finally {</span>
+<span class="fc" id="L2683">            IOUtils.closeQuietly(output);</span>
+        }
+        try {
+<span class="nc" id="L2686">            FileUtils.moveFileToDirectory(testFile1, testFile2, true);</span>
+<span class="nc" id="L2687">            fail(&quot;Expected IOException when dest not a directory&quot;);</span>
+<span class="pc" id="L2688">        } catch (final IOException e) {</span>
+            // expected
+        }
+
+<span class="fc" id="L2692">        final File nonexistant = new File(getTestDirectory(), &quot;testMoveFileNonExistant&quot;);</span>
+        try {
+<span class="nc" id="L2694">            FileUtils.moveFileToDirectory(testFile1, nonexistant, false);</span>
+<span class="nc" id="L2695">            fail(&quot;Expected IOException when dest does not exist and create=false&quot;);</span>
+<span class="pc" id="L2696">        } catch (final IOException e) {</span>
+            // expected
+        }
+<span class="fc" id="L2699">    }</span>
+
+
+    @Test
+    public void testMoveDirectory_Rename() throws Exception {
+<span class="fc" id="L2704">        final File dir = getTestDirectory();</span>
+<span class="fc" id="L2705">        final File src = new File(dir, &quot;testMoveDirectory1Source&quot;);</span>
+<span class="fc" id="L2706">        final File testDir = new File(src, &quot;foo&quot;);</span>
+<span class="fc" id="L2707">        final File testFile = new File(testDir, &quot;bar&quot;);</span>
+<span class="fc" id="L2708">        testDir.mkdirs();</span>
+<span class="pc bpc" id="L2709" title="1 of 2 branches missed.">        if (!testFile.getParentFile().exists()) {</span>
+<span class="nc" id="L2710">            throw new IOException(&quot;Cannot create file &quot; + testFile</span>
+<span class="nc" id="L2711">                    + &quot; as the parent directory does not exist&quot;);</span>
+        }
+<span class="fc" id="L2713">        final BufferedOutputStream output =</span>
+<span class="fc" id="L2714">                new BufferedOutputStream(new FileOutputStream(testFile));</span>
+        try {
+<span class="fc" id="L2716">            TestUtils.generateTestData(output, (long) 0);</span>
+<span class="fc" id="L2717">        } finally {</span>
+<span class="fc" id="L2718">            IOUtils.closeQuietly(output);</span>
+        }
+<span class="fc" id="L2720">        final File destination = new File(dir, &quot;testMoveDirectory1Dest&quot;);</span>
+<span class="fc" id="L2721">        FileUtils.deleteDirectory(destination);</span>
+
+        // Move the directory
+<span class="fc" id="L2724">        FileUtils.moveDirectory(src, destination);</span>
+
+        // Check results
+<span class="fc" id="L2727">        assertTrue(&quot;Check Exist&quot;, destination.exists());</span>
+<span class="pc bpc" id="L2728" title="1 of 2 branches missed.">        assertTrue(&quot;Original deleted&quot;, !src.exists());</span>
+<span class="fc" id="L2729">        final File movedDir = new File(destination, testDir.getName());</span>
+<span class="fc" id="L2730">        final File movedFile = new File(movedDir, testFile.getName());</span>
+<span class="fc" id="L2731">        assertTrue(&quot;Check dir moved&quot;, movedDir.exists());</span>
+<span class="fc" id="L2732">        assertTrue(&quot;Check file moved&quot;, movedFile.exists());</span>
+<span class="fc" id="L2733">    }</span>
+
+    @Test
+    public void testMoveDirectory_CopyDelete() throws Exception {
+
+<span class="fc" id="L2738">        final File dir = getTestDirectory();</span>
+<span class="fc" id="L2739">        final File src = new File(dir, &quot;testMoveDirectory2Source&quot;) {</span>
+            private static final long serialVersionUID = 1L;
+
+            // Force renameTo to fail
+            @Override
+            public boolean renameTo(final File dest) {
+<span class="fc" id="L2745">                return false;</span>
+            }
+        };
+<span class="fc" id="L2748">        final File testDir = new File(src, &quot;foo&quot;);</span>
+<span class="fc" id="L2749">        final File testFile = new File(testDir, &quot;bar&quot;);</span>
+<span class="fc" id="L2750">        testDir.mkdirs();</span>
+<span class="pc bpc" id="L2751" title="1 of 2 branches missed.">        if (!testFile.getParentFile().exists()) {</span>
+<span class="nc" id="L2752">            throw new IOException(&quot;Cannot create file &quot; + testFile</span>
+<span class="nc" id="L2753">                    + &quot; as the parent directory does not exist&quot;);</span>
+        }
+<span class="fc" id="L2755">        final BufferedOutputStream output =</span>
+<span class="fc" id="L2756">                new BufferedOutputStream(new FileOutputStream(testFile));</span>
+        try {
+<span class="fc" id="L2758">            TestUtils.generateTestData(output, (long) 0);</span>
+<span class="fc" id="L2759">        } finally {</span>
+<span class="fc" id="L2760">            IOUtils.closeQuietly(output);</span>
+        }
+<span class="fc" id="L2762">        final File destination = new File(dir, &quot;testMoveDirectory1Dest&quot;);</span>
+<span class="fc" id="L2763">        FileUtils.deleteDirectory(destination);</span>
+
+        // Move the directory
+<span class="fc" id="L2766">        FileUtils.moveDirectory(src, destination);</span>
+
+        // Check results
+<span class="fc" id="L2769">        assertTrue(&quot;Check Exist&quot;, destination.exists());</span>
+<span class="pc bpc" id="L2770" title="1 of 2 branches missed.">        assertTrue(&quot;Original deleted&quot;, !src.exists());</span>
+<span class="fc" id="L2771">        final File movedDir = new File(destination, testDir.getName());</span>
+<span class="fc" id="L2772">        final File movedFile = new File(movedDir, testFile.getName());</span>
+<span class="fc" id="L2773">        assertTrue(&quot;Check dir moved&quot;, movedDir.exists());</span>
+<span class="fc" id="L2774">        assertTrue(&quot;Check file moved&quot;, movedFile.exists());</span>
+<span class="fc" id="L2775">    }</span>
+
+    @Test
+    public void testMoveDirectory_Errors() throws Exception {
+        try {
+<span class="nc" id="L2780">            FileUtils.moveDirectory(null, new File(&quot;foo&quot;));</span>
+<span class="nc" id="L2781">            fail(&quot;Expected NullPointerException when source is null&quot;);</span>
+<span class="pc" id="L2782">        } catch (final NullPointerException e) {</span>
+            // expected
+        }
+        try {
+<span class="nc" id="L2786">            FileUtils.moveDirectory(new File(&quot;foo&quot;), null);</span>
+<span class="nc" id="L2787">            fail(&quot;Expected NullPointerException when destination is null&quot;);</span>
+<span class="pc" id="L2788">        } catch (final NullPointerException e) {</span>
+            // expected
+        }
+        try {
+<span class="nc" id="L2792">            FileUtils.moveDirectory(new File(&quot;nonexistant&quot;), new File(&quot;foo&quot;));</span>
+<span class="nc" id="L2793">            fail(&quot;Expected FileNotFoundException for source&quot;);</span>
+<span class="pc" id="L2794">        } catch (final FileNotFoundException e) {</span>
+            // expected
+        }
+<span class="fc" id="L2797">        final File testFile = new File(getTestDirectory(), &quot;testMoveDirectoryFile&quot;);</span>
+<span class="pc bpc" id="L2798" title="1 of 2 branches missed.">        if (!testFile.getParentFile().exists()) {</span>
+<span class="nc" id="L2799">            throw new IOException(&quot;Cannot create file &quot; + testFile</span>
+<span class="nc" id="L2800">                    + &quot; as the parent directory does not exist&quot;);</span>
+        }
+<span class="fc" id="L2802">        final BufferedOutputStream output =</span>
+<span class="fc" id="L2803">                new BufferedOutputStream(new FileOutputStream(testFile));</span>
+        try {
+<span class="fc" id="L2805">            TestUtils.generateTestData(output, (long) 0);</span>
+<span class="fc" id="L2806">        } finally {</span>
+<span class="fc" id="L2807">            IOUtils.closeQuietly(output);</span>
+        }
+        try {
+<span class="nc" id="L2810">            FileUtils.moveDirectory(testFile, new File(&quot;foo&quot;));</span>
+<span class="nc" id="L2811">            fail(&quot;Expected IOException when source is not a directory&quot;);</span>
+<span class="pc" id="L2812">        } catch (final IOException e) {</span>
+            // expected
+        }
+<span class="fc" id="L2815">        final File testSrcFile = new File(getTestDirectory(), &quot;testMoveDirectorySource&quot;);</span>
+<span class="fc" id="L2816">        final File testDestFile = new File(getTestDirectory(), &quot;testMoveDirectoryDest&quot;);</span>
+<span class="fc" id="L2817">        testSrcFile.mkdir();</span>
+<span class="fc" id="L2818">        testDestFile.mkdir();</span>
+        try {
+<span class="nc" id="L2820">            FileUtils.moveDirectory(testSrcFile, testDestFile);</span>
+<span class="nc" id="L2821">            fail(&quot;Expected FileExistsException when dest already exists&quot;);</span>
+<span class="pc" id="L2822">        } catch (final FileExistsException e) {</span>
+            // expected
+        }
+
+<span class="fc" id="L2826">    }</span>
+
+    @Test
+    public void testMoveDirectoryToDirectory() throws Exception {
+<span class="fc" id="L2830">        final File dir = getTestDirectory();</span>
+<span class="fc" id="L2831">        final File src = new File(dir, &quot;testMoveDirectory1Source&quot;);</span>
+<span class="fc" id="L2832">        final File testChildDir = new File(src, &quot;foo&quot;);</span>
+<span class="fc" id="L2833">        final File testFile = new File(testChildDir, &quot;bar&quot;);</span>
+<span class="fc" id="L2834">        testChildDir.mkdirs();</span>
+<span class="pc bpc" id="L2835" title="1 of 2 branches missed.">        if (!testFile.getParentFile().exists()) {</span>
+<span class="nc" id="L2836">            throw new IOException(&quot;Cannot create file &quot; + testFile</span>
+<span class="nc" id="L2837">                    + &quot; as the parent directory does not exist&quot;);</span>
+        }
+<span class="fc" id="L2839">        final BufferedOutputStream output =</span>
+<span class="fc" id="L2840">                new BufferedOutputStream(new FileOutputStream(testFile));</span>
+        try {
+<span class="fc" id="L2842">            TestUtils.generateTestData(output, (long) 0);</span>
+<span class="fc" id="L2843">        } finally {</span>
+<span class="fc" id="L2844">            IOUtils.closeQuietly(output);</span>
+        }
+<span class="fc" id="L2846">        final File destDir = new File(dir, &quot;testMoveDirectory1Dest&quot;);</span>
+<span class="fc" id="L2847">        FileUtils.deleteDirectory(destDir);</span>
+<span class="fc" id="L2848">        assertFalse(&quot;Check Exist before&quot;, destDir.exists());</span>
+
+        // Move the directory
+<span class="fc" id="L2851">        FileUtils.moveDirectoryToDirectory(src, destDir, true);</span>
+
+        // Check results
+<span class="fc" id="L2854">        assertTrue(&quot;Check Exist after&quot;, destDir.exists());</span>
+<span class="pc bpc" id="L2855" title="1 of 2 branches missed.">        assertTrue(&quot;Original deleted&quot;, !src.exists());</span>
+<span class="fc" id="L2856">        final File movedDir = new File(destDir, src.getName());</span>
+<span class="fc" id="L2857">        final File movedChildDir = new File(movedDir, testChildDir.getName());</span>
+<span class="fc" id="L2858">        final File movedFile = new File(movedChildDir, testFile.getName());</span>
+<span class="fc" id="L2859">        assertTrue(&quot;Check dir moved&quot;, movedDir.exists());</span>
+<span class="fc" id="L2860">        assertTrue(&quot;Check child dir moved&quot;, movedChildDir.exists());</span>
+<span class="fc" id="L2861">        assertTrue(&quot;Check file moved&quot;, movedFile.exists());</span>
+<span class="fc" id="L2862">    }</span>
+
+    @Test
+    public void testMoveDirectoryToDirectory_Errors() throws Exception {
+        try {
+<span class="nc" id="L2867">            FileUtils.moveDirectoryToDirectory(null, new File(&quot;foo&quot;), true);</span>
+<span class="nc" id="L2868">            fail(&quot;Expected NullPointerException when source is null&quot;);</span>
+<span class="pc" id="L2869">        } catch (final NullPointerException e) {</span>
+            // expected
+        }
+        try {
+<span class="nc" id="L2873">            FileUtils.moveDirectoryToDirectory(new File(&quot;foo&quot;), null, true);</span>
+<span class="nc" id="L2874">            fail(&quot;Expected NullPointerException when destination is null&quot;);</span>
+<span class="pc" id="L2875">        } catch (final NullPointerException e) {</span>
+            // expected
+        }
+<span class="fc" id="L2878">        final File testFile1 = new File(getTestDirectory(), &quot;testMoveFileFile1&quot;);</span>
+<span class="fc" id="L2879">        final File testFile2 = new File(getTestDirectory(), &quot;testMoveFileFile2&quot;);</span>
+<span class="pc bpc" id="L2880" title="1 of 2 branches missed.">        if (!testFile1.getParentFile().exists()) {</span>
+<span class="nc" id="L2881">            throw new IOException(&quot;Cannot create file &quot; + testFile1</span>
+<span class="nc" id="L2882">                    + &quot; as the parent directory does not exist&quot;);</span>
+        }
+<span class="fc" id="L2884">        final BufferedOutputStream output1 =</span>
+<span class="fc" id="L2885">                new BufferedOutputStream(new FileOutputStream(testFile1));</span>
+        try {
+<span class="fc" id="L2887">            TestUtils.generateTestData(output1, (long) 0);</span>
+<span class="fc" id="L2888">        } finally {</span>
+<span class="fc" id="L2889">            IOUtils.closeQuietly(output1);</span>
+        }
+<span class="pc bpc" id="L2891" title="1 of 2 branches missed.">        if (!testFile2.getParentFile().exists()) {</span>
+<span class="nc" id="L2892">            throw new IOException(&quot;Cannot create file &quot; + testFile2</span>
+<span class="nc" id="L2893">                    + &quot; as the parent directory does not exist&quot;);</span>
+        }
+<span class="fc" id="L2895">        final BufferedOutputStream output =</span>
+<span class="fc" id="L2896">                new BufferedOutputStream(new FileOutputStream(testFile2));</span>
+        try {
+<span class="fc" id="L2898">            TestUtils.generateTestData(output, (long) 0);</span>
+<span class="fc" id="L2899">        } finally {</span>
+<span class="fc" id="L2900">            IOUtils.closeQuietly(output);</span>
+        }
+        try {
+<span class="nc" id="L2903">            FileUtils.moveDirectoryToDirectory(testFile1, testFile2, true);</span>
+<span class="nc" id="L2904">            fail(&quot;Expected IOException when dest not a directory&quot;);</span>
+<span class="pc" id="L2905">        } catch (final IOException e) {</span>
+            // expected
+        }
+
+<span class="fc" id="L2909">        final File nonexistant = new File(getTestDirectory(), &quot;testMoveFileNonExistant&quot;);</span>
+        try {
+<span class="nc" id="L2911">            FileUtils.moveDirectoryToDirectory(testFile1, nonexistant, false);</span>
+<span class="nc" id="L2912">            fail(&quot;Expected IOException when dest does not exist and create=false&quot;);</span>
+<span class="pc" id="L2913">        } catch (final IOException e) {</span>
+            // expected
+        }
+<span class="fc" id="L2916">    }</span>
+
+    @Test
+    public void testMoveToDirectory() throws Exception {
+<span class="fc" id="L2920">        final File destDir = new File(getTestDirectory(), &quot;testMoveToDirectoryDestDir&quot;);</span>
+<span class="fc" id="L2921">        final File testDir = new File(getTestDirectory(), &quot;testMoveToDirectoryTestDir&quot;);</span>
+<span class="fc" id="L2922">        final File testFile = new File(getTestDirectory(), &quot;testMoveToDirectoryTestFile&quot;);</span>
+<span class="fc" id="L2923">        testDir.mkdirs();</span>
+<span class="pc bpc" id="L2924" title="1 of 2 branches missed.">        if (!testFile.getParentFile().exists()) {</span>
+<span class="nc" id="L2925">            throw new IOException(&quot;Cannot create file &quot; + testFile</span>
+<span class="nc" id="L2926">                    + &quot; as the parent directory does not exist&quot;);</span>
+        }
+<span class="fc" id="L2928">        final BufferedOutputStream output =</span>
+<span class="fc" id="L2929">                new BufferedOutputStream(new FileOutputStream(testFile));</span>
+        try {
+<span class="fc" id="L2931">            TestUtils.generateTestData(output, (long) 0);</span>
+<span class="fc" id="L2932">        } finally {</span>
+<span class="fc" id="L2933">            IOUtils.closeQuietly(output);</span>
+        }
+<span class="fc" id="L2935">        final File movedFile = new File(destDir, testFile.getName());</span>
+<span class="fc" id="L2936">        final File movedDir = new File(destDir, testFile.getName());</span>
+
+<span class="fc" id="L2938">        assertFalse(&quot;Check File Doesnt exist&quot;, movedFile.exists());</span>
+<span class="fc" id="L2939">        assertFalse(&quot;Check Dir Doesnt exist&quot;, movedDir.exists());</span>
+
+        // Test moving a file
+<span class="fc" id="L2942">        FileUtils.moveToDirectory(testFile, destDir, true);</span>
+<span class="fc" id="L2943">        assertTrue(&quot;Check File exists&quot;, movedFile.exists());</span>
+<span class="fc" id="L2944">        assertFalse(&quot;Check Original File doesn't exist&quot;, testFile.exists());</span>
+
+        // Test moving a directory
+<span class="fc" id="L2947">        FileUtils.moveToDirectory(testDir, destDir, true);</span>
+<span class="fc" id="L2948">        assertTrue(&quot;Check Dir exists&quot;, movedDir.exists());</span>
+<span class="fc" id="L2949">        assertFalse(&quot;Check Original Dir doesn't exist&quot;, testDir.exists());</span>
+<span class="fc" id="L2950">    }</span>
+
+    @Test
+    public void testMoveToDirectory_Errors() throws Exception {
+        try {
+<span class="nc" id="L2955">            FileUtils.moveDirectoryToDirectory(null, new File(&quot;foo&quot;), true);</span>
+<span class="nc" id="L2956">            fail(&quot;Expected NullPointerException when source is null&quot;);</span>
+<span class="pc" id="L2957">        } catch (final NullPointerException e) {</span>
+            // expected
+        }
+        try {
+<span class="nc" id="L2961">            FileUtils.moveDirectoryToDirectory(new File(&quot;foo&quot;), null, true);</span>
+<span class="nc" id="L2962">            fail(&quot;Expected NullPointerException when destination is null&quot;);</span>
+<span class="pc" id="L2963">        } catch (final NullPointerException e) {</span>
+            // expected
+        }
+<span class="fc" id="L2966">        final File nonexistant = new File(getTestDirectory(), &quot;nonexistant&quot;);</span>
+<span class="fc" id="L2967">        final File destDir = new File(getTestDirectory(), &quot;MoveToDirectoryDestDir&quot;);</span>
+        try {
+<span class="nc" id="L2969">            FileUtils.moveToDirectory(nonexistant, destDir, true);</span>
+<span class="nc" id="L2970">            fail(&quot;Expected IOException when source does not exist&quot;);</span>
+<span class="pc" id="L2971">        } catch (final IOException e) {</span>
+            // expected
+        }
+<span class="fc" id="L2974">    }</span>
+
+    @Test
+    public void testIO300() throws Exception {
+<span class="fc" id="L2978">        final File testDirectory = getTestDirectory();</span>
+<span class="fc" id="L2979">        final File src = new File(testDirectory, &quot;dir1&quot;);</span>
+<span class="fc" id="L2980">        final File dest = new File(src, &quot;dir2&quot;);</span>
+<span class="fc" id="L2981">        assertTrue(dest.mkdirs());</span>
+<span class="fc" id="L2982">        assertTrue(src.exists());</span>
+        try {
+<span class="nc" id="L2984">            FileUtils.moveDirectoryToDirectory(src, dest, false);</span>
+<span class="nc" id="L2985">            fail(&quot;expected IOException&quot;);</span>
+<span class="pc" id="L2986">        } catch (final IOException ioe) {</span>
+            // expected
+        }
+<span class="fc" id="L2989">        assertTrue(src.exists());</span>
+<span class="fc" id="L2990">    }</span>
+
+    @Test
+    public void testIO276() throws Exception {
+<span class="fc" id="L2994">        final File dir = new File(&quot;target&quot;, &quot;IO276&quot;);</span>
+<span class="nc" id="L2995">        assertTrue(dir + &quot; should not be present&quot;, dir.mkdirs());</span>
+<span class="nc" id="L2996">        final File file = new File(dir, &quot;IO276.txt&quot;);</span>
+<span class="nc" id="L2997">        assertTrue(file + &quot; should not be present&quot;, file.createNewFile());</span>
+<span class="nc" id="L2998">        FileUtils.forceDeleteOnExit(dir);</span>
+        // If this does not work, test will fail next time (assuming target is not cleaned)
+<span class="nc" id="L3000">    }</span>
+
+    // Test helper class to pretend a file is shorter than it is
+    private static class ShorterFile extends File {
+        private static final long serialVersionUID = 1L;
+
+        public ShorterFile(String pathname) {
+<span class="fc" id="L3007">            super(pathname);</span>
+<span class="fc" id="L3008">        }</span>
+
+        @Override
+        public long length() {
+<span class="fc" id="L3012">            return super.length() - 1;</span>
+        }
+    }
+
+    // This test relies on FileUtils.copyFile using File.length to check the output size
+    @Test
+    public void testIncorrectOutputSize() throws Exception {
+<span class="fc" id="L3019">        File inFile = new File(&quot;pom.xml&quot;);</span>
+<span class="fc" id="L3020">        File outFile = new ShorterFile(&quot;target/pom.tmp&quot;); // it will report a shorter file</span>
+        try {
+<span class="nc" id="L3022">            FileUtils.copyFile(inFile, outFile);</span>
+<span class="nc" id="L3023">            fail(&quot;Expected IOException&quot;);</span>
+<span class="pc" id="L3024">        } catch (Exception e) {</span>
+<span class="fc" id="L3025">            final String msg = e.toString();</span>
+<span class="fc" id="L3026">            assertTrue(msg, msg.contains(&quot;Failed to copy full contents&quot;));</span>
+        } finally {
+<span class="fc" id="L3028">            outFile.delete(); // tidy up</span>
+        }
+<span class="fc" id="L3030">    }</span>
+
+    /**
+     * DirectoryWalker implementation that recursively lists all files and directories.
+     */
+    static class ListDirectoryWalker extends DirectoryWalker&lt;File&gt; {
+        ListDirectoryWalker() {
+<span class="fc" id="L3037">            super();</span>
+<span class="fc" id="L3038">        }</span>
+
+        List&lt;File&gt; list(final File startDirectory) throws IOException {
+<span class="fc" id="L3041">            final ArrayList&lt;File&gt; files = new ArrayList&lt;File&gt;();</span>
+<span class="fc" id="L3042">            walk(startDirectory, files);</span>
+<span class="fc" id="L3043">            return files;</span>
+        }
+
+        @Override
+        protected void handleDirectoryStart(final File directory, final int depth, final Collection&lt;File&gt; results) throws IOException {
+            // Add all directories except the starting directory
+<span class="fc bfc" id="L3049" title="All 2 branches covered.">            if (depth &gt; 0) {</span>
+<span class="fc" id="L3050">                results.add(directory);</span>
+            }
+<span class="fc" id="L3052">        }</span>
+
+        @Override
+        protected void handleFile(final File file, final int depth, final Collection&lt;File&gt; results) throws IOException {
+<span class="fc" id="L3056">            results.add(file);</span>
+<span class="fc" id="L3057">        }</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>commons-io (Apr 20, 2019 6:11:46 PM)</div></body></html>

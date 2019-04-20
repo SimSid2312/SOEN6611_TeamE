@@ -1,0 +1,576 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>DirectoryWalkerTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.4 (Apr 20, 2019 6:07:50 PM)</a> &gt; <a href="../../index.html" class="el_group">2.4</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io</a> &gt; <span class="el_source">DirectoryWalkerTestCase.java</span></div><h1>DirectoryWalkerTestCase.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import junit.framework.Assert;
+
+import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.io.filefilter.NameFileFilter;
+import org.apache.commons.io.filefilter.OrFileFilter;
+import org.junit.Test;
+
+/**
+ * This is used to test DirectoryWalker for correctness.
+ *
+ * @version $Id$
+ * @see DirectoryWalker
+ *
+ */
+<span class="fc" id="L46">public class DirectoryWalkerTestCase {</span>
+
+    // Directories
+<span class="fc" id="L49">    private static final File current      = new File(&quot;.&quot;);</span>
+<span class="fc" id="L50">    private static final File javaDir      = new File(&quot;src/main/java&quot;);</span>
+<span class="fc" id="L51">    private static final File orgDir       = new File(javaDir, &quot;org&quot;);</span>
+<span class="fc" id="L52">    private static final File apacheDir    = new File(orgDir, &quot;apache&quot;);</span>
+<span class="fc" id="L53">    private static final File commonsDir   = new File(apacheDir, &quot;commons&quot;);</span>
+<span class="fc" id="L54">    private static final File ioDir        = new File(commonsDir, &quot;io&quot;);</span>
+<span class="fc" id="L55">    private static final File outputDir    = new File(ioDir, &quot;output&quot;);</span>
+<span class="fc" id="L56">    private static final File[] dirs       = new File[] {orgDir, apacheDir, commonsDir, ioDir, outputDir};</span>
+
+    // Files
+<span class="fc" id="L59">    private static final File filenameUtils = new File(ioDir, &quot;FilenameUtils.java&quot;);</span>
+<span class="fc" id="L60">    private static final File ioUtils       = new File(ioDir, &quot;IOUtils.java&quot;);</span>
+<span class="fc" id="L61">    private static final File proxyWriter   = new File(outputDir, &quot;ProxyWriter.java&quot;);</span>
+<span class="fc" id="L62">    private static final File nullStream    = new File(outputDir, &quot;NullOutputStream.java&quot;);</span>
+<span class="fc" id="L63">    private static final File[] ioFiles     = new File[] {filenameUtils, ioUtils};</span>
+<span class="fc" id="L64">    private static final File[] outputFiles = new File[] {proxyWriter, nullStream};</span>
+    
+    // Filters
+<span class="fc" id="L67">    private static final IOFileFilter dirsFilter        = createNameFilter(dirs);</span>
+<span class="fc" id="L68">    private static final IOFileFilter iofilesFilter     = createNameFilter(ioFiles);</span>
+<span class="fc" id="L69">    private static final IOFileFilter outputFilesFilter = createNameFilter(outputFiles);</span>
+<span class="fc" id="L70">    private static final IOFileFilter ioDirAndFilesFilter = new OrFileFilter(dirsFilter, iofilesFilter);</span>
+<span class="fc" id="L71">    private static final IOFileFilter dirsAndFilesFilter = new OrFileFilter(ioDirAndFilesFilter, outputFilesFilter);</span>
+
+    // Filter to exclude SVN files
+<span class="fc" id="L74">    private static final IOFileFilter NOT_SVN = FileFilterUtils.makeSVNAware(null);</span>
+
+    //-----------------------------------------------------------------------
+
+    /**
+     * Test Filtering
+     */
+    @Test
+    public void testFilter() {
+<span class="fc" id="L83">        List&lt;File&gt; results = new TestFileFinder(dirsAndFilesFilter, -1).find(javaDir);</span>
+<span class="fc" id="L84">        assertEquals(&quot;Result Size&quot;, 1 + dirs.length + ioFiles.length + outputFiles.length, results.size());</span>
+<span class="fc" id="L85">        assertTrue(&quot;Start Dir&quot;, results.contains(javaDir));</span>
+<span class="fc" id="L86">        checkContainsFiles(&quot;Dir&quot;, dirs, results);</span>
+<span class="fc" id="L87">        checkContainsFiles(&quot;IO File&quot;, ioFiles, results);</span>
+<span class="fc" id="L88">        checkContainsFiles(&quot;Output File&quot;, outputFiles, results);</span>
+<span class="fc" id="L89">    }</span>
+
+    /**
+     * Test Filtering and limit to depth 0
+     */
+    @Test
+    public void testFilterAndLimitA() {
+<span class="fc" id="L96">        List&lt;File&gt; results = new TestFileFinder(NOT_SVN, 0).find(javaDir);</span>
+<span class="fc" id="L97">        assertEquals(&quot;[A] Result Size&quot;, 1, results.size());</span>
+<span class="fc" id="L98">        assertTrue(&quot;[A] Start Dir&quot;,   results.contains(javaDir));</span>
+<span class="fc" id="L99">    }</span>
+
+    /**
+     * Test Filtering and limit to depth 1
+     */
+    @Test
+    public void testFilterAndLimitB() {
+<span class="fc" id="L106">        List&lt;File&gt; results = new TestFileFinder(NOT_SVN, 1).find(javaDir);</span>
+<span class="fc" id="L107">        assertEquals(&quot;[B] Result Size&quot;, 2, results.size());</span>
+<span class="fc" id="L108">        assertTrue(&quot;[B] Start Dir&quot;,   results.contains(javaDir));</span>
+<span class="fc" id="L109">        assertTrue(&quot;[B] Org Dir&quot;,     results.contains(orgDir));</span>
+<span class="fc" id="L110">    }</span>
+
+    /**
+     * Test Filtering and limit to depth 3
+     */
+    @Test
+    public void testFilterAndLimitC() {
+<span class="fc" id="L117">        List&lt;File&gt; results = new TestFileFinder(NOT_SVN, 3).find(javaDir);</span>
+<span class="fc" id="L118">        assertEquals(&quot;[C] Result Size&quot;, 4, results.size());</span>
+<span class="fc" id="L119">        assertTrue(&quot;[C] Start Dir&quot;,   results.contains(javaDir));</span>
+<span class="fc" id="L120">        assertTrue(&quot;[C] Org Dir&quot;,     results.contains(orgDir));</span>
+<span class="fc" id="L121">        assertTrue(&quot;[C] Apache Dir&quot;,  results.contains(apacheDir));</span>
+<span class="fc" id="L122">        assertTrue(&quot;[C] Commons Dir&quot;, results.contains(commonsDir));</span>
+<span class="fc" id="L123">    }</span>
+
+    /**
+     * Test Filtering and limit to depth 5
+     */
+    @Test
+    public void testFilterAndLimitD() {
+<span class="fc" id="L130">        List&lt;File&gt; results = new TestFileFinder(dirsAndFilesFilter, 5).find(javaDir);</span>
+<span class="fc" id="L131">        assertEquals(&quot;[D] Result Size&quot;, 1 + dirs.length + ioFiles.length, results.size());</span>
+<span class="fc" id="L132">        assertTrue(&quot;[D] Start Dir&quot;, results.contains(javaDir));</span>
+<span class="fc" id="L133">        checkContainsFiles(&quot;[D] Dir&quot;, dirs, results);</span>
+<span class="fc" id="L134">        checkContainsFiles(&quot;[D] File&quot;, ioFiles, results);</span>
+<span class="fc" id="L135">    }</span>
+
+    /**
+     * Test separate dir and file filters
+     */
+    @Test
+    public void testFilterDirAndFile1() {
+<span class="fc" id="L142">        List&lt;File&gt; results = new TestFileFinder(dirsFilter, iofilesFilter, -1).find(javaDir);</span>
+<span class="fc" id="L143">        assertEquals(&quot;[DirAndFile1] Result Size&quot;, 1 + dirs.length + ioFiles.length, results.size());</span>
+<span class="fc" id="L144">        assertTrue(&quot;[DirAndFile1] Start Dir&quot;, results.contains(javaDir));</span>
+<span class="fc" id="L145">        checkContainsFiles(&quot;[DirAndFile1] Dir&quot;, dirs, results);</span>
+<span class="fc" id="L146">        checkContainsFiles(&quot;[DirAndFile1] File&quot;, ioFiles, results);</span>
+<span class="fc" id="L147">    }</span>
+
+    /**
+     * Test separate dir and file filters
+     */
+    @Test
+    public void testFilterDirAndFile2() {
+<span class="fc" id="L154">        List&lt;File&gt; results = new TestFileFinder((IOFileFilter) null, (IOFileFilter) null, -1).find(javaDir);</span>
+<span class="pc bpc" id="L155" title="1 of 2 branches missed.">        assertTrue(&quot;[DirAndFile2] Result Size&quot;, results.size() &gt; 1 + dirs.length + ioFiles.length);</span>
+<span class="fc" id="L156">        assertTrue(&quot;[DirAndFile2] Start Dir&quot;, results.contains(javaDir));</span>
+<span class="fc" id="L157">        checkContainsFiles(&quot;[DirAndFile2] Dir&quot;, dirs, results);</span>
+<span class="fc" id="L158">        checkContainsFiles(&quot;[DirAndFile2] File&quot;, ioFiles, results);</span>
+<span class="fc" id="L159">    }</span>
+
+    /**
+     * Test separate dir and file filters
+     */
+    @Test
+    public void testFilterDirAndFile3() {
+<span class="fc" id="L166">        List&lt;File&gt; results = new TestFileFinder(dirsFilter, (IOFileFilter) null, -1).find(javaDir);</span>
+<span class="fc" id="L167">        List&lt;File&gt; resultDirs = directoriesOnly(results);</span>
+<span class="fc" id="L168">        assertEquals(&quot;[DirAndFile3] Result Size&quot;, 1 + dirs.length, resultDirs.size());</span>
+<span class="fc" id="L169">        assertTrue(&quot;[DirAndFile3] Start Dir&quot;, results.contains(javaDir));</span>
+<span class="fc" id="L170">        checkContainsFiles(&quot;[DirAndFile3] Dir&quot;, dirs, resultDirs);</span>
+<span class="fc" id="L171">    }</span>
+
+    /**
+     * Test separate dir and file filters
+     */
+    @Test
+    public void testFilterDirAndFile4() {
+<span class="fc" id="L178">        List&lt;File&gt; results = new TestFileFinder((IOFileFilter) null, iofilesFilter, -1).find(javaDir);</span>
+<span class="fc" id="L179">        List&lt;File&gt; resultFiles = filesOnly(results);</span>
+<span class="fc" id="L180">        assertEquals(&quot;[DirAndFile4] Result Size&quot;, ioFiles.length, resultFiles.size());</span>
+<span class="fc" id="L181">        assertTrue(&quot;[DirAndFile4] Start Dir&quot;, results.contains(javaDir));</span>
+<span class="fc" id="L182">        checkContainsFiles(&quot;[DirAndFile4] File&quot;, ioFiles, resultFiles);</span>
+<span class="fc" id="L183">    }</span>
+
+    /**
+     * Test Limiting to current directory
+     */
+    @Test
+    public void testLimitToCurrent() {
+<span class="fc" id="L190">        List&lt;File&gt; results = new TestFileFinder(null, 0).find(current);</span>
+<span class="fc" id="L191">        assertEquals(&quot;Result Size&quot;, 1, results.size());</span>
+<span class="fc" id="L192">        assertTrue(&quot;Current Dir&quot;, results.contains(new File(&quot;.&quot;)));</span>
+<span class="fc" id="L193">    }</span>
+
+    /**
+     * test an invalid start directory
+     */
+    @Test
+    public void testMissingStartDirectory() {
+
+        // TODO is this what we want with invalid directory?
+<span class="fc" id="L202">        File invalidDir = new File(&quot;invalid-dir&quot;);</span>
+<span class="fc" id="L203">        List&lt;File&gt; results = new TestFileFinder(null, -1).find(invalidDir);</span>
+<span class="fc" id="L204">        assertEquals(&quot;Result Size&quot;, 1, results.size());</span>
+<span class="fc" id="L205">        assertTrue(&quot;Current Dir&quot;, results.contains(invalidDir));</span>
+ 
+        try {
+<span class="nc" id="L208">            new TestFileFinder(null, -1).find(null);</span>
+<span class="nc" id="L209">            fail(&quot;Null start directory didn't throw Exception&quot;);</span>
+<span class="pc" id="L210">        } catch (NullPointerException ignore) {</span>
+            // expected result
+        }
+<span class="fc" id="L213">    }</span>
+
+    /**
+     * test an invalid start directory
+     */
+    @Test
+    public void testHandleStartDirectoryFalse() {
+
+<span class="fc" id="L221">        List&lt;File&gt; results = new TestFalseFileFinder(null, -1).find(current);</span>
+<span class="fc" id="L222">        assertEquals(&quot;Result Size&quot;, 0, results.size());</span>
+
+<span class="fc" id="L224">    }</span>
+
+    // ------------ Convenience Test Methods ------------------------------------
+
+    /**
+     * Check the files in the array are in the results list.
+     */
+    private void checkContainsFiles(String prefix, File[] files, Collection&lt;File&gt; results) {
+<span class="fc bfc" id="L232" title="All 2 branches covered.">        for (int i = 0; i &lt; files.length; i++) {</span>
+<span class="fc" id="L233">            assertTrue(prefix + &quot;[&quot;+i+&quot;] &quot; + files[i], results.contains(files[i]));</span>
+        }
+<span class="fc" id="L235">    }</span>
+
+    private void checkContainsString(String prefix, File[] files, Collection&lt;String&gt; results) {
+<span class="fc bfc" id="L238" title="All 2 branches covered.">        for (int i = 0; i &lt; files.length; i++) {</span>
+<span class="fc" id="L239">            assertTrue(prefix + &quot;[&quot;+i+&quot;] &quot; + files[i], results.contains(files[i].toString()));</span>
+        }
+<span class="fc" id="L241">    }</span>
+
+    /**
+     * Extract the directories.
+     */
+    private List&lt;File&gt; directoriesOnly(Collection&lt;File&gt; results) {
+<span class="fc" id="L247">        List&lt;File&gt; list = new ArrayList&lt;File&gt;(results.size());</span>
+<span class="fc bfc" id="L248" title="All 2 branches covered.">        for (File file : results) {</span>
+<span class="fc bfc" id="L249" title="All 2 branches covered.">            if (file.isDirectory()) {</span>
+<span class="fc" id="L250">                list.add(file);</span>
+            }
+        }
+<span class="fc" id="L253">        return list;</span>
+    }
+
+    /**
+     * Extract the files.
+     */
+    private List&lt;File&gt; filesOnly(Collection&lt;File&gt; results) {
+<span class="fc" id="L260">        List&lt;File&gt; list = new ArrayList&lt;File&gt;(results.size());</span>
+<span class="fc bfc" id="L261" title="All 2 branches covered.">        for (File file : results) {</span>
+<span class="fc bfc" id="L262" title="All 2 branches covered.">            if (file.isFile()) {</span>
+<span class="fc" id="L263">                list.add(file);</span>
+            }
+        }
+<span class="fc" id="L266">        return list;</span>
+    }
+
+    /**
+     * Create an name filter containg the names of the files
+     * in the array.
+     */
+    private static IOFileFilter createNameFilter(File[] files) {
+<span class="fc" id="L274">        String[] names = new String[files.length];</span>
+<span class="fc bfc" id="L275" title="All 2 branches covered.">        for (int i = 0; i &lt; files.length; i++) {</span>
+<span class="fc" id="L276">            names[i] = files[i].getName();</span>
+        }
+<span class="fc" id="L278">        return new NameFileFilter(names);</span>
+    }
+
+    /**
+     * Test Cancel
+     */
+    @Test
+    public void testCancel() {
+<span class="fc" id="L286">        String cancelName = null;</span>
+
+        // Cancel on a file
+        try {
+<span class="fc" id="L290">            cancelName = &quot;DirectoryWalker.java&quot;;</span>
+<span class="nc" id="L291">            new TestCancelWalker(cancelName, false).find(javaDir);</span>
+<span class="nc" id="L292">            fail(&quot;CancelException not thrown for '&quot; + cancelName + &quot;'&quot;);</span>
+<span class="pc" id="L293">        } catch (DirectoryWalker.CancelException cancel) {</span>
+<span class="fc" id="L294">            assertEquals(&quot;File:  &quot; + cancelName,   cancelName, cancel.getFile().getName());</span>
+<span class="fc" id="L295">            assertEquals(&quot;Depth: &quot; + cancelName,  5, cancel.getDepth());</span>
+<span class="nc" id="L296">        } catch(IOException ex) {</span>
+<span class="nc" id="L297">            fail(&quot;IOException: &quot; + cancelName + &quot; &quot; + ex);</span>
+        }
+
+        // Cancel on a directory
+        try {
+<span class="fc" id="L302">            cancelName = &quot;commons&quot;;</span>
+<span class="nc" id="L303">            new TestCancelWalker(cancelName, false).find(javaDir);</span>
+<span class="nc" id="L304">            fail(&quot;CancelException not thrown for '&quot; + cancelName + &quot;'&quot;);</span>
+<span class="pc" id="L305">        } catch (DirectoryWalker.CancelException cancel) {</span>
+<span class="fc" id="L306">            assertEquals(&quot;File:  &quot; + cancelName,   cancelName, cancel.getFile().getName());</span>
+<span class="fc" id="L307">            assertEquals(&quot;Depth: &quot; + cancelName,  3, cancel.getDepth());</span>
+<span class="nc" id="L308">        } catch(IOException ex) {</span>
+<span class="nc" id="L309">            fail(&quot;IOException: &quot; + cancelName + &quot; &quot; + ex);</span>
+        }
+
+        // Suppress CancelException (use same file name as preceeding test)
+        try {
+<span class="fc" id="L314">            List&lt;File&gt; results = new TestCancelWalker(cancelName, true).find(javaDir);</span>
+<span class="fc" id="L315">            File lastFile = results.get(results.size() - 1);</span>
+<span class="fc" id="L316">            assertEquals(&quot;Suppress:  &quot; + cancelName,   cancelName, lastFile.getName());</span>
+<span class="pc" id="L317">        } catch(IOException ex) {</span>
+<span class="nc" id="L318">            fail(&quot;Suppress threw &quot; + ex);</span>
+        }
+
+<span class="fc" id="L321">    }</span>
+
+    /**
+     * Test Cancel
+     */
+    @Test
+    public void testMultiThreadCancel() {
+<span class="fc" id="L328">        String cancelName = &quot;DirectoryWalker.java&quot;;</span>
+<span class="fc" id="L329">        TestMultiThreadCancelWalker walker = new TestMultiThreadCancelWalker(cancelName, false);</span>
+        // Cancel on a file
+        try {
+<span class="nc" id="L332">            walker.find(javaDir);</span>
+<span class="nc" id="L333">            fail(&quot;CancelException not thrown for '&quot; + cancelName + &quot;'&quot;);</span>
+<span class="pc" id="L334">        } catch (DirectoryWalker.CancelException cancel) {</span>
+<span class="fc" id="L335">            File last = walker.results.get(walker.results.size() - 1);</span>
+<span class="fc" id="L336">            assertEquals(cancelName, last.getName());</span>
+<span class="fc" id="L337">            assertEquals(&quot;Depth: &quot; + cancelName,  5, cancel.getDepth());</span>
+<span class="nc" id="L338">        } catch(IOException ex) {</span>
+<span class="nc" id="L339">            fail(&quot;IOException: &quot; + cancelName + &quot; &quot; + ex);</span>
+        }
+        
+        // Cancel on a directory
+        try {
+<span class="fc" id="L344">            cancelName = &quot;commons&quot;;</span>
+<span class="fc" id="L345">            walker = new TestMultiThreadCancelWalker(cancelName, false);</span>
+<span class="nc" id="L346">            walker.find(javaDir);</span>
+<span class="nc" id="L347">            fail(&quot;CancelException not thrown for '&quot; + cancelName + &quot;'&quot;);</span>
+<span class="pc" id="L348">        } catch (DirectoryWalker.CancelException cancel) {</span>
+<span class="fc" id="L349">            assertEquals(&quot;File:  &quot; + cancelName,   cancelName, cancel.getFile().getName());</span>
+<span class="fc" id="L350">            assertEquals(&quot;Depth: &quot; + cancelName,  3, cancel.getDepth());</span>
+<span class="nc" id="L351">        } catch(IOException ex) {</span>
+<span class="nc" id="L352">            fail(&quot;IOException: &quot; + cancelName + &quot; &quot; + ex);</span>
+        }
+        
+        // Suppress CancelException (use same file name as preceeding test)
+        try {
+<span class="fc" id="L357">            walker = new TestMultiThreadCancelWalker(cancelName, true);</span>
+<span class="fc" id="L358">            List&lt;File&gt; results = walker.find(javaDir);</span>
+<span class="fc" id="L359">            File lastFile = results.get(results.size() - 1);</span>
+<span class="fc" id="L360">            assertEquals(&quot;Suppress:  &quot; + cancelName, cancelName, lastFile.getName());</span>
+<span class="pc" id="L361">        } catch(IOException ex) {</span>
+<span class="nc" id="L362">            fail(&quot;Suppress threw &quot; + ex);</span>
+        }
+
+<span class="fc" id="L365">    }</span>
+
+    /**
+     * Test Filtering
+     */
+    @Test
+    public void testFilterString() {
+<span class="fc" id="L372">        List&lt;String&gt; results = new TestFileFinderString(dirsAndFilesFilter, -1).find(javaDir);</span>
+<span class="fc" id="L373">        assertEquals(&quot;Result Size&quot;, outputFiles.length + ioFiles.length, results.size());</span>
+<span class="fc" id="L374">        checkContainsString(&quot;IO File&quot;, ioFiles, results);</span>
+<span class="fc" id="L375">        checkContainsString(&quot;Output File&quot;, outputFiles, results);</span>
+<span class="fc" id="L376">    }</span>
+
+    // ------------ Test DirectoryWalker implementation --------------------------
+
+    /**
+     * Test DirectoryWalker implementation that finds files in a directory hierarchy
+     * applying a file filter.
+     */
+    private static class TestFileFinder extends DirectoryWalker&lt;File&gt; {
+
+        protected TestFileFinder(FileFilter filter, int depthLimit) {
+<span class="fc" id="L387">            super(filter, depthLimit);</span>
+<span class="fc" id="L388">        }</span>
+
+        protected TestFileFinder(IOFileFilter dirFilter, IOFileFilter fileFilter, int depthLimit) {
+<span class="fc" id="L391">            super(dirFilter, fileFilter, depthLimit);</span>
+<span class="fc" id="L392">        }</span>
+
+        /** find files. */
+        protected List&lt;File&gt; find(File startDirectory) {
+<span class="fc" id="L396">           List&lt;File&gt; results = new ArrayList&lt;File&gt;();</span>
+           try {
+<span class="fc" id="L398">               walk(startDirectory, results);</span>
+<span class="pc" id="L399">           } catch(IOException ex) {</span>
+<span class="nc" id="L400">               Assert.fail(ex.toString());</span>
+           }
+<span class="fc" id="L402">           return results;</span>
+        }
+
+        /** Handles a directory end by adding the File to the result set. */
+        @Override
+        protected void handleDirectoryEnd(File directory, int depth, Collection&lt;File&gt; results) {
+<span class="fc" id="L408">            results.add(directory);</span>
+<span class="fc" id="L409">        }</span>
+
+        /** Handles a file by adding the File to the result set. */
+        @Override
+        protected void handleFile(File file, int depth, Collection&lt;File&gt; results) {
+<span class="fc" id="L414">            results.add(file);</span>
+<span class="fc" id="L415">        }</span>
+    }
+
+    // ------------ Test DirectoryWalker implementation --------------------------
+
+    /**
+     * Test DirectoryWalker implementation that always returns false
+     * from handleDirectoryStart()
+     */
+    private static class TestFalseFileFinder extends TestFileFinder {
+
+        protected TestFalseFileFinder(FileFilter filter, int depthLimit) {
+<span class="fc" id="L427">            super(filter, depthLimit);</span>
+<span class="fc" id="L428">        }</span>
+
+        /** Always returns false. */
+        @Override
+        protected boolean handleDirectory(File directory, int depth, Collection&lt;File&gt; results) {
+<span class="fc" id="L433">            return false;</span>
+        }
+    }
+
+    // ------------ Test DirectoryWalker implementation --------------------------
+
+    /**
+     * Test DirectoryWalker implementation that finds files in a directory hierarchy
+     * applying a file filter.
+     */
+    static class TestCancelWalker extends DirectoryWalker&lt;File&gt; {
+        private String cancelFileName;
+        private boolean suppressCancel;
+
+        TestCancelWalker(String cancelFileName,boolean suppressCancel) {
+<span class="fc" id="L448">            super();</span>
+<span class="fc" id="L449">            this.cancelFileName = cancelFileName;</span>
+<span class="fc" id="L450">            this.suppressCancel = suppressCancel;</span>
+<span class="fc" id="L451">        }</span>
+
+        /** find files. */
+        protected List&lt;File&gt; find(File startDirectory) throws IOException {
+<span class="fc" id="L455">           List&lt;File&gt; results = new ArrayList&lt;File&gt;();</span>
+<span class="fc" id="L456">           walk(startDirectory, results);</span>
+<span class="fc" id="L457">           return results;</span>
+        }
+
+        /** Handles a directory end by adding the File to the result set. */
+        @Override
+        protected void handleDirectoryEnd(File directory, int depth, Collection&lt;File&gt; results) throws IOException {
+<span class="fc" id="L463">            results.add(directory);</span>
+<span class="fc bfc" id="L464" title="All 2 branches covered.">            if (cancelFileName.equals(directory.getName())) {</span>
+<span class="fc" id="L465">                throw new CancelException(directory, depth);</span>
+            }
+<span class="fc" id="L467">        }</span>
+
+        /** Handles a file by adding the File to the result set. */
+        @Override
+        protected void handleFile(File file, int depth, Collection&lt;File&gt; results) throws IOException {
+<span class="fc" id="L472">            results.add(file);</span>
+<span class="fc bfc" id="L473" title="All 2 branches covered.">            if (cancelFileName.equals(file.getName())) {</span>
+<span class="fc" id="L474">                throw new CancelException(file, depth);</span>
+            }
+<span class="fc" id="L476">        }</span>
+
+        /** Handles Cancel. */
+        @Override
+        protected void handleCancelled(File startDirectory, Collection&lt;File&gt; results,
+                       CancelException cancel) throws IOException {
+<span class="fc bfc" id="L482" title="All 2 branches covered.">            if (!suppressCancel) {</span>
+<span class="nc" id="L483">                super.handleCancelled(startDirectory, results, cancel);</span>
+            }
+<span class="fc" id="L485">        }</span>
+    }
+
+    /**
+     * Test DirectoryWalker implementation that finds files in a directory hierarchy
+     * applying a file filter.
+     */
+    static class TestMultiThreadCancelWalker extends DirectoryWalker&lt;File&gt; {
+        private String cancelFileName;
+        private boolean suppressCancel;
+        private boolean cancelled;
+        public List&lt;File&gt; results;
+
+        TestMultiThreadCancelWalker(String cancelFileName, boolean suppressCancel) {
+<span class="fc" id="L499">            super();</span>
+<span class="fc" id="L500">            this.cancelFileName = cancelFileName;</span>
+<span class="fc" id="L501">            this.suppressCancel = suppressCancel;</span>
+<span class="fc" id="L502">        }</span>
+
+        /** find files. */
+        protected List&lt;File&gt; find(File startDirectory) throws IOException {
+<span class="fc" id="L506">           results = new ArrayList&lt;File&gt;();</span>
+<span class="fc" id="L507">           walk(startDirectory, results);</span>
+<span class="fc" id="L508">           return results;</span>
+        }
+
+        /** Handles a directory end by adding the File to the result set. */
+        @Override
+        protected void handleDirectoryEnd(File directory, int depth, Collection&lt;File&gt; results) throws IOException {
+<span class="fc" id="L514">            results.add(directory);</span>
+<span class="fc" id="L515">            assertFalse(cancelled);</span>
+<span class="fc bfc" id="L516" title="All 2 branches covered.">            if (cancelFileName.equals(directory.getName())) {</span>
+<span class="fc" id="L517">                cancelled = true;</span>
+            }
+<span class="fc" id="L519">        }</span>
+
+        /** Handles a file by adding the File to the result set. */
+        @Override
+        protected void handleFile(File file, int depth, Collection&lt;File&gt; results) throws IOException {
+<span class="fc" id="L524">            results.add(file);</span>
+<span class="fc" id="L525">            assertFalse(cancelled);</span>
+<span class="fc bfc" id="L526" title="All 2 branches covered.">            if (cancelFileName.equals(file.getName())) {</span>
+<span class="fc" id="L527">                cancelled = true;</span>
+            }
+<span class="fc" id="L529">        }</span>
+
+        /** Handles Cancelled. */
+        @Override
+        protected boolean handleIsCancelled(File file, int depth, Collection&lt;File&gt; results) throws IOException {
+<span class="fc" id="L534">            return cancelled;</span>
+        }
+
+        /** Handles Cancel. */
+        @Override
+        protected void handleCancelled(File startDirectory, Collection&lt;File&gt; results,
+                       CancelException cancel) throws IOException {
+<span class="fc bfc" id="L541" title="All 2 branches covered.">            if (!suppressCancel) {</span>
+<span class="nc" id="L542">                super.handleCancelled(startDirectory, results, cancel);</span>
+            }
+<span class="fc" id="L544">        }</span>
+    }
+
+    /**
+     * Test DirectoryWalker implementation that finds files in a directory hierarchy
+     * applying a file filter.
+     */
+    private static class TestFileFinderString extends DirectoryWalker&lt;String&gt; {
+
+        protected TestFileFinderString(FileFilter filter, int depthLimit) {
+<span class="fc" id="L554">            super(filter, depthLimit);</span>
+<span class="fc" id="L555">        }</span>
+
+        /** find files. */
+        protected List&lt;String&gt; find(File startDirectory) {
+<span class="fc" id="L559">           List&lt;String&gt; results = new ArrayList&lt;String&gt;();</span>
+           try {
+<span class="fc" id="L561">               walk(startDirectory, results);</span>
+<span class="pc" id="L562">           } catch(IOException ex) {</span>
+<span class="nc" id="L563">               Assert.fail(ex.toString());</span>
+           }
+<span class="fc" id="L565">           return results;</span>
+        }
+
+        /** Handles a file by adding the File to the result set. */
+        @Override
+        protected void handleFile(File file, int depth, Collection&lt;String&gt; results) {
+<span class="fc" id="L571">            results.add(file.toString());</span>
+<span class="fc" id="L572">        }</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.4 (Apr 20, 2019 6:07:50 PM)</div></body></html>

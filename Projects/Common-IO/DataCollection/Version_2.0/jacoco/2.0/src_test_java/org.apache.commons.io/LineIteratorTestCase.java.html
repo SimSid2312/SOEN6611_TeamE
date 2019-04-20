@@ -1,0 +1,453 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>LineIteratorTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.0 (Apr 20, 2019 6:00:46 PM)</a> &gt; <a href="../../index.html" class="el_group">2.0</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io</a> &gt; <span class="el_source">LineIteratorTestCase.java</span></div><h1>LineIteratorTestCase.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.NoSuchElementException;
+
+import org.apache.commons.io.testtools.FileBasedTestCase;
+
+/**
+ * This is used to test LineIterator for correctness.
+ * 
+ * @author Niall Pemberton
+ * @author Stephen Colebourne
+ * @version $Id$
+ */
+public class LineIteratorTestCase extends FileBasedTestCase {
+
+    public LineIteratorTestCase(String name) {
+<span class="fc" id="L43">        super(name);</span>
+<span class="fc" id="L44">    }</span>
+
+    private void assertLines(List&lt;String&gt; lines, LineIterator iterator) {
+        try {
+<span class="fc bfc" id="L48" title="All 2 branches covered.">            for (int i = 0; i &lt; lines.size(); i++) {</span>
+<span class="fc" id="L49">                String line = iterator.nextLine();</span>
+<span class="fc" id="L50">                assertEquals(&quot;nextLine() line &quot; + i, lines.get(i), line);</span>
+            }
+<span class="fc" id="L52">            assertFalse(&quot;No more expected&quot;, iterator.hasNext());</span>
+        } finally {
+<span class="fc" id="L54">            LineIterator.closeQuietly(iterator);</span>
+        }
+<span class="fc" id="L56">    }</span>
+
+    /**
+     * Creates a test file with a specified number of lines.
+     */
+    private List&lt;String&gt; createLinesFile(File file, int lineCount) throws Exception {
+<span class="fc" id="L62">        List&lt;String&gt; lines = createStringLines(lineCount);</span>
+<span class="fc" id="L63">        FileUtils.writeLines(file, lines);</span>
+<span class="fc" id="L64">        return lines;</span>
+    }
+
+    /**
+     * Creates a test file with a specified number of lines.
+     */
+    private List&lt;String&gt; createLinesFile(File file, String encoding, int lineCount) throws Exception {
+<span class="fc" id="L71">        List&lt;String&gt; lines = createStringLines(lineCount);</span>
+<span class="fc" id="L72">        FileUtils.writeLines(file, encoding, lines);</span>
+<span class="fc" id="L73">        return lines;</span>
+    }
+
+    /**
+     * Creates String data lines.
+     * 
+     * @param lineCount
+     * @return a new lines list.
+     */
+    private List&lt;String&gt; createStringLines(int lineCount) {
+<span class="fc" id="L83">        List&lt;String&gt; lines = new ArrayList&lt;String&gt;();</span>
+<span class="fc bfc" id="L84" title="All 2 branches covered.">        for (int i = 0; i &lt; lineCount; i++) {</span>
+<span class="fc" id="L85">            lines.add(&quot;LINE &quot; + i);</span>
+        }
+<span class="fc" id="L87">        return lines;</span>
+    }
+
+    /** @see junit.framework.TestCase#setUp() */
+    @Override
+    protected void setUp() throws Exception {
+<span class="fc" id="L93">        File dir = getTestDirectory();</span>
+<span class="pc bpc" id="L94" title="1 of 2 branches missed.">        if (dir.exists()) {</span>
+<span class="fc" id="L95">            FileUtils.deleteDirectory(dir);</span>
+        }
+<span class="fc" id="L97">        dir.mkdirs();</span>
+
+<span class="fc" id="L99">    }</span>
+
+    /** @see junit.framework.TestCase#tearDown() */
+    @Override
+    protected void tearDown() throws Exception {
+<span class="fc" id="L104">        FileUtils.deleteDirectory(getTestDirectory());</span>
+<span class="fc" id="L105">    }</span>
+
+    // -----------------------------------------------------------------------
+    /**
+     * Test constructor.
+     */
+    public void testConstructor() throws Exception {
+        try {
+<span class="nc" id="L113">            new LineIterator((Reader) null);</span>
+<span class="nc" id="L114">            fail();</span>
+<span class="fc" id="L115">        } catch (IllegalArgumentException ex) {</span>
+            // expected
+<span class="nc" id="L117">        }</span>
+<span class="fc" id="L118">    }</span>
+
+    /**
+     * Test a file with no lines.
+     */
+    public void testZeroLines() throws Exception {
+<span class="fc" id="L124">        doTestFileWithSpecifiedLines(0);</span>
+<span class="fc" id="L125">    }</span>
+
+    /**
+     * Test a file with 1 line.
+     */
+    public void testOneLines() throws Exception {
+<span class="fc" id="L131">        doTestFileWithSpecifiedLines(1);</span>
+<span class="fc" id="L132">    }</span>
+
+    /**
+     * Test a file with 2 lines.
+     */
+    public void testTwoLines() throws Exception {
+<span class="fc" id="L138">        doTestFileWithSpecifiedLines(2);</span>
+<span class="fc" id="L139">    }</span>
+
+    /**
+     * Test a file with 3 lines.
+     */
+    public void testThreeLines() throws Exception {
+<span class="fc" id="L145">        doTestFileWithSpecifiedLines(3);</span>
+<span class="fc" id="L146">    }</span>
+
+    /**
+     * Test a missing File.
+     */
+    public void testMissingFile() throws Exception {
+<span class="fc" id="L152">        File testFile = new File(getTestDirectory(), &quot;dummy-missing-file.txt&quot;);</span>
+
+<span class="fc" id="L154">        LineIterator iterator = null;</span>
+        try {
+<span class="nc" id="L156">            iterator = FileUtils.lineIterator(testFile, &quot;UTF-8&quot;);</span>
+<span class="nc" id="L157">            fail(&quot;Expected FileNotFoundException&quot;);</span>
+<span class="fc" id="L158">        } catch (FileNotFoundException expected) {</span>
+            // ignore, expected result
+        } finally {
+<span class="fc" id="L161">            LineIterator.closeQuietly(iterator);</span>
+        }
+<span class="fc" id="L163">    }</span>
+
+    /**
+     * Test a file with a Valid encoding.
+     */
+    public void testValidEncoding() throws Exception {
+<span class="fc" id="L169">        String encoding = &quot;UTF-8&quot;;</span>
+
+<span class="fc" id="L171">        File testFile = new File(getTestDirectory(), &quot;LineIterator-validEncoding.txt&quot;);</span>
+<span class="fc" id="L172">        createLinesFile(testFile, encoding, 3);</span>
+
+<span class="fc" id="L174">        LineIterator iterator = FileUtils.lineIterator(testFile, encoding);</span>
+        try {
+<span class="fc" id="L176">            int count = 0;</span>
+<span class="fc bfc" id="L177" title="All 2 branches covered.">            while (iterator.hasNext()) {</span>
+<span class="fc" id="L178">                assertTrue(iterator.next() instanceof String);</span>
+<span class="fc" id="L179">                count++;</span>
+            }
+<span class="fc" id="L181">            assertEquals(3, count);</span>
+        } finally {
+<span class="fc" id="L183">            LineIterator.closeQuietly(iterator);</span>
+        }
+<span class="fc" id="L185">    }</span>
+
+    /**
+     * Test a file with an Invalid encoding.
+     */
+    public void testInvalidEncoding() throws Exception {
+<span class="fc" id="L191">        String encoding = &quot;XXXXXXXX&quot;;</span>
+
+<span class="fc" id="L193">        File testFile = new File(getTestDirectory(), &quot;LineIterator-invalidEncoding.txt&quot;);</span>
+<span class="fc" id="L194">        createLinesFile(testFile, &quot;UTF-8&quot;, 3);</span>
+
+<span class="fc" id="L196">        LineIterator iterator = null;</span>
+        try {
+<span class="nc" id="L198">            iterator = FileUtils.lineIterator(testFile, encoding);</span>
+<span class="nc" id="L199">            fail(&quot;Expected UnsupportedEncodingException&quot;);</span>
+<span class="fc" id="L200">        } catch (UnsupportedEncodingException expected) {</span>
+            // ignore, expected result
+        } finally {
+<span class="fc" id="L203">            LineIterator.closeQuietly(iterator);</span>
+        }
+<span class="fc" id="L205">    }</span>
+
+    /**
+     * Test the iterator using only the nextLine() method.
+     */
+    public void testNextLineOnlyDefaultEncoding() throws Exception {
+<span class="fc" id="L211">        File testFile = new File(getTestDirectory(), &quot;LineIterator-nextOnly.txt&quot;);</span>
+<span class="fc" id="L212">        List&lt;String&gt; lines = createLinesFile(testFile, 3);</span>
+
+<span class="fc" id="L214">        LineIterator iterator = FileUtils.lineIterator(testFile);</span>
+<span class="fc" id="L215">        assertLines(lines, iterator);</span>
+<span class="fc" id="L216">    }</span>
+
+    /**
+     * Test the iterator using only the nextLine() method.
+     */
+    public void testNextLineOnlyNullEncoding() throws Exception {
+<span class="fc" id="L222">        String encoding = null;</span>
+
+<span class="fc" id="L224">        File testFile = new File(getTestDirectory(), &quot;LineIterator-nextOnly.txt&quot;);</span>
+<span class="fc" id="L225">        List&lt;String&gt; lines = createLinesFile(testFile, encoding, 3);</span>
+
+<span class="fc" id="L227">        LineIterator iterator = FileUtils.lineIterator(testFile, encoding);</span>
+<span class="fc" id="L228">        assertLines(lines, iterator);</span>
+<span class="fc" id="L229">    }</span>
+
+    /**
+     * Test the iterator using only the nextLine() method.
+     */
+    public void testNextLineOnlyUtf8Encoding() throws Exception {
+<span class="fc" id="L235">        String encoding = &quot;UTF-8&quot;;</span>
+
+<span class="fc" id="L237">        File testFile = new File(getTestDirectory(), &quot;LineIterator-nextOnly.txt&quot;);</span>
+<span class="fc" id="L238">        List&lt;String&gt; lines = createLinesFile(testFile, encoding, 3);</span>
+
+<span class="fc" id="L240">        LineIterator iterator = FileUtils.lineIterator(testFile, encoding);</span>
+<span class="fc" id="L241">        assertLines(lines, iterator);</span>
+<span class="fc" id="L242">    }</span>
+
+    /**
+     * Test the iterator using only the next() method.
+     */
+    public void testNextOnly() throws Exception {
+<span class="fc" id="L248">        String encoding = null;</span>
+
+<span class="fc" id="L250">        File testFile = new File(getTestDirectory(), &quot;LineIterator-nextOnly.txt&quot;);</span>
+<span class="fc" id="L251">        List&lt;String&gt; lines = createLinesFile(testFile, encoding, 3);</span>
+
+<span class="fc" id="L253">        LineIterator iterator = FileUtils.lineIterator(testFile, encoding);</span>
+        try {
+<span class="fc bfc" id="L255" title="All 2 branches covered.">            for (int i = 0; i &lt; lines.size(); i++) {</span>
+<span class="fc" id="L256">                String line = iterator.next();</span>
+<span class="fc" id="L257">                assertEquals(&quot;next() line &quot; + i, lines.get(i), line);</span>
+            }
+<span class="fc" id="L259">            assertEquals(&quot;No more expected&quot;, false, iterator.hasNext());</span>
+        } finally {
+<span class="fc" id="L261">            LineIterator.closeQuietly(iterator);</span>
+        }
+<span class="fc" id="L263">    }</span>
+
+    /**
+     * Tests hasNext when it throws an exception.
+     */
+    public void testNextWithException() throws Exception {
+<span class="fc" id="L269">        Reader reader = new BufferedReader(new StringReader(&quot;&quot;)) {</span>
+            @Override
+            public String readLine() throws IOException {
+<span class="fc" id="L272">                throw new IOException(&quot;hasNext&quot;);</span>
+            }
+        };
+        try {
+<span class="nc" id="L276">            new LineIterator(reader).hasNext();</span>
+<span class="nc" id="L277">            fail(&quot;Expected IllegalStateException&quot;);</span>
+<span class="fc" id="L278">        } catch (IllegalStateException e) {</span>
+            // expected
+<span class="nc" id="L280">        }</span>
+<span class="fc" id="L281">    }</span>
+
+    /**
+     * Test closing the iterator before all the file has been processed.
+     */
+    public void testCloseEarly() throws Exception {
+<span class="fc" id="L287">        String encoding = &quot;UTF-8&quot;;</span>
+
+<span class="fc" id="L289">        File testFile = new File(getTestDirectory(), &quot;LineIterator-closeEarly.txt&quot;);</span>
+<span class="fc" id="L290">        createLinesFile(testFile, encoding, 3);</span>
+
+<span class="fc" id="L292">        LineIterator iterator = FileUtils.lineIterator(testFile, encoding);</span>
+        try {
+            // get
+<span class="fc" id="L295">            assertTrue(&quot;Line expected&quot;, iterator.next() instanceof String);</span>
+<span class="fc" id="L296">            assertTrue(&quot;More expected&quot;, iterator.hasNext());</span>
+
+            // close
+<span class="fc" id="L299">            iterator.close();</span>
+<span class="fc" id="L300">            assertFalse(&quot;No more expected&quot;, iterator.hasNext());</span>
+            try {
+<span class="nc" id="L302">                iterator.next();</span>
+<span class="nc" id="L303">                fail();</span>
+<span class="fc" id="L304">            } catch (NoSuchElementException ex) {</span>
+                // expected
+<span class="nc" id="L306">            }</span>
+            try {
+<span class="nc" id="L308">                iterator.nextLine();</span>
+<span class="nc" id="L309">                fail();</span>
+<span class="fc" id="L310">            } catch (NoSuchElementException ex) {</span>
+                // expected
+<span class="nc" id="L312">            }</span>
+
+            // try closing again
+<span class="fc" id="L315">            iterator.close();</span>
+            try {
+<span class="nc" id="L317">                iterator.next();</span>
+<span class="nc" id="L318">                fail();</span>
+<span class="fc" id="L319">            } catch (NoSuchElementException ex) {</span>
+                // expected
+<span class="nc" id="L321">            }</span>
+            try {
+<span class="nc" id="L323">                iterator.nextLine();</span>
+<span class="nc" id="L324">                fail();</span>
+<span class="fc" id="L325">            } catch (NoSuchElementException ex) {</span>
+                // expected
+<span class="nc" id="L327">            }</span>
+        } finally {
+<span class="fc" id="L329">            LineIterator.closeQuietly(iterator);</span>
+        }
+<span class="fc" id="L331">    }</span>
+
+    /**
+     * Utility method to create and test a file with a specified number of lines.
+     */
+    private void doTestFileWithSpecifiedLines(int lineCount) throws Exception {
+<span class="fc" id="L337">        String encoding = &quot;UTF-8&quot;;</span>
+
+<span class="fc" id="L339">        String fileName = &quot;LineIterator-&quot; + lineCount + &quot;-test.txt&quot;;</span>
+<span class="fc" id="L340">        File testFile = new File(getTestDirectory(), fileName);</span>
+<span class="fc" id="L341">        List&lt;String&gt; lines = createLinesFile(testFile, encoding, lineCount);</span>
+
+<span class="fc" id="L343">        LineIterator iterator = FileUtils.lineIterator(testFile, encoding);</span>
+        try {
+            try {
+<span class="nc" id="L346">                iterator.remove();</span>
+<span class="nc" id="L347">                fail(&quot;Remove is unsupported&quot;);</span>
+<span class="fc" id="L348">            } catch (UnsupportedOperationException ex) {</span>
+                // expected
+<span class="nc" id="L350">            }</span>
+
+<span class="fc" id="L352">            int idx = 0;</span>
+<span class="fc bfc" id="L353" title="All 2 branches covered.">            while (iterator.hasNext()) {</span>
+<span class="fc" id="L354">                String line = iterator.next();</span>
+<span class="fc" id="L355">                assertEquals(&quot;Comparing line &quot; + idx, lines.get(idx), line);</span>
+<span class="pc bpc" id="L356" title="1 of 2 branches missed.">                assertTrue(&quot;Exceeded expected idx=&quot; + idx + &quot; size=&quot; + lines.size(), idx &lt; lines.size());</span>
+<span class="fc" id="L357">                idx++;</span>
+<span class="fc" id="L358">            }</span>
+<span class="fc" id="L359">            assertEquals(&quot;Line Count doesn't match&quot;, idx, lines.size());</span>
+
+            // try calling next() after file processed
+            try {
+<span class="nc" id="L363">                iterator.next();</span>
+<span class="nc" id="L364">                fail(&quot;Expected NoSuchElementException&quot;);</span>
+<span class="fc" id="L365">            } catch (NoSuchElementException expected) {</span>
+                // ignore, expected result
+<span class="nc" id="L367">            }</span>
+            try {
+<span class="nc" id="L369">                iterator.nextLine();</span>
+<span class="nc" id="L370">                fail(&quot;Expected NoSuchElementException&quot;);</span>
+<span class="fc" id="L371">            } catch (NoSuchElementException expected) {</span>
+                // ignore, expected result
+<span class="nc" id="L373">            }</span>
+        } finally {
+<span class="fc" id="L375">            LineIterator.closeQuietly(iterator);</span>
+        }
+<span class="fc" id="L377">    }</span>
+
+    // -----------------------------------------------------------------------
+    public void testFilteringFileReader() throws Exception {
+<span class="fc" id="L381">        String encoding = &quot;UTF-8&quot;;</span>
+
+<span class="fc" id="L383">        String fileName = &quot;LineIterator-Filter-test.txt&quot;;</span>
+<span class="fc" id="L384">        File testFile = new File(getTestDirectory(), fileName);</span>
+<span class="fc" id="L385">        List&lt;String&gt; lines = createLinesFile(testFile, encoding, 9);</span>
+
+<span class="fc" id="L387">        Reader reader = new FileReader(testFile);</span>
+<span class="fc" id="L388">        this.testFiltering(lines, reader);</span>
+<span class="fc" id="L389">    }</span>
+
+    public void testFilteringBufferedReader() throws Exception {
+<span class="fc" id="L392">        String encoding = &quot;UTF-8&quot;;</span>
+
+<span class="fc" id="L394">        String fileName = &quot;LineIterator-Filter-test.txt&quot;;</span>
+<span class="fc" id="L395">        File testFile = new File(getTestDirectory(), fileName);</span>
+<span class="fc" id="L396">        List&lt;String&gt; lines = createLinesFile(testFile, encoding, 9);</span>
+
+<span class="fc" id="L398">        Reader reader = new BufferedReader(new FileReader(testFile));</span>
+<span class="fc" id="L399">        this.testFiltering(lines, reader);</span>
+<span class="fc" id="L400">    }</span>
+
+    private void testFiltering(List&lt;String&gt; lines, Reader reader) {
+<span class="fc" id="L403">        LineIterator iterator = new LineIterator(reader) {</span>
+            @Override
+            protected boolean isValidLine(String line) {
+<span class="fc" id="L406">                char c = line.charAt(line.length() - 1);</span>
+<span class="fc bfc" id="L407" title="All 2 branches covered.">                return ((c - 48) % 3 != 1);</span>
+            }
+        };
+        try {
+            try {
+<span class="nc" id="L412">                iterator.remove();</span>
+<span class="nc" id="L413">                fail(&quot;Remove is unsupported&quot;);</span>
+<span class="fc" id="L414">            } catch (UnsupportedOperationException ex) {</span>
+                // expected
+<span class="nc" id="L416">            }</span>
+
+<span class="fc" id="L418">            int idx = 0;</span>
+<span class="fc" id="L419">            int actualLines = 0;</span>
+<span class="fc bfc" id="L420" title="All 2 branches covered.">            while (iterator.hasNext()) {</span>
+<span class="fc" id="L421">                String line = iterator.next();</span>
+<span class="fc" id="L422">                actualLines++;</span>
+<span class="fc" id="L423">                assertEquals(&quot;Comparing line &quot; + idx, lines.get(idx), line);</span>
+<span class="pc bpc" id="L424" title="1 of 2 branches missed.">                assertTrue(&quot;Exceeded expected idx=&quot; + idx + &quot; size=&quot; + lines.size(), idx &lt; lines.size());</span>
+<span class="fc" id="L425">                idx++;</span>
+<span class="fc bfc" id="L426" title="All 2 branches covered.">                if (idx % 3 == 1) {</span>
+<span class="fc" id="L427">                    idx++;</span>
+                }
+<span class="fc" id="L429">            }</span>
+<span class="fc" id="L430">            assertEquals(&quot;Line Count doesn't match&quot;, 9, lines.size());</span>
+<span class="fc" id="L431">            assertEquals(&quot;Line Count doesn't match&quot;, 9, idx);</span>
+<span class="fc" id="L432">            assertEquals(&quot;Line Count doesn't match&quot;, 6, actualLines);</span>
+
+            // try calling next() after file processed
+            try {
+<span class="nc" id="L436">                iterator.next();</span>
+<span class="nc" id="L437">                fail(&quot;Expected NoSuchElementException&quot;);</span>
+<span class="fc" id="L438">            } catch (NoSuchElementException expected) {</span>
+                // ignore, expected result
+<span class="nc" id="L440">            }</span>
+            try {
+<span class="nc" id="L442">                iterator.nextLine();</span>
+<span class="nc" id="L443">                fail(&quot;Expected NoSuchElementException&quot;);</span>
+<span class="fc" id="L444">            } catch (NoSuchElementException expected) {</span>
+                // ignore, expected result
+<span class="nc" id="L446">            }</span>
+        } finally {
+<span class="fc" id="L448">            LineIterator.closeQuietly(iterator);</span>
+        }
+<span class="fc" id="L450">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.0 (Apr 20, 2019 6:00:46 PM)</div></body></html>

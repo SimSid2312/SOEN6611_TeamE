@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TaggedOutputStreamTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-io (Apr 20, 2019 6:11:46 PM)</a> &gt; <a href="../../index.html" class="el_group">commons-io</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.output</a> &gt; <span class="el_source">TaggedOutputStreamTest.java</span></div><h1>TaggedOutputStreamTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.output;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.UUID;
+
+import junit.framework.TestCase;
+
+import org.apache.commons.io.TaggedIOException;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+/**
+ * JUnit Test Case for {@link TaggedOutputStream}.
+ */
+<span class="fc" id="L36">public class TaggedOutputStreamTest  {</span>
+
+    @Test
+    public void testNormalStream() {
+        try {
+<span class="fc" id="L41">            final ByteArrayOutputStream buffer = new ByteArrayOutputStream(); </span>
+<span class="fc" id="L42">            final OutputStream stream = new TaggedOutputStream(buffer);</span>
+<span class="fc" id="L43">            stream.write('a');</span>
+<span class="fc" id="L44">            stream.write(new byte[] { 'b' });</span>
+<span class="fc" id="L45">            stream.write(new byte[] { 'c' }, 0, 1);</span>
+<span class="fc" id="L46">            stream.flush();</span>
+<span class="fc" id="L47">            stream.close();</span>
+<span class="fc" id="L48">            assertEquals(3, buffer.size());</span>
+<span class="fc" id="L49">            assertEquals('a', buffer.toByteArray()[0]);</span>
+<span class="fc" id="L50">            assertEquals('b', buffer.toByteArray()[1]);</span>
+<span class="fc" id="L51">            assertEquals('c', buffer.toByteArray()[2]);</span>
+<span class="nc" id="L52">        } catch (final IOException e) {</span>
+<span class="nc" id="L53">            fail(&quot;Unexpected exception thrown&quot;);</span>
+<span class="fc" id="L54">        }</span>
+<span class="fc" id="L55">    }</span>
+
+    @Test
+    public void testBrokenStream() {
+<span class="fc" id="L59">        final IOException exception = new IOException(&quot;test exception&quot;);</span>
+<span class="fc" id="L60">        final TaggedOutputStream stream =</span>
+            new TaggedOutputStream(new BrokenOutputStream(exception));
+
+        // Test the write() method
+        try {
+<span class="nc" id="L65">            stream.write('x');</span>
+<span class="nc" id="L66">            fail(&quot;Expected exception not thrown.&quot;);</span>
+<span class="fc" id="L67">        } catch (final IOException e) {</span>
+<span class="fc" id="L68">            assertTrue(stream.isCauseOf(e));</span>
+            try {
+<span class="nc" id="L70">                stream.throwIfCauseOf(e);</span>
+<span class="nc" id="L71">                fail(&quot;Expected exception not thrown.&quot;);</span>
+<span class="fc" id="L72">            } catch (final IOException e2) {</span>
+<span class="fc" id="L73">                assertEquals(exception, e2);</span>
+<span class="nc" id="L74">            }</span>
+<span class="nc" id="L75">        }</span>
+
+        // Test the flush() method
+        try {
+<span class="nc" id="L79">            stream.flush();</span>
+<span class="nc" id="L80">            fail(&quot;Expected exception not thrown.&quot;);</span>
+<span class="fc" id="L81">        } catch (final IOException e) {</span>
+<span class="fc" id="L82">            assertTrue(stream.isCauseOf(e));</span>
+            try {
+<span class="nc" id="L84">                stream.throwIfCauseOf(e);</span>
+<span class="nc" id="L85">                fail(&quot;Expected exception not thrown.&quot;);</span>
+<span class="fc" id="L86">            } catch (final IOException e2) {</span>
+<span class="fc" id="L87">                assertEquals(exception, e2);</span>
+<span class="nc" id="L88">            }</span>
+<span class="nc" id="L89">        }</span>
+
+        // Test the close() method
+        try {
+<span class="nc" id="L93">            stream.close();</span>
+<span class="nc" id="L94">            fail(&quot;Expected exception not thrown.&quot;);</span>
+<span class="fc" id="L95">        } catch (final IOException e) {</span>
+<span class="fc" id="L96">            assertTrue(stream.isCauseOf(e));</span>
+            try {
+<span class="nc" id="L98">                stream.throwIfCauseOf(e);</span>
+<span class="nc" id="L99">                fail(&quot;Expected exception not thrown.&quot;);</span>
+<span class="fc" id="L100">            } catch (final IOException e2) {</span>
+<span class="fc" id="L101">                assertEquals(exception, e2);</span>
+<span class="nc" id="L102">            }</span>
+<span class="nc" id="L103">        }</span>
+<span class="fc" id="L104">    }</span>
+
+    @Test
+    public void testOtherException() throws Exception {
+<span class="fc" id="L108">        final IOException exception = new IOException(&quot;test exception&quot;);</span>
+<span class="fc" id="L109">        final OutputStream closed = new ClosedOutputStream();</span>
+<span class="fc" id="L110">        final TaggedOutputStream stream = new TaggedOutputStream(closed);</span>
+
+<span class="fc" id="L112">        assertFalse(stream.isCauseOf(exception));</span>
+<span class="fc" id="L113">        assertFalse(stream.isCauseOf(</span>
+<span class="fc" id="L114">                new TaggedIOException(exception, UUID.randomUUID())));</span>
+
+        try {
+<span class="fc" id="L117">            stream.throwIfCauseOf(exception);</span>
+<span class="nc" id="L118">        } catch (final IOException e) {</span>
+<span class="nc" id="L119">            fail(&quot;Unexpected exception thrown&quot;);</span>
+<span class="fc" id="L120">        }</span>
+
+        try {
+<span class="fc" id="L123">            stream.throwIfCauseOf(</span>
+<span class="fc" id="L124">                    new TaggedIOException(exception, UUID.randomUUID()));</span>
+<span class="nc" id="L125">        } catch (final IOException e) {</span>
+<span class="nc" id="L126">            fail(&quot;Unexpected exception thrown&quot;);</span>
+<span class="fc" id="L127">        }</span>
+<span class="fc" id="L128">        stream.close();</span>
+<span class="fc" id="L129">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>commons-io (Apr 20, 2019 6:11:46 PM)</div></body></html>

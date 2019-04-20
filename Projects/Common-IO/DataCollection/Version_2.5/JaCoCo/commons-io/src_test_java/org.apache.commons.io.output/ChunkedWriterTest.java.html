@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ChunkedWriterTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-io (Apr 20, 2019 6:11:46 PM)</a> &gt; <a href="../../index.html" class="el_group">commons-io</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.output</a> &gt; <span class="el_source">ChunkedWriterTest.java</span></div><h1>ChunkedWriterTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.output;
+
+import static org.junit.Assert.assertEquals;
+
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.junit.Test;
+
+<span class="fc" id="L27">public class ChunkedWriterTest {</span>
+    @Test
+    public void write_four_chunks() throws Exception {
+<span class="fc" id="L30">        final AtomicInteger numWrites = new AtomicInteger();</span>
+<span class="fc" id="L31">        OutputStreamWriter osw = getOutputStreamWriter(numWrites);</span>
+
+<span class="fc" id="L33">        ChunkedWriter chunked = new ChunkedWriter(osw, 10);</span>
+<span class="fc" id="L34">        chunked.write(&quot;0123456789012345678901234567891&quot;.toCharArray());</span>
+<span class="fc" id="L35">        chunked.flush();</span>
+<span class="fc" id="L36">        assertEquals(4, numWrites.get());</span>
+<span class="fc" id="L37">        chunked.close();</span>
+<span class="fc" id="L38">    }</span>
+
+    @Test
+    public void write_two_chunks_default_constructor() throws Exception {
+<span class="fc" id="L42">        final AtomicInteger numWrites = new AtomicInteger();</span>
+<span class="fc" id="L43">        OutputStreamWriter osw = getOutputStreamWriter(numWrites);</span>
+
+<span class="fc" id="L45">        ChunkedWriter chunked = new ChunkedWriter(osw);</span>
+<span class="fc" id="L46">        chunked.write(new char[1024 * 4 + 1]);</span>
+<span class="fc" id="L47">        chunked.flush();</span>
+<span class="fc" id="L48">        assertEquals(2, numWrites.get());</span>
+<span class="fc" id="L49">        chunked.close();</span>
+<span class="fc" id="L50">    }</span>
+
+    private OutputStreamWriter getOutputStreamWriter(final AtomicInteger numWrites) {
+<span class="fc" id="L53">        ByteArrayOutputStream baos = new ByteArrayOutputStream();</span>
+<span class="fc" id="L54">        return new OutputStreamWriter(baos) {</span>
+            @Override
+            public void write(char[] cbuf, int off, int len) throws IOException {
+<span class="fc" id="L57">                numWrites.incrementAndGet();</span>
+<span class="fc" id="L58">                super.write(cbuf, off, len);</span>
+<span class="fc" id="L59">            }</span>
+        };
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void negative_chunksize_not_permitted() throws Exception {
+<span class="nc" id="L65">        (new ChunkedWriter(new OutputStreamWriter(new ByteArrayOutputStream()), 0)).close();;</span>
+<span class="nc" id="L66">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>commons-io (Apr 20, 2019 6:11:46 PM)</div></body></html>

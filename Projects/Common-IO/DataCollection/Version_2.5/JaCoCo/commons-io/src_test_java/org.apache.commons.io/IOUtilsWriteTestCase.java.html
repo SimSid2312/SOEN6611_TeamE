@@ -1,0 +1,790 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>IOUtilsWriteTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-io (Apr 20, 2019 6:11:46 PM)</a> &gt; <a href="../../index.html" class="el_group">commons-io</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io</a> &gt; <span class="el_source">IOUtilsWriteTestCase.java</span></div><h1>IOUtilsWriteTestCase.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io;
+
+import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.apache.commons.io.testtools.FileBasedTestCase;
+import org.apache.commons.io.testtools.TestUtils;
+import org.apache.commons.io.testtools.YellOnFlushAndCloseOutputStream;
+import org.junit.Test;
+
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+/**
+ * JUnit tests for IOUtils write methods.
+ *
+ * @version $Id$
+ * @see IOUtils
+ */
+@SuppressWarnings(&quot;deprecation&quot;) // includes tests for deprecated methods
+<span class="fc" id="L42">public class IOUtilsWriteTestCase extends FileBasedTestCase {</span>
+
+    private static final int FILE_SIZE = 1024 * 4 + 1;
+
+
+<span class="fc" id="L47">    private final byte[] inData = TestUtils.generateTestData((long) FILE_SIZE);</span>
+
+    // ----------------------------------------------------------------
+    // Tests
+    // ----------------------------------------------------------------
+
+    //-----------------------------------------------------------------------
+    @Test
+    public void testWrite_byteArrayToOutputStream() throws Exception {
+<span class="fc" id="L56">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L57">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+
+<span class="fc" id="L59">        IOUtils.write(inData, out);</span>
+<span class="fc" id="L60">        out.off();</span>
+<span class="fc" id="L61">        out.flush();</span>
+
+<span class="fc" id="L63">        assertEquals(&quot;Sizes differ&quot;, inData.length, baout.size());</span>
+<span class="fc" id="L64">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, baout.toByteArray()));</span>
+<span class="fc" id="L65">    }</span>
+
+    @Test
+    public void testWrite_byteArrayToOutputStream_nullData() throws Exception {
+<span class="fc" id="L69">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L70">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+
+<span class="fc" id="L72">        IOUtils.write((byte[]) null, out);</span>
+<span class="fc" id="L73">        out.off();</span>
+<span class="fc" id="L74">        out.flush();</span>
+
+<span class="fc" id="L76">        assertEquals(&quot;Sizes differ&quot;, 0, baout.size());</span>
+<span class="fc" id="L77">    }</span>
+
+    @Test
+    public void testWrite_byteArrayToOutputStream_nullStream() throws Exception {
+        try {
+<span class="nc" id="L82">            IOUtils.write(inData, (OutputStream) null);</span>
+<span class="nc" id="L83">            fail();</span>
+<span class="fc" id="L84">        } catch (final NullPointerException ignore) {</span>
+<span class="nc" id="L85">        }</span>
+<span class="fc" id="L86">    }</span>
+
+    //-----------------------------------------------------------------------
+    @Test
+    public void testWrite_byteArrayToWriter() throws Exception {
+<span class="fc" id="L91">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+        @SuppressWarnings(&quot;resource&quot;) // deliberately not closed
+<span class="fc" id="L93">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+<span class="fc" id="L94">        final Writer writer = new OutputStreamWriter(baout, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L96">        IOUtils.write(inData, writer);</span>
+<span class="fc" id="L97">        out.off();</span>
+<span class="fc" id="L98">        writer.flush();</span>
+
+<span class="fc" id="L100">        assertEquals(&quot;Sizes differ&quot;, inData.length, baout.size());</span>
+<span class="fc" id="L101">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, baout.toByteArray()));</span>
+<span class="fc" id="L102">    }</span>
+
+    @Test
+    public void testWrite_byteArrayToWriter_nullData() throws Exception {
+<span class="fc" id="L106">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+        @SuppressWarnings(&quot;resource&quot;) // deliberately not closed
+<span class="fc" id="L108">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+<span class="fc" id="L109">        final Writer writer = new OutputStreamWriter(baout, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L111">        IOUtils.write((byte[]) null, writer);</span>
+<span class="fc" id="L112">        out.off();</span>
+<span class="fc" id="L113">        writer.flush();</span>
+
+<span class="fc" id="L115">        assertEquals(&quot;Sizes differ&quot;, 0, baout.size());</span>
+<span class="fc" id="L116">    }</span>
+
+    @Test
+    public void testWrite_byteArrayToWriter_nullWriter() throws Exception {
+        try {
+<span class="nc" id="L121">            IOUtils.write(inData, (Writer) null);</span>
+<span class="nc" id="L122">            fail();</span>
+<span class="fc" id="L123">        } catch (final NullPointerException ignore) {</span>
+<span class="nc" id="L124">        }</span>
+<span class="fc" id="L125">    }</span>
+
+    //-----------------------------------------------------------------------
+    @Test
+    public void testWrite_byteArrayToWriter_Encoding() throws Exception {
+<span class="fc" id="L130">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+        @SuppressWarnings(&quot;resource&quot;) // deliberately not closed
+<span class="fc" id="L132">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+<span class="fc" id="L133">        final Writer writer = new OutputStreamWriter(baout, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L135">        IOUtils.write(inData, writer, &quot;UTF8&quot;);</span>
+<span class="fc" id="L136">        out.off();</span>
+<span class="fc" id="L137">        writer.flush();</span>
+
+<span class="fc" id="L139">        byte[] bytes = baout.toByteArray();</span>
+<span class="fc" id="L140">        bytes = new String(bytes, &quot;UTF8&quot;).getBytes(&quot;US-ASCII&quot;);</span>
+<span class="fc" id="L141">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, bytes));</span>
+<span class="fc" id="L142">    }</span>
+
+    @Test
+    public void testWrite_byteArrayToWriter_Encoding_nullData() throws Exception {
+<span class="fc" id="L146">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+        @SuppressWarnings(&quot;resource&quot;) // deliberately not closed
+<span class="fc" id="L148">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+<span class="fc" id="L149">        final Writer writer = new OutputStreamWriter(baout, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L151">        IOUtils.write(null, writer, &quot;UTF8&quot;);</span>
+<span class="fc" id="L152">        out.off();</span>
+<span class="fc" id="L153">        writer.flush();</span>
+
+<span class="fc" id="L155">        assertEquals(&quot;Sizes differ&quot;, 0, baout.size());</span>
+<span class="fc" id="L156">    }</span>
+
+    @Test
+    public void testWrite_byteArrayToWriter_Encoding_nullWriter() throws Exception {
+        try {
+<span class="nc" id="L161">            IOUtils.write(inData, null, &quot;UTF8&quot;);</span>
+<span class="nc" id="L162">            fail();</span>
+<span class="fc" id="L163">        } catch (final NullPointerException ignore) {</span>
+<span class="nc" id="L164">        }</span>
+<span class="fc" id="L165">    }</span>
+
+    @Test
+    public void testWrite_byteArrayToWriter_Encoding_nullEncoding() throws Exception {
+<span class="fc" id="L169">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+        @SuppressWarnings(&quot;resource&quot;) // deliberately not closed
+<span class="fc" id="L171">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+<span class="fc" id="L172">        final Writer writer = new OutputStreamWriter(baout, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L174">        IOUtils.write(inData, writer, (String) null);</span>
+<span class="fc" id="L175">        out.off();</span>
+<span class="fc" id="L176">        writer.flush();</span>
+
+<span class="fc" id="L178">        assertEquals(&quot;Sizes differ&quot;, inData.length, baout.size());</span>
+<span class="fc" id="L179">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, baout.toByteArray()));</span>
+<span class="fc" id="L180">    }</span>
+
+    //-----------------------------------------------------------------------
+    @Test
+    public void testWrite_charSequenceToOutputStream() throws Exception {
+<span class="fc" id="L185">        final CharSequence csq = new StringBuilder(new String(inData, &quot;US-ASCII&quot;));</span>
+
+<span class="fc" id="L187">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L188">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+
+<span class="fc" id="L190">        IOUtils.write(csq, out);</span>
+<span class="fc" id="L191">        out.off();</span>
+<span class="fc" id="L192">        out.flush();</span>
+
+<span class="fc" id="L194">        assertEquals(&quot;Sizes differ&quot;, inData.length, baout.size());</span>
+<span class="fc" id="L195">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, baout.toByteArray()));</span>
+<span class="fc" id="L196">    }</span>
+
+    @Test
+    public void testWrite_charSequenceToOutputStream_nullData() throws Exception {
+<span class="fc" id="L200">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L201">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+
+<span class="fc" id="L203">        IOUtils.write((CharSequence) null, out);</span>
+<span class="fc" id="L204">        out.off();</span>
+<span class="fc" id="L205">        out.flush();</span>
+
+<span class="fc" id="L207">        assertEquals(&quot;Sizes differ&quot;, 0, baout.size());</span>
+<span class="fc" id="L208">    }</span>
+
+    @Test
+    public void testWrite_charSequenceToOutputStream_nullStream() throws Exception {
+<span class="fc" id="L212">        final CharSequence csq = new StringBuilder(new String(inData, &quot;US-ASCII&quot;));</span>
+        try {
+<span class="nc" id="L214">            IOUtils.write(csq, (OutputStream) null);</span>
+<span class="nc" id="L215">            fail();</span>
+<span class="fc" id="L216">        } catch (final NullPointerException ignore) {</span>
+<span class="nc" id="L217">        }</span>
+<span class="fc" id="L218">    }</span>
+
+    //-----------------------------------------------------------------------
+    @Test
+    public void testWrite_charSequenceToOutputStream_Encoding() throws Exception {
+<span class="fc" id="L223">        final CharSequence csq = new StringBuilder(new String(inData, &quot;US-ASCII&quot;));</span>
+
+<span class="fc" id="L225">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L226">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+
+<span class="fc" id="L228">        IOUtils.write(csq, out, &quot;UTF16&quot;);</span>
+<span class="fc" id="L229">        out.off();</span>
+<span class="fc" id="L230">        out.flush();</span>
+
+<span class="fc" id="L232">        byte[] bytes = baout.toByteArray();</span>
+<span class="fc" id="L233">        bytes = new String(bytes, &quot;UTF16&quot;).getBytes(&quot;US-ASCII&quot;);</span>
+<span class="fc" id="L234">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, bytes));</span>
+<span class="fc" id="L235">    }</span>
+
+    @Test
+    public void testWrite_charSequenceToOutputStream_Encoding_nullData() throws Exception {
+<span class="fc" id="L239">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L240">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+
+<span class="fc" id="L242">        IOUtils.write((CharSequence) null, out);</span>
+<span class="fc" id="L243">        out.off();</span>
+<span class="fc" id="L244">        out.flush();</span>
+
+<span class="fc" id="L246">        assertEquals(&quot;Sizes differ&quot;, 0, baout.size());</span>
+<span class="fc" id="L247">    }</span>
+
+    @Test
+    public void testWrite_charSequenceToOutputStream_Encoding_nullStream() throws Exception {
+<span class="fc" id="L251">        final CharSequence csq = new StringBuilder(new String(inData, &quot;US-ASCII&quot;));</span>
+        try {
+<span class="nc" id="L253">            IOUtils.write(csq, (OutputStream) null);</span>
+<span class="nc" id="L254">            fail();</span>
+<span class="fc" id="L255">        } catch (final NullPointerException ignore) {</span>
+<span class="nc" id="L256">        }</span>
+<span class="fc" id="L257">    }</span>
+
+    @Test
+    public void testWrite_charSequenceToOutputStream_nullEncoding() throws Exception {
+<span class="fc" id="L261">        final CharSequence csq = new StringBuilder(new String(inData, &quot;US-ASCII&quot;));</span>
+
+<span class="fc" id="L263">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L264">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+
+<span class="fc" id="L266">        IOUtils.write(csq, out, (String) null);</span>
+<span class="fc" id="L267">        out.off();</span>
+<span class="fc" id="L268">        out.flush();</span>
+
+<span class="fc" id="L270">        assertEquals(&quot;Sizes differ&quot;, inData.length, baout.size());</span>
+<span class="fc" id="L271">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, baout.toByteArray()));</span>
+<span class="fc" id="L272">    }</span>
+
+    //-----------------------------------------------------------------------
+    @Test
+    public void testWrite_charSequenceToWriter() throws Exception {
+<span class="fc" id="L277">        final CharSequence csq = new StringBuilder(new String(inData, &quot;US-ASCII&quot;));</span>
+
+<span class="fc" id="L279">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+        @SuppressWarnings(&quot;resource&quot;) // deliberately not closed
+<span class="fc" id="L281">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+<span class="fc" id="L282">        final Writer writer = new OutputStreamWriter(baout, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L284">        IOUtils.write(csq, writer);</span>
+<span class="fc" id="L285">        out.off();</span>
+<span class="fc" id="L286">        writer.flush();</span>
+
+<span class="fc" id="L288">        assertEquals(&quot;Sizes differ&quot;, inData.length, baout.size());</span>
+<span class="fc" id="L289">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, baout.toByteArray()));</span>
+<span class="fc" id="L290">    }</span>
+
+    @Test
+    public void testWrite_charSequenceToWriter_Encoding_nullData() throws Exception {
+<span class="fc" id="L294">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+        @SuppressWarnings(&quot;resource&quot;) // deliberately not closed
+<span class="fc" id="L296">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+<span class="fc" id="L297">        final Writer writer = new OutputStreamWriter(baout, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L299">        IOUtils.write((CharSequence) null, writer);</span>
+<span class="fc" id="L300">        out.off();</span>
+<span class="fc" id="L301">        writer.flush();</span>
+
+<span class="fc" id="L303">        assertEquals(&quot;Sizes differ&quot;, 0, baout.size());</span>
+<span class="fc" id="L304">    }</span>
+
+    @Test
+    public void testWrite_charSequenceToWriter_Encoding_nullStream() throws Exception {
+<span class="fc" id="L308">        final CharSequence csq = new StringBuilder(new String(inData, &quot;US-ASCII&quot;));</span>
+        try {
+<span class="nc" id="L310">            IOUtils.write(csq, (Writer) null);</span>
+<span class="nc" id="L311">            fail();</span>
+<span class="fc" id="L312">        } catch (final NullPointerException ignore) {</span>
+<span class="nc" id="L313">        }</span>
+<span class="fc" id="L314">    }</span>
+
+    //-----------------------------------------------------------------------
+    @Test
+    public void testWrite_stringToOutputStream() throws Exception {
+<span class="fc" id="L319">        final String str = new String(inData, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L321">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L322">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+
+<span class="fc" id="L324">        IOUtils.write(str, out);</span>
+<span class="fc" id="L325">        out.off();</span>
+<span class="fc" id="L326">        out.flush();</span>
+
+<span class="fc" id="L328">        assertEquals(&quot;Sizes differ&quot;, inData.length, baout.size());</span>
+<span class="fc" id="L329">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, baout.toByteArray()));</span>
+<span class="fc" id="L330">    }</span>
+
+    @Test
+    public void testWrite_stringToOutputStream_nullData() throws Exception {
+<span class="fc" id="L334">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L335">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+
+<span class="fc" id="L337">        IOUtils.write((String) null, out);</span>
+<span class="fc" id="L338">        out.off();</span>
+<span class="fc" id="L339">        out.flush();</span>
+
+<span class="fc" id="L341">        assertEquals(&quot;Sizes differ&quot;, 0, baout.size());</span>
+<span class="fc" id="L342">    }</span>
+
+    @Test
+    public void testWrite_stringToOutputStream_nullStream() throws Exception {
+<span class="fc" id="L346">        final String str = new String(inData, &quot;US-ASCII&quot;);</span>
+        try {
+<span class="nc" id="L348">            IOUtils.write(str, (OutputStream) null);</span>
+<span class="nc" id="L349">            fail();</span>
+<span class="fc" id="L350">        } catch (final NullPointerException ignore) {</span>
+<span class="nc" id="L351">        }</span>
+<span class="fc" id="L352">    }</span>
+
+    //-----------------------------------------------------------------------
+    @Test
+    public void testWrite_stringToOutputStream_Encoding() throws Exception {
+<span class="fc" id="L357">        final String str = new String(inData, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L359">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L360">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+
+<span class="fc" id="L362">        IOUtils.write(str, out, &quot;UTF16&quot;);</span>
+<span class="fc" id="L363">        out.off();</span>
+<span class="fc" id="L364">        out.flush();</span>
+
+<span class="fc" id="L366">        byte[] bytes = baout.toByteArray();</span>
+<span class="fc" id="L367">        bytes = new String(bytes, &quot;UTF16&quot;).getBytes(&quot;US-ASCII&quot;);</span>
+<span class="fc" id="L368">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, bytes));</span>
+<span class="fc" id="L369">    }</span>
+
+    @Test
+    public void testWrite_stringToOutputStream_Encoding_nullData() throws Exception {
+<span class="fc" id="L373">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L374">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+
+<span class="fc" id="L376">        IOUtils.write((String) null, out);</span>
+<span class="fc" id="L377">        out.off();</span>
+<span class="fc" id="L378">        out.flush();</span>
+
+<span class="fc" id="L380">        assertEquals(&quot;Sizes differ&quot;, 0, baout.size());</span>
+<span class="fc" id="L381">    }</span>
+
+    @Test
+    public void testWrite_stringToOutputStream_Encoding_nullStream() throws Exception {
+<span class="fc" id="L385">        final String str = new String(inData, &quot;US-ASCII&quot;);</span>
+        try {
+<span class="nc" id="L387">            IOUtils.write(str, (OutputStream) null);</span>
+<span class="nc" id="L388">            fail();</span>
+<span class="fc" id="L389">        } catch (final NullPointerException ignore) {</span>
+<span class="nc" id="L390">        }</span>
+<span class="fc" id="L391">    }</span>
+
+    @Test
+    public void testWrite_stringToOutputStream_nullEncoding() throws Exception {
+<span class="fc" id="L395">        final String str = new String(inData, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L397">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L398">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+
+<span class="fc" id="L400">        IOUtils.write(str, out, (String) null);</span>
+<span class="fc" id="L401">        out.off();</span>
+<span class="fc" id="L402">        out.flush();</span>
+
+<span class="fc" id="L404">        assertEquals(&quot;Sizes differ&quot;, inData.length, baout.size());</span>
+<span class="fc" id="L405">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, baout.toByteArray()));</span>
+<span class="fc" id="L406">    }</span>
+
+    //-----------------------------------------------------------------------
+    @Test
+    public void testWrite_stringToWriter() throws Exception {
+<span class="fc" id="L411">        final String str = new String(inData, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L413">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+        @SuppressWarnings(&quot;resource&quot;) // deliberately not closed
+<span class="fc" id="L415">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+<span class="fc" id="L416">        final Writer writer = new OutputStreamWriter(baout, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L418">        IOUtils.write(str, writer);</span>
+<span class="fc" id="L419">        out.off();</span>
+<span class="fc" id="L420">        writer.flush();</span>
+
+<span class="fc" id="L422">        assertEquals(&quot;Sizes differ&quot;, inData.length, baout.size());</span>
+<span class="fc" id="L423">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, baout.toByteArray()));</span>
+<span class="fc" id="L424">    }</span>
+
+    @Test
+    public void testWrite_stringToWriter_Encoding_nullData() throws Exception {
+<span class="fc" id="L428">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+        @SuppressWarnings(&quot;resource&quot;) // deliberately not closed
+<span class="fc" id="L430">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+<span class="fc" id="L431">        final Writer writer = new OutputStreamWriter(baout, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L433">        IOUtils.write((String) null, writer);</span>
+<span class="fc" id="L434">        out.off();</span>
+<span class="fc" id="L435">        writer.flush();</span>
+
+<span class="fc" id="L437">        assertEquals(&quot;Sizes differ&quot;, 0, baout.size());</span>
+<span class="fc" id="L438">    }</span>
+
+    @Test
+    public void testWrite_stringToWriter_Encoding_nullStream() throws Exception {
+<span class="fc" id="L442">        final String str = new String(inData, &quot;US-ASCII&quot;);</span>
+        try {
+<span class="nc" id="L444">            IOUtils.write(str, (Writer) null);</span>
+<span class="nc" id="L445">            fail();</span>
+<span class="fc" id="L446">        } catch (final NullPointerException ignore) {</span>
+<span class="nc" id="L447">        }</span>
+<span class="fc" id="L448">    }</span>
+
+    //-----------------------------------------------------------------------
+    @Test
+    public void testWrite_charArrayToOutputStream() throws Exception {
+<span class="fc" id="L453">        final String str = new String(inData, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L455">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L456">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+
+<span class="fc" id="L458">        IOUtils.write(str.toCharArray(), out);</span>
+<span class="fc" id="L459">        out.off();</span>
+<span class="fc" id="L460">        out.flush();</span>
+
+<span class="fc" id="L462">        assertEquals(&quot;Sizes differ&quot;, inData.length, baout.size());</span>
+<span class="fc" id="L463">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, baout.toByteArray()));</span>
+<span class="fc" id="L464">    }</span>
+
+    @Test
+    public void testWrite_charArrayToOutputStream_nullData() throws Exception {
+<span class="fc" id="L468">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L469">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+
+<span class="fc" id="L471">        IOUtils.write((char[]) null, out);</span>
+<span class="fc" id="L472">        out.off();</span>
+<span class="fc" id="L473">        out.flush();</span>
+
+<span class="fc" id="L475">        assertEquals(&quot;Sizes differ&quot;, 0, baout.size());</span>
+<span class="fc" id="L476">    }</span>
+
+    @Test
+    public void testWrite_charArrayToOutputStream_nullStream() throws Exception {
+<span class="fc" id="L480">        final String str = new String(inData, &quot;US-ASCII&quot;);</span>
+        try {
+<span class="nc" id="L482">            IOUtils.write(str.toCharArray(), (OutputStream) null);</span>
+<span class="nc" id="L483">            fail();</span>
+<span class="fc" id="L484">        } catch (final NullPointerException ignore) {</span>
+<span class="nc" id="L485">        }</span>
+<span class="fc" id="L486">    }</span>
+
+    //-----------------------------------------------------------------------
+    @Test
+    public void testWrite_charArrayToOutputStream_Encoding() throws Exception {
+<span class="fc" id="L491">        final String str = new String(inData, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L493">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L494">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+
+<span class="fc" id="L496">        IOUtils.write(str.toCharArray(), out, &quot;UTF16&quot;);</span>
+<span class="fc" id="L497">        out.off();</span>
+<span class="fc" id="L498">        out.flush();</span>
+
+<span class="fc" id="L500">        byte[] bytes = baout.toByteArray();</span>
+<span class="fc" id="L501">        bytes = new String(bytes, &quot;UTF16&quot;).getBytes(&quot;US-ASCII&quot;);</span>
+<span class="fc" id="L502">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, bytes));</span>
+<span class="fc" id="L503">    }</span>
+
+    @Test
+    public void testWrite_charArrayToOutputStream_Encoding_nullData() throws Exception {
+<span class="fc" id="L507">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L508">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+
+<span class="fc" id="L510">        IOUtils.write((char[]) null, out);</span>
+<span class="fc" id="L511">        out.off();</span>
+<span class="fc" id="L512">        out.flush();</span>
+
+<span class="fc" id="L514">        assertEquals(&quot;Sizes differ&quot;, 0, baout.size());</span>
+<span class="fc" id="L515">    }</span>
+
+    @Test
+    public void testWrite_charArrayToOutputStream_Encoding_nullStream() throws Exception {
+<span class="fc" id="L519">        final String str = new String(inData, &quot;US-ASCII&quot;);</span>
+        try {
+<span class="nc" id="L521">            IOUtils.write(str.toCharArray(), (OutputStream) null);</span>
+<span class="nc" id="L522">            fail();</span>
+<span class="fc" id="L523">        } catch (final NullPointerException ignore) {</span>
+<span class="nc" id="L524">        }</span>
+<span class="fc" id="L525">    }</span>
+
+    @Test
+    public void testWrite_charArrayToOutputStream_nullEncoding() throws Exception {
+<span class="fc" id="L529">        final String str = new String(inData, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L531">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L532">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+
+<span class="fc" id="L534">        IOUtils.write(str.toCharArray(), out, (String) null);</span>
+<span class="fc" id="L535">        out.off();</span>
+<span class="fc" id="L536">        out.flush();</span>
+
+<span class="fc" id="L538">        assertEquals(&quot;Sizes differ&quot;, inData.length, baout.size());</span>
+<span class="fc" id="L539">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, baout.toByteArray()));</span>
+<span class="fc" id="L540">    }</span>
+
+    //-----------------------------------------------------------------------
+    @Test
+    public void testWrite_charArrayToWriter() throws Exception {
+<span class="fc" id="L545">        final String str = new String(inData, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L547">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+        @SuppressWarnings(&quot;resource&quot;) // deliberately not closed
+<span class="fc" id="L549">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+<span class="fc" id="L550">        final Writer writer = new OutputStreamWriter(baout, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L552">        IOUtils.write(str.toCharArray(), writer);</span>
+<span class="fc" id="L553">        out.off();</span>
+<span class="fc" id="L554">        writer.flush();</span>
+
+<span class="fc" id="L556">        assertEquals(&quot;Sizes differ&quot;, inData.length, baout.size());</span>
+<span class="fc" id="L557">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, baout.toByteArray()));</span>
+<span class="fc" id="L558">    }</span>
+
+    @Test
+    public void testWrite_charArrayToWriter_Encoding_nullData() throws Exception {
+<span class="fc" id="L562">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+        @SuppressWarnings(&quot;resource&quot;) // deliberately not closed
+<span class="fc" id="L564">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+<span class="fc" id="L565">        final Writer writer = new OutputStreamWriter(baout, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L567">        IOUtils.write((char[]) null, writer);</span>
+<span class="fc" id="L568">        out.off();</span>
+<span class="fc" id="L569">        writer.flush();</span>
+
+<span class="fc" id="L571">        assertEquals(&quot;Sizes differ&quot;, 0, baout.size());</span>
+<span class="fc" id="L572">    }</span>
+
+    @Test
+    public void testWrite_charArrayToWriter_Encoding_nullStream() throws Exception {
+<span class="fc" id="L576">        final String str = new String(inData, &quot;US-ASCII&quot;);</span>
+        try {
+<span class="nc" id="L578">            IOUtils.write(str.toCharArray(), (Writer) null);</span>
+<span class="nc" id="L579">            fail();</span>
+<span class="fc" id="L580">        } catch (final NullPointerException ignore) {</span>
+<span class="nc" id="L581">        }</span>
+<span class="fc" id="L582">    }</span>
+
+    //-----------------------------------------------------------------------
+    @Test
+    public void testWriteLines_OutputStream() throws Exception {
+<span class="fc" id="L587">        final Object[] data = new Object[]{</span>
+                &quot;hello&quot;, new StringBuffer(&quot;world&quot;), &quot;&quot;, &quot;this is&quot;, null, &quot;some text&quot;};
+<span class="fc" id="L589">        final List&lt;Object&gt; list = Arrays.asList(data);</span>
+
+<span class="fc" id="L591">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L592">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, false, true);</span>
+
+<span class="fc" id="L594">        IOUtils.writeLines(list, &quot;*&quot;, out);</span>
+
+<span class="fc" id="L596">        out.off();</span>
+<span class="fc" id="L597">        out.flush();</span>
+
+<span class="fc" id="L599">        final String expected = &quot;hello*world**this is**some text*&quot;;</span>
+<span class="fc" id="L600">        final String actual = baout.toString();</span>
+<span class="fc" id="L601">        assertEquals(expected, actual);</span>
+<span class="fc" id="L602">    }</span>
+
+    @Test
+    public void testWriteLines_OutputStream_nullData() throws Exception {
+<span class="fc" id="L606">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L607">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, false, true);</span>
+
+<span class="fc" id="L609">        IOUtils.writeLines(null, &quot;*&quot;, out);</span>
+<span class="fc" id="L610">        out.off();</span>
+<span class="fc" id="L611">        out.flush();</span>
+
+<span class="fc" id="L613">        assertEquals(&quot;Sizes differ&quot;, 0, baout.size());</span>
+<span class="fc" id="L614">    }</span>
+
+    @Test
+    public void testWriteLines_OutputStream_nullSeparator() throws Exception {
+<span class="fc" id="L618">        final Object[] data = new Object[]{&quot;hello&quot;, &quot;world&quot;};</span>
+<span class="fc" id="L619">        final List&lt;Object&gt; list = Arrays.asList(data);</span>
+
+<span class="fc" id="L621">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L622">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, false, true);</span>
+
+<span class="fc" id="L624">        IOUtils.writeLines(list, null, out);</span>
+<span class="fc" id="L625">        out.off();</span>
+<span class="fc" id="L626">        out.flush();</span>
+
+<span class="fc" id="L628">        final String expected = &quot;hello&quot; + IOUtils.LINE_SEPARATOR + &quot;world&quot; + IOUtils.LINE_SEPARATOR;</span>
+<span class="fc" id="L629">        final String actual = baout.toString();</span>
+<span class="fc" id="L630">        assertEquals(expected, actual);</span>
+<span class="fc" id="L631">    }</span>
+
+    @Test
+    public void testWriteLines_OutputStream_nullStream() throws Exception {
+<span class="fc" id="L635">        final Object[] data = new Object[]{&quot;hello&quot;, &quot;world&quot;};</span>
+<span class="fc" id="L636">        final List&lt;Object&gt; list = Arrays.asList(data);</span>
+        try {
+<span class="nc" id="L638">            IOUtils.writeLines(list, &quot;*&quot;, (OutputStream) null);</span>
+<span class="nc" id="L639">            fail();</span>
+<span class="fc" id="L640">        } catch (final NullPointerException ignore) {</span>
+<span class="nc" id="L641">        }</span>
+<span class="fc" id="L642">    }</span>
+
+    //-----------------------------------------------------------------------
+    @Test
+    public void testWriteLines_OutputStream_Encoding() throws Exception {
+<span class="fc" id="L647">        final Object[] data = new Object[]{</span>
+                &quot;hello\u8364&quot;, new StringBuffer(&quot;world&quot;), &quot;&quot;, &quot;this is&quot;, null, &quot;some text&quot;};
+<span class="fc" id="L649">        final List&lt;Object&gt; list = Arrays.asList(data);</span>
+
+<span class="fc" id="L651">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L652">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, false, true);</span>
+
+<span class="fc" id="L654">        IOUtils.writeLines(list, &quot;*&quot;, out, &quot;UTF-8&quot;);</span>
+
+<span class="fc" id="L656">        out.off();</span>
+<span class="fc" id="L657">        out.flush();</span>
+
+<span class="fc" id="L659">        final String expected = &quot;hello\u8364*world**this is**some text*&quot;;</span>
+<span class="fc" id="L660">        final String actual = baout.toString(&quot;UTF-8&quot;);</span>
+<span class="fc" id="L661">        assertEquals(expected, actual);</span>
+<span class="fc" id="L662">    }</span>
+
+    @Test
+    public void testWriteLines_OutputStream_Encoding_nullData() throws Exception {
+<span class="fc" id="L666">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L667">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, false, true);</span>
+
+<span class="fc" id="L669">        IOUtils.writeLines(null, &quot;*&quot;, out, &quot;US-ASCII&quot;);</span>
+<span class="fc" id="L670">        out.off();</span>
+<span class="fc" id="L671">        out.flush();</span>
+
+<span class="fc" id="L673">        assertEquals(&quot;Sizes differ&quot;, 0, baout.size());</span>
+<span class="fc" id="L674">    }</span>
+
+    @Test
+    public void testWriteLines_OutputStream_Encoding_nullSeparator() throws Exception {
+<span class="fc" id="L678">        final Object[] data = new Object[]{&quot;hello&quot;, &quot;world&quot;};</span>
+<span class="fc" id="L679">        final List&lt;Object&gt; list = Arrays.asList(data);</span>
+
+<span class="fc" id="L681">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L682">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, false, true);</span>
+
+<span class="fc" id="L684">        IOUtils.writeLines(list, null, out, &quot;US-ASCII&quot;);</span>
+<span class="fc" id="L685">        out.off();</span>
+<span class="fc" id="L686">        out.flush();</span>
+
+<span class="fc" id="L688">        final String expected = &quot;hello&quot; + IOUtils.LINE_SEPARATOR + &quot;world&quot; + IOUtils.LINE_SEPARATOR;</span>
+<span class="fc" id="L689">        final String actual = baout.toString();</span>
+<span class="fc" id="L690">        assertEquals(expected, actual);</span>
+<span class="fc" id="L691">    }</span>
+
+    @Test
+    public void testWriteLines_OutputStream_Encoding_nullStream() throws Exception {
+<span class="fc" id="L695">        final Object[] data = new Object[]{&quot;hello&quot;, &quot;world&quot;};</span>
+<span class="fc" id="L696">        final List&lt;Object&gt; list = Arrays.asList(data);</span>
+        try {
+<span class="nc" id="L698">            IOUtils.writeLines(list, &quot;*&quot;, null, &quot;US-ASCII&quot;);</span>
+<span class="nc" id="L699">            fail();</span>
+<span class="fc" id="L700">        } catch (final NullPointerException ignore) {</span>
+<span class="nc" id="L701">        }</span>
+<span class="fc" id="L702">    }</span>
+
+    @Test
+    public void testWriteLines_OutputStream_Encoding_nullEncoding() throws Exception {
+<span class="fc" id="L706">        final Object[] data = new Object[]{</span>
+                &quot;hello&quot;, new StringBuffer(&quot;world&quot;), &quot;&quot;, &quot;this is&quot;, null, &quot;some text&quot;};
+<span class="fc" id="L708">        final List&lt;Object&gt; list = Arrays.asList(data);</span>
+
+<span class="fc" id="L710">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L711">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, false, true);</span>
+
+<span class="fc" id="L713">        IOUtils.writeLines(list, &quot;*&quot;, out, (String) null);</span>
+
+<span class="fc" id="L715">        out.off();</span>
+<span class="fc" id="L716">        out.flush();</span>
+
+<span class="fc" id="L718">        final String expected = &quot;hello*world**this is**some text*&quot;;</span>
+<span class="fc" id="L719">        final String actual = baout.toString();</span>
+<span class="fc" id="L720">        assertEquals(expected, actual);</span>
+<span class="fc" id="L721">    }</span>
+
+    //-----------------------------------------------------------------------
+    @Test
+    public void testWriteLines_Writer() throws Exception {
+<span class="fc" id="L726">        final Object[] data = new Object[]{</span>
+                &quot;hello&quot;, new StringBuffer(&quot;world&quot;), &quot;&quot;, &quot;this is&quot;, null, &quot;some text&quot;};
+<span class="fc" id="L728">        final List&lt;Object&gt; list = Arrays.asList(data);</span>
+
+<span class="fc" id="L730">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+        @SuppressWarnings(&quot;resource&quot;) // deliberately not closed
+<span class="fc" id="L732">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+<span class="fc" id="L733">        final Writer writer = new OutputStreamWriter(baout, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L735">        IOUtils.writeLines(list, &quot;*&quot;, writer);</span>
+
+<span class="fc" id="L737">        out.off();</span>
+<span class="fc" id="L738">        writer.flush();</span>
+
+<span class="fc" id="L740">        final String expected = &quot;hello*world**this is**some text*&quot;;</span>
+<span class="fc" id="L741">        final String actual = baout.toString();</span>
+<span class="fc" id="L742">        assertEquals(expected, actual);</span>
+<span class="fc" id="L743">    }</span>
+
+    @Test
+    public void testWriteLines_Writer_nullData() throws Exception {
+<span class="fc" id="L747">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+        @SuppressWarnings(&quot;resource&quot;) // deliberately not closed
+<span class="fc" id="L749">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+<span class="fc" id="L750">        final Writer writer = new OutputStreamWriter(baout, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L752">        IOUtils.writeLines(null, &quot;*&quot;, writer);</span>
+<span class="fc" id="L753">        out.off();</span>
+<span class="fc" id="L754">        writer.flush();</span>
+
+<span class="fc" id="L756">        assertEquals(&quot;Sizes differ&quot;, 0, baout.size());</span>
+<span class="fc" id="L757">    }</span>
+
+    @Test
+    public void testWriteLines_Writer_nullSeparator() throws Exception {
+<span class="fc" id="L761">        final Object[] data = new Object[]{&quot;hello&quot;, &quot;world&quot;};</span>
+<span class="fc" id="L762">        final List&lt;Object&gt; list = Arrays.asList(data);</span>
+
+<span class="fc" id="L764">        final ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+        @SuppressWarnings(&quot;resource&quot;) // deliberately not closed
+<span class="fc" id="L766">        final YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+<span class="fc" id="L767">        final Writer writer = new OutputStreamWriter(baout, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L769">        IOUtils.writeLines(list, null, writer);</span>
+<span class="fc" id="L770">        out.off();</span>
+<span class="fc" id="L771">        writer.flush();</span>
+
+<span class="fc" id="L773">        final String expected = &quot;hello&quot; + IOUtils.LINE_SEPARATOR + &quot;world&quot; + IOUtils.LINE_SEPARATOR;</span>
+<span class="fc" id="L774">        final String actual = baout.toString();</span>
+<span class="fc" id="L775">        assertEquals(expected, actual);</span>
+<span class="fc" id="L776">    }</span>
+
+    @Test
+    public void testWriteLines_Writer_nullStream() throws Exception {
+<span class="fc" id="L780">        final Object[] data = new Object[]{&quot;hello&quot;, &quot;world&quot;};</span>
+<span class="fc" id="L781">        final List&lt;Object&gt; list = Arrays.asList(data);</span>
+        try {
+<span class="nc" id="L783">            IOUtils.writeLines(list, &quot;*&quot;, (Writer) null);</span>
+<span class="nc" id="L784">            fail();</span>
+<span class="fc" id="L785">        } catch (final NullPointerException ignore) {</span>
+<span class="nc" id="L786">        }</span>
+<span class="fc" id="L787">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>commons-io (Apr 20, 2019 6:11:46 PM)</div></body></html>

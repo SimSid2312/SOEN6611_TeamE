@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>IOUtilsCopyTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.4 (Apr 20, 2019 6:07:50 PM)</a> &gt; <a href="../../index.html" class="el_group">2.4</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io</a> &gt; <span class="el_source">IOUtilsCopyTestCase.java</span></div><h1>IOUtilsCopyTestCase.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.Writer;
+import java.util.Arrays;
+
+import org.apache.commons.io.input.NullInputStream;
+import org.apache.commons.io.input.NullReader;
+import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.apache.commons.io.output.NullOutputStream;
+import org.apache.commons.io.output.NullWriter;
+import org.apache.commons.io.testtools.FileBasedTestCase;
+import org.apache.commons.io.testtools.YellOnCloseInputStream;
+import org.apache.commons.io.testtools.YellOnFlushAndCloseOutputStream;
+
+/**
+ * JUnit tests for IOUtils copy methods.
+ * 
+ * @version $Id$
+ * @see IOUtils
+ */
+public class IOUtilsCopyTestCase extends FileBasedTestCase {
+
+    /*
+     * NOTE this is not particularly beautiful code. A better way to check for
+     * flush and close status would be to implement &quot;trojan horse&quot; wrapper
+     * implementations of the various stream classes, which set a flag when
+     * relevant methods are called. (JT)
+     */
+
+    private static final int FILE_SIZE = 1024 * 4 + 1;
+
+
+<span class="fc" id="L55">    private byte[] inData = generateTestData(FILE_SIZE);</span>
+
+    public IOUtilsCopyTestCase(String testName) {
+<span class="fc" id="L58">        super(testName);</span>
+<span class="fc" id="L59">    }</span>
+
+    // ----------------------------------------------------------------
+    // Setup
+    // ----------------------------------------------------------------
+
+    @Override
+    public void setUp() throws Exception {
+<span class="fc" id="L67">    }</span>
+
+    @Override
+    public void tearDown() throws Exception {
+<span class="fc" id="L71">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testCopy_inputStreamToOutputStream() throws Exception {
+<span class="fc" id="L75">        InputStream in = new ByteArrayInputStream(inData);</span>
+<span class="fc" id="L76">        in = new YellOnCloseInputStream(in);</span>
+
+<span class="fc" id="L78">        ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L79">        OutputStream out = new YellOnFlushAndCloseOutputStream(baout, false, true);</span>
+
+<span class="fc" id="L81">        int count = IOUtils.copy(in, out);</span>
+        
+<span class="fc" id="L83">        assertEquals(&quot;Not all bytes were read&quot;, 0, in.available());</span>
+<span class="fc" id="L84">        assertEquals(&quot;Sizes differ&quot;, inData.length, baout.size());</span>
+<span class="fc" id="L85">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, baout.toByteArray()));</span>
+<span class="fc" id="L86">        assertEquals(inData.length,count);</span>
+<span class="fc" id="L87">    }</span>
+
+    public void testCopy_inputStreamToOutputStream_nullIn() throws Exception {
+<span class="fc" id="L90">        OutputStream out = new ByteArrayOutputStream();</span>
+        try {
+<span class="nc" id="L92">            IOUtils.copy((InputStream) null, out);</span>
+<span class="nc" id="L93">            fail();</span>
+<span class="pc" id="L94">        } catch (NullPointerException ex) {}</span>
+<span class="fc" id="L95">    }</span>
+
+    public void testCopy_inputStreamToOutputStream_nullOut() throws Exception {
+<span class="fc" id="L98">        InputStream in = new ByteArrayInputStream(inData);</span>
+        try {
+<span class="nc" id="L100">            IOUtils.copy(in, (OutputStream) null);</span>
+<span class="nc" id="L101">            fail();</span>
+<span class="pc" id="L102">        } catch (NullPointerException ex) {}</span>
+<span class="fc" id="L103">    }</span>
+
+    /**
+     * Test Copying file &gt; 2GB  - see issue# IO-84
+     */
+    public void testCopy_inputStreamToOutputStream_IO84() throws Exception {
+<span class="fc" id="L109">        long size = (long)Integer.MAX_VALUE + (long)1;</span>
+<span class="fc" id="L110">        InputStream  in  = new NullInputStream(size);</span>
+<span class="fc" id="L111">        OutputStream out = new NullOutputStream();</span>
+
+        // Test copy() method
+<span class="fc" id="L114">        assertEquals(-1, IOUtils.copy(in, out));</span>
+
+        // reset the input
+<span class="fc" id="L117">        in.close();</span>
+
+        // Test copyLarge() method
+<span class="fc" id="L120">        assertEquals(&quot;copyLarge()&quot;, size, IOUtils.copyLarge(in, out));</span>
+<span class="fc" id="L121">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testCopy_inputStreamToWriter() throws Exception {
+<span class="fc" id="L125">        InputStream in = new ByteArrayInputStream(inData);</span>
+<span class="fc" id="L126">        in = new YellOnCloseInputStream(in);</span>
+
+<span class="fc" id="L128">        ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L129">        YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+<span class="fc" id="L130">        Writer writer = new OutputStreamWriter(baout, &quot;US-ASCII&quot;);</span>
+        
+<span class="fc" id="L132">        IOUtils.copy(in, writer);</span>
+<span class="fc" id="L133">        out.off();</span>
+<span class="fc" id="L134">        writer.flush();</span>
+
+<span class="fc" id="L136">        assertEquals(&quot;Not all bytes were read&quot;, 0, in.available());</span>
+<span class="fc" id="L137">        assertEquals(&quot;Sizes differ&quot;, inData.length, baout.size());</span>
+<span class="fc" id="L138">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, baout.toByteArray()));</span>
+<span class="fc" id="L139">    }</span>
+
+    public void testCopy_inputStreamToWriter_nullIn() throws Exception {
+<span class="fc" id="L142">        ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L143">        OutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+<span class="fc" id="L144">        Writer writer = new OutputStreamWriter(out, &quot;US-ASCII&quot;);</span>
+        try {
+<span class="nc" id="L146">            IOUtils.copy((InputStream) null, writer);</span>
+<span class="nc" id="L147">            fail();</span>
+<span class="pc" id="L148">        } catch (NullPointerException ex) {}</span>
+<span class="fc" id="L149">    }</span>
+
+    public void testCopy_inputStreamToWriter_nullOut() throws Exception {
+<span class="fc" id="L152">        InputStream in = new ByteArrayInputStream(inData);</span>
+        try {
+<span class="nc" id="L154">            IOUtils.copy(in, (Writer) null);</span>
+<span class="nc" id="L155">            fail();</span>
+<span class="pc" id="L156">        } catch (NullPointerException ex) {}</span>
+<span class="fc" id="L157">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testCopy_inputStreamToWriter_Encoding() throws Exception {
+<span class="fc" id="L161">        InputStream in = new ByteArrayInputStream(inData);</span>
+<span class="fc" id="L162">        in = new YellOnCloseInputStream(in);</span>
+
+<span class="fc" id="L164">        ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L165">        YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+<span class="fc" id="L166">        Writer writer = new OutputStreamWriter(baout, &quot;US-ASCII&quot;);</span>
+        
+<span class="fc" id="L168">        IOUtils.copy(in, writer, &quot;UTF8&quot;);</span>
+<span class="fc" id="L169">        out.off();</span>
+<span class="fc" id="L170">        writer.flush();</span>
+
+<span class="fc" id="L172">        assertEquals(&quot;Not all bytes were read&quot;, 0, in.available());</span>
+<span class="fc" id="L173">        byte[] bytes = baout.toByteArray();</span>
+<span class="fc" id="L174">        bytes = new String(bytes, &quot;UTF8&quot;).getBytes(&quot;US-ASCII&quot;);</span>
+<span class="fc" id="L175">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, bytes));</span>
+<span class="fc" id="L176">    }</span>
+
+    public void testCopy_inputStreamToWriter_Encoding_nullIn() throws Exception {
+<span class="fc" id="L179">        ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L180">        OutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+<span class="fc" id="L181">        Writer writer = new OutputStreamWriter(out, &quot;US-ASCII&quot;);</span>
+        try {
+<span class="nc" id="L183">            IOUtils.copy((InputStream) null, writer, &quot;UTF8&quot;);</span>
+<span class="nc" id="L184">            fail();</span>
+<span class="pc" id="L185">        } catch (NullPointerException ex) {}</span>
+<span class="fc" id="L186">    }</span>
+
+    public void testCopy_inputStreamToWriter_Encoding_nullOut() throws Exception {
+<span class="fc" id="L189">        InputStream in = new ByteArrayInputStream(inData);</span>
+        try {
+<span class="nc" id="L191">            IOUtils.copy(in, (Writer) null, &quot;UTF8&quot;);</span>
+<span class="nc" id="L192">            fail();</span>
+<span class="pc" id="L193">        } catch (NullPointerException ex) {}</span>
+<span class="fc" id="L194">    }</span>
+
+    public void testCopy_inputStreamToWriter_Encoding_nullEncoding() throws Exception {
+<span class="fc" id="L197">        InputStream in = new ByteArrayInputStream(inData);</span>
+<span class="fc" id="L198">        in = new YellOnCloseInputStream(in);</span>
+
+<span class="fc" id="L200">        ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L201">        YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+<span class="fc" id="L202">        Writer writer = new OutputStreamWriter(baout, &quot;US-ASCII&quot;);</span>
+        
+<span class="fc" id="L204">        IOUtils.copy(in, writer, (String) null);</span>
+<span class="fc" id="L205">        out.off();</span>
+<span class="fc" id="L206">        writer.flush();</span>
+
+<span class="fc" id="L208">        assertEquals(&quot;Not all bytes were read&quot;, 0, in.available());</span>
+<span class="fc" id="L209">        assertEquals(&quot;Sizes differ&quot;, inData.length, baout.size());</span>
+<span class="fc" id="L210">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, baout.toByteArray()));</span>
+<span class="fc" id="L211">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testCopy_readerToOutputStream() throws Exception {
+<span class="fc" id="L215">        InputStream in = new ByteArrayInputStream(inData);</span>
+<span class="fc" id="L216">        in = new YellOnCloseInputStream(in);</span>
+<span class="fc" id="L217">        Reader reader = new InputStreamReader(in, &quot;US-ASCII&quot;);</span>
+        
+<span class="fc" id="L219">        ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L220">        OutputStream out = new YellOnFlushAndCloseOutputStream(baout, false, true);</span>
+        
+<span class="fc" id="L222">        IOUtils.copy(reader, out);</span>
+        //Note: this method *does* flush. It is equivalent to:
+        //  OutputStreamWriter _out = new OutputStreamWriter(fout);
+        //  IOUtils.copy( fin, _out, 4096 ); // copy( Reader, Writer, int );
+        //  _out.flush();
+        //  out = fout;
+
+        // Note: rely on the method to flush
+<span class="fc" id="L230">        assertEquals(&quot;Sizes differ&quot;, inData.length, baout.size());</span>
+<span class="fc" id="L231">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, baout.toByteArray()));</span>
+<span class="fc" id="L232">    }</span>
+
+    public void testCopy_readerToOutputStream_nullIn() throws Exception {
+<span class="fc" id="L235">        ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L236">        OutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+        try {
+<span class="nc" id="L238">            IOUtils.copy((Reader) null, out);</span>
+<span class="nc" id="L239">            fail();</span>
+<span class="pc" id="L240">        } catch (NullPointerException ex) {}</span>
+<span class="fc" id="L241">    }</span>
+
+    public void testCopy_readerToOutputStream_nullOut() throws Exception {
+<span class="fc" id="L244">        InputStream in = new ByteArrayInputStream(inData);</span>
+<span class="fc" id="L245">        in = new YellOnCloseInputStream(in);</span>
+<span class="fc" id="L246">        Reader reader = new InputStreamReader(in, &quot;US-ASCII&quot;);</span>
+        try {
+<span class="nc" id="L248">            IOUtils.copy(reader, (OutputStream) null);</span>
+<span class="nc" id="L249">            fail();</span>
+<span class="pc" id="L250">        } catch (NullPointerException ex) {}</span>
+<span class="fc" id="L251">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testCopy_readerToOutputStream_Encoding() throws Exception {
+<span class="fc" id="L255">        InputStream in = new ByteArrayInputStream(inData);</span>
+<span class="fc" id="L256">        in = new YellOnCloseInputStream(in);</span>
+<span class="fc" id="L257">        Reader reader = new InputStreamReader(in, &quot;US-ASCII&quot;);</span>
+        
+<span class="fc" id="L259">        ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L260">        OutputStream out = new YellOnFlushAndCloseOutputStream(baout, false, true);</span>
+
+<span class="fc" id="L262">        IOUtils.copy(reader, out, &quot;UTF16&quot;);</span>
+        // note: this method *does* flush.
+        // note: we don't flush here; this IOUtils method does it for us
+        
+<span class="fc" id="L266">        byte[] bytes = baout.toByteArray();</span>
+<span class="fc" id="L267">        bytes = new String(bytes, &quot;UTF16&quot;).getBytes(&quot;US-ASCII&quot;);</span>
+<span class="fc" id="L268">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, bytes));</span>
+<span class="fc" id="L269">    }</span>
+
+    public void testCopy_readerToOutputStream_Encoding_nullIn() throws Exception {
+<span class="fc" id="L272">        ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L273">        OutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+        try {
+<span class="nc" id="L275">            IOUtils.copy((Reader) null, out, &quot;UTF16&quot;);</span>
+<span class="nc" id="L276">            fail();</span>
+<span class="pc" id="L277">        } catch (NullPointerException ex) {}</span>
+<span class="fc" id="L278">    }</span>
+
+    public void testCopy_readerToOutputStream_Encoding_nullOut() throws Exception {
+<span class="fc" id="L281">        InputStream in = new ByteArrayInputStream(inData);</span>
+<span class="fc" id="L282">        in = new YellOnCloseInputStream(in);</span>
+<span class="fc" id="L283">        Reader reader = new InputStreamReader(in, &quot;US-ASCII&quot;);</span>
+        try {
+<span class="nc" id="L285">            IOUtils.copy(reader, (OutputStream) null, &quot;UTF16&quot;);</span>
+<span class="nc" id="L286">            fail();</span>
+<span class="pc" id="L287">        } catch (NullPointerException ex) {}</span>
+<span class="fc" id="L288">    }</span>
+
+    public void testCopy_readerToOutputStream_Encoding_nullEncoding() throws Exception {
+<span class="fc" id="L291">        InputStream in = new ByteArrayInputStream(inData);</span>
+<span class="fc" id="L292">        in = new YellOnCloseInputStream(in);</span>
+<span class="fc" id="L293">        Reader reader = new InputStreamReader(in, &quot;US-ASCII&quot;);</span>
+        
+<span class="fc" id="L295">        ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L296">        OutputStream out = new YellOnFlushAndCloseOutputStream(baout, false, true);</span>
+
+<span class="fc" id="L298">        IOUtils.copy(reader, out, (String) null);</span>
+        // note: this method *does* flush.
+        // note: we don't flush here; this IOUtils method does it for us
+
+<span class="fc" id="L302">        assertEquals(&quot;Sizes differ&quot;, inData.length, baout.size());</span>
+<span class="fc" id="L303">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, baout.toByteArray()));</span>
+<span class="fc" id="L304">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testCopy_readerToWriter() throws Exception {
+<span class="fc" id="L308">        InputStream in = new ByteArrayInputStream(inData);</span>
+<span class="fc" id="L309">        in = new YellOnCloseInputStream(in);</span>
+<span class="fc" id="L310">        Reader reader = new InputStreamReader(in, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L312">        ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L313">        YellOnFlushAndCloseOutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+<span class="fc" id="L314">        Writer writer = new OutputStreamWriter(baout, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L316">        int count = IOUtils.copy(reader, writer);</span>
+<span class="fc" id="L317">        out.off();</span>
+<span class="fc" id="L318">        writer.flush();</span>
+<span class="fc" id="L319">        assertEquals(&quot;The number of characters returned by copy is wrong&quot;, inData.length, count);</span>
+<span class="fc" id="L320">        assertEquals(&quot;Sizes differ&quot;, inData.length, baout.size());</span>
+<span class="fc" id="L321">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, baout.toByteArray()));</span>
+<span class="fc" id="L322">    }</span>
+
+    public void testCopy_readerToWriter_nullIn() throws Exception {
+<span class="fc" id="L325">        ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L326">        OutputStream out = new YellOnFlushAndCloseOutputStream(baout, true, true);</span>
+<span class="fc" id="L327">        Writer writer = new OutputStreamWriter(out, &quot;US-ASCII&quot;);</span>
+        try {
+<span class="nc" id="L329">            IOUtils.copy((Reader) null, writer);</span>
+<span class="nc" id="L330">            fail();</span>
+<span class="pc" id="L331">        } catch (NullPointerException ex) {}</span>
+<span class="fc" id="L332">    }</span>
+
+    public void testCopy_readerToWriter_nullOut() throws Exception {
+<span class="fc" id="L335">        InputStream in = new ByteArrayInputStream(inData);</span>
+<span class="fc" id="L336">        in = new YellOnCloseInputStream(in);</span>
+<span class="fc" id="L337">        Reader reader = new InputStreamReader(in, &quot;US-ASCII&quot;);</span>
+        try {
+<span class="nc" id="L339">            IOUtils.copy(reader, (Writer) null);</span>
+<span class="nc" id="L340">            fail();</span>
+<span class="pc" id="L341">        } catch (NullPointerException ex) {}</span>
+<span class="fc" id="L342">    }</span>
+
+    /**
+     * Test Copying file &gt; 2GB  - see issue# IO-84
+     */
+    public void testCopy_readerToWriter_IO84() throws Exception {
+<span class="fc" id="L348">        long size = (long)Integer.MAX_VALUE + (long)1;</span>
+<span class="fc" id="L349">        Reader reader = new NullReader(size);</span>
+<span class="fc" id="L350">        Writer writer = new NullWriter();</span>
+
+        // Test copy() method
+<span class="fc" id="L353">        assertEquals(-1, IOUtils.copy(reader, writer));</span>
+
+        // reset the input
+<span class="fc" id="L356">        reader.close();</span>
+
+        // Test copyLarge() method
+<span class="fc" id="L359">        assertEquals(&quot;copyLarge()&quot;, size, IOUtils.copyLarge(reader, writer));</span>
+
+<span class="fc" id="L361">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.4 (Apr 20, 2019 6:07:50 PM)</div></body></html>

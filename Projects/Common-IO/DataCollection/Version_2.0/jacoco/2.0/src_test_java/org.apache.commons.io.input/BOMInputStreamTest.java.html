@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>BOMInputStreamTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.0 (Apr 20, 2019 6:00:46 PM)</a> &gt; <a href="../../index.html" class="el_group">2.0</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.input</a> &gt; <span class="el_source">BOMInputStreamTest.java</span></div><h1>BOMInputStreamTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.input;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+import junit.framework.TestCase;
+
+import org.apache.commons.io.ByteOrderMark;
+
+/**
+ * Test case for {@link BOMInputStream}.
+ *
+ * @version $Id$
+ */
+<span class="fc" id="L32">public class BOMInputStreamTest extends TestCase {</span>
+    //----------------------------------------------------------------------------
+    //  Support code
+    //----------------------------------------------------------------------------
+
+    /**
+     *  Creates the underlying data stream, with or without BOM.
+     */
+    public InputStream createDataStream(byte[] baseData, boolean addBOM) {
+<span class="fc" id="L41">        byte[] data = baseData;</span>
+<span class="fc bfc" id="L42" title="All 2 branches covered.">        if (addBOM) {</span>
+<span class="fc" id="L43">            data = new byte[baseData.length + 3];</span>
+<span class="fc" id="L44">            data[0] = (byte) 0xEF;</span>
+<span class="fc" id="L45">            data[1] = (byte) 0xBB;</span>
+<span class="fc" id="L46">            data[2] = (byte) 0xBF;</span>
+<span class="fc" id="L47">            System.arraycopy(baseData, 0, data, 3, baseData.length);</span>
+        }
+<span class="fc" id="L49">        return new ByteArrayInputStream(data);</span>
+    }
+
+    private void assertData(byte[] expected, byte[] actual, int off, int len)
+        throws Exception {
+<span class="fc" id="L54">        assertEquals(&quot;length&quot;, expected.length, len);</span>
+<span class="fc bfc" id="L55" title="All 2 branches covered.">        for (int ii = 0; ii &lt; expected.length; ii++) {</span>
+<span class="fc" id="L56">            assertEquals(&quot;byte &quot; + ii, expected[ii], actual[ii]);</span>
+        }
+<span class="fc" id="L58">    }</span>
+
+    /**
+     *  A mock InputStream that expects &lt;code&gt;close()&lt;/code&gt; to be called.
+     */
+    private static class ExpectCloseInputStream extends InputStream {
+        private boolean _closeCalled;
+
+        @Override
+        public void close() throws IOException {
+<span class="fc" id="L68">            _closeCalled = true;</span>
+<span class="fc" id="L69">        }</span>
+
+        @Override
+        public int read() throws IOException {
+<span class="nc" id="L73">            return -1;</span>
+        }
+
+        public void assertCloseCalled() {
+<span class="fc" id="L77">            assertTrue(_closeCalled);</span>
+<span class="fc" id="L78">        }</span>
+    }
+
+    //----------------------------------------------------------------------------
+    //  Test cases
+    //----------------------------------------------------------------------------
+
+    // make sure that our support code works as expected
+    public void testSupportCode() throws Exception {
+<span class="fc" id="L87">        InputStream in = createDataStream(new byte[] { 'A', 'B' }, true);</span>
+<span class="fc" id="L88">        byte[] buf = new byte[1024];</span>
+<span class="fc" id="L89">        int len = in.read(buf);</span>
+<span class="fc" id="L90">        assertEquals(5, len);</span>
+<span class="fc" id="L91">        assertEquals(0xEF, buf[0] &amp; 0xFF);</span>
+<span class="fc" id="L92">        assertEquals(0xBB, buf[1] &amp; 0xFF);</span>
+<span class="fc" id="L93">        assertEquals(0xBF, buf[2] &amp; 0xFF);</span>
+<span class="fc" id="L94">        assertEquals('A', buf[3] &amp; 0xFF);</span>
+<span class="fc" id="L95">        assertEquals('B', buf[4] &amp; 0xFF);</span>
+
+<span class="fc" id="L97">        assertData(</span>
+                new byte[] { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF, 'A', 'B' },
+                buf, 0, len);
+<span class="fc" id="L100">    }</span>
+
+    public void testReadWithoutBOM() throws Exception {
+<span class="fc" id="L103">        byte[] data = new byte[] { 'A', 'B', 'C' };</span>
+<span class="fc" id="L104">        BOMInputStream in = new BOMInputStream(createDataStream(data, false));</span>
+<span class="fc" id="L105">        assertEquals('A', in.read());</span>
+<span class="fc" id="L106">        assertEquals('B', in.read());</span>
+<span class="fc" id="L107">        assertEquals('C', in.read());</span>
+<span class="fc" id="L108">        assertEquals(-1, in.read());</span>
+<span class="fc" id="L109">        assertFalse(&quot;hasBOM()&quot;, in.hasBOM());</span>
+<span class="fc" id="L110">        assertFalse(&quot;hasBOM(UTF-8)&quot;, in.hasBOM(ByteOrderMark.UTF_8));</span>
+<span class="fc" id="L111">        assertNull(&quot;getBOM&quot;, in.getBOM());</span>
+<span class="fc" id="L112">    }</span>
+
+    public void testReadEmpty() throws Exception {
+<span class="fc" id="L115">        byte[] data = new byte[] {};</span>
+<span class="fc" id="L116">        BOMInputStream in = new BOMInputStream(createDataStream(data, false));</span>
+<span class="fc" id="L117">        assertEquals(-1, in.read());</span>
+<span class="fc" id="L118">        assertFalse(&quot;hasBOM()&quot;, in.hasBOM());</span>
+<span class="fc" id="L119">        assertFalse(&quot;hasBOM(UTF-8)&quot;, in.hasBOM(ByteOrderMark.UTF_8));</span>
+<span class="fc" id="L120">        assertNull(&quot;getBOM&quot;, in.getBOM());</span>
+<span class="fc" id="L121">    }</span>
+
+    public void testReadSmall() throws Exception {
+<span class="fc" id="L124">        byte[] data = new byte[] { 'A', 'B' };</span>
+<span class="fc" id="L125">        BOMInputStream in = new BOMInputStream(createDataStream(data, false));</span>
+<span class="fc" id="L126">        assertEquals('A', in.read());</span>
+<span class="fc" id="L127">        assertEquals('B', in.read());</span>
+<span class="fc" id="L128">        assertEquals(-1, in.read());</span>
+<span class="fc" id="L129">        assertFalse(&quot;hasBOM()&quot;, in.hasBOM());</span>
+<span class="fc" id="L130">        assertFalse(&quot;hasBOM(UTF-8)&quot;, in.hasBOM(ByteOrderMark.UTF_8));</span>
+<span class="fc" id="L131">        assertNull(&quot;getBOM&quot;, in.getBOM());</span>
+<span class="fc" id="L132">    }</span>
+
+    public void testReadWithBOM() throws Exception {
+<span class="fc" id="L135">        byte[] data = new byte[] { 'A', 'B', 'C' };</span>
+<span class="fc" id="L136">        BOMInputStream in = new BOMInputStream(createDataStream(data, true));</span>
+<span class="fc" id="L137">        assertEquals('A', in.read());</span>
+<span class="fc" id="L138">        assertEquals('B', in.read());</span>
+<span class="fc" id="L139">        assertEquals('C', in.read());</span>
+<span class="fc" id="L140">        assertEquals(-1, in.read());</span>
+<span class="fc" id="L141">        assertTrue(&quot;hasBOM()&quot;, in.hasBOM());</span>
+<span class="fc" id="L142">        assertTrue(&quot;hasBOM(UTF-8)&quot;, in.hasBOM(ByteOrderMark.UTF_8));</span>
+<span class="fc" id="L143">        assertEquals(&quot;getBOM&quot;, ByteOrderMark.UTF_8, in.getBOM());</span>
+        try {
+<span class="nc" id="L145">            in.hasBOM(ByteOrderMark.UTF_16BE);</span>
+<span class="fc" id="L146">        } catch (IllegalArgumentException e) {</span>
+            // expected - not configured for UTF-16BE
+<span class="nc" id="L148">        }</span>
+<span class="fc" id="L149">    }</span>
+
+    public void testGetBOMFirstThenRead() throws Exception {
+<span class="fc" id="L152">        byte[] data = new byte[] { 'A', 'B', 'C' };</span>
+<span class="fc" id="L153">        BOMInputStream in = new BOMInputStream(createDataStream(data, true));</span>
+<span class="fc" id="L154">        assertEquals(&quot;getBOM&quot;, ByteOrderMark.UTF_8, in.getBOM());</span>
+<span class="fc" id="L155">        assertTrue(&quot;hasBOM()&quot;, in.hasBOM());</span>
+<span class="fc" id="L156">        assertTrue(&quot;hasBOM(UTF-8)&quot;, in.hasBOM(ByteOrderMark.UTF_8));</span>
+<span class="fc" id="L157">        assertEquals('A', in.read());</span>
+<span class="fc" id="L158">        assertEquals('B', in.read());</span>
+<span class="fc" id="L159">        assertEquals('C', in.read());</span>
+<span class="fc" id="L160">        assertEquals(-1, in.read());</span>
+<span class="fc" id="L161">    }</span>
+
+    public void testReadWithBOMInclude() throws Exception {
+<span class="fc" id="L164">        byte[] data = new byte[] { 'A', 'B', 'C' };</span>
+<span class="fc" id="L165">        BOMInputStream in = new BOMInputStream(createDataStream(data, true), true);</span>
+<span class="fc" id="L166">        assertEquals(0xEF, in.read());</span>
+<span class="fc" id="L167">        assertEquals(0xBB, in.read());</span>
+<span class="fc" id="L168">        assertEquals(0xBF, in.read());</span>
+<span class="fc" id="L169">        assertEquals('A', in.read());</span>
+<span class="fc" id="L170">        assertEquals('B', in.read());</span>
+<span class="fc" id="L171">        assertEquals('C', in.read());</span>
+<span class="fc" id="L172">        assertEquals(-1, in.read());</span>
+<span class="fc" id="L173">        assertTrue(&quot;hasBOM()&quot;, in.hasBOM());</span>
+<span class="fc" id="L174">        assertTrue(&quot;hasBOM(UTF-8)&quot;, in.hasBOM(ByteOrderMark.UTF_8));</span>
+<span class="fc" id="L175">        assertEquals(&quot;getBOM&quot;, ByteOrderMark.UTF_8, in.getBOM());</span>
+<span class="fc" id="L176">    }</span>
+
+    public void testGetBOMFirstThenReadInclude() throws Exception {
+<span class="fc" id="L179">        byte[] data = new byte[] { 'A', 'B', 'C' };</span>
+<span class="fc" id="L180">        BOMInputStream in = new BOMInputStream(createDataStream(data, true), true);</span>
+<span class="fc" id="L181">        assertTrue(&quot;hasBOM()&quot;, in.hasBOM());</span>
+<span class="fc" id="L182">        assertTrue(&quot;hasBOM(UTF-8)&quot;, in.hasBOM(ByteOrderMark.UTF_8));</span>
+<span class="fc" id="L183">        assertEquals(&quot;getBOM&quot;, ByteOrderMark.UTF_8, in.getBOM());</span>
+<span class="fc" id="L184">        assertEquals(0xEF, in.read());</span>
+<span class="fc" id="L185">        assertEquals(0xBB, in.read());</span>
+<span class="fc" id="L186">        assertEquals(0xBF, in.read());</span>
+<span class="fc" id="L187">        assertEquals('A', in.read());</span>
+<span class="fc" id="L188">        assertEquals('B', in.read());</span>
+<span class="fc" id="L189">        assertEquals('C', in.read());</span>
+<span class="fc" id="L190">        assertEquals(-1, in.read());</span>
+<span class="fc" id="L191">    }</span>
+
+    public void testReadWithMultipleBOM() throws Exception {
+<span class="fc" id="L194">        byte[] data = new byte[] { 'A', 'B', 'C' };</span>
+<span class="fc" id="L195">        BOMInputStream in = new BOMInputStream(createDataStream(data, true), </span>
+                                            ByteOrderMark.UTF_16BE, ByteOrderMark.UTF_8);
+<span class="fc" id="L197">        assertEquals('A', in.read());</span>
+<span class="fc" id="L198">        assertEquals('B', in.read());</span>
+<span class="fc" id="L199">        assertEquals('C', in.read());</span>
+<span class="fc" id="L200">        assertEquals(-1, in.read());</span>
+<span class="fc" id="L201">        assertTrue(&quot;hasBOM()&quot;, in.hasBOM());</span>
+<span class="fc" id="L202">        assertTrue(&quot;hasBOM(UTF-8)&quot;, in.hasBOM(ByteOrderMark.UTF_8));</span>
+<span class="fc" id="L203">        assertFalse(&quot;hasBOM(UTF-16BE)&quot;, in.hasBOM(ByteOrderMark.UTF_16BE));</span>
+<span class="fc" id="L204">        assertEquals(&quot;getBOM&quot;, ByteOrderMark.UTF_8, in.getBOM());</span>
+<span class="fc" id="L205">    }</span>
+
+    public void testLargeBufferWithoutBOM() throws Exception {
+<span class="fc" id="L208">        byte[] data = new byte[] { 'A', 'B', 'C' };</span>
+<span class="fc" id="L209">        InputStream in = new BOMInputStream(createDataStream(data, false));</span>
+<span class="fc" id="L210">        byte[] buf = new byte[1024];</span>
+<span class="fc" id="L211">        assertData(data, buf, 0, in.read(buf));</span>
+<span class="fc" id="L212">    }</span>
+
+    public void testLargeBufferWithBOM() throws Exception {
+<span class="fc" id="L215">        byte[] data = new byte[] { 'A', 'B', 'C' };</span>
+<span class="fc" id="L216">        InputStream in = new BOMInputStream(createDataStream(data, true));</span>
+<span class="fc" id="L217">        byte[] buf = new byte[1024];</span>
+<span class="fc" id="L218">        assertData(data, buf, 0, in.read(buf));</span>
+<span class="fc" id="L219">    }</span>
+
+    public void testSmallBufferWithoutBOM() throws Exception {
+<span class="fc" id="L222">        byte[] data = new byte[] { 'A', 'B', 'C' };</span>
+<span class="fc" id="L223">        InputStream in = new BOMInputStream(createDataStream(data, false));</span>
+<span class="fc" id="L224">        byte[] buf = new byte[1024];</span>
+<span class="fc" id="L225">        assertData(new byte[] { 'A', 'B' }, buf, 0, in.read(buf, 0, 2));</span>
+<span class="fc" id="L226">        assertData(new byte[] { 'C' }, buf, 0, in.read(buf, 0, 2));</span>
+<span class="fc" id="L227">    }</span>
+
+    public void testSmallBufferWithBOM() throws Exception {
+<span class="fc" id="L230">        byte[] data = new byte[] { 'A', 'B', 'C' };</span>
+<span class="fc" id="L231">        InputStream in = new BOMInputStream(createDataStream(data, true));</span>
+<span class="fc" id="L232">        byte[] buf = new byte[1024];</span>
+<span class="fc" id="L233">        assertData(new byte[] { 'A', 'B' }, buf, 0, in.read(buf, 0, 2));</span>
+<span class="fc" id="L234">        assertData(new byte[] { 'C' }, buf, 0, in.read(buf, 0, 2));</span>
+<span class="fc" id="L235">    }</span>
+
+    public void testLeadingNonBOMSingleRead() throws Exception {
+<span class="fc" id="L238">        byte[] data = new byte[] { (byte) 0xEF, (byte) 0xAB, (byte) 0xCD };</span>
+<span class="fc" id="L239">        InputStream in = new BOMInputStream(createDataStream(data, false));</span>
+<span class="fc" id="L240">        assertEquals(0xEF, in.read());</span>
+<span class="fc" id="L241">        assertEquals(0xAB, in.read());</span>
+<span class="fc" id="L242">        assertEquals(0xCD, in.read());</span>
+<span class="fc" id="L243">        assertEquals(-1, in.read());</span>
+<span class="fc" id="L244">    }</span>
+
+    public void testLeadingNonBOMBufferedRead() throws Exception {
+<span class="fc" id="L247">        byte[] data = new byte[] { (byte) 0xEF, (byte) 0xAB, (byte) 0xCD };</span>
+<span class="fc" id="L248">        InputStream in = new BOMInputStream(createDataStream(data, false));</span>
+<span class="fc" id="L249">        byte[] buf = new byte[1024];</span>
+<span class="fc" id="L250">        assertData(data, buf, 0, in.read(buf));</span>
+<span class="fc" id="L251">    }</span>
+
+    public void testSkipWithoutBOM() throws Exception {
+<span class="fc" id="L254">        byte[] data = new byte[] { 'A', 'B', 'C', 'D' };</span>
+<span class="fc" id="L255">        InputStream in = new BOMInputStream(createDataStream(data, false));</span>
+<span class="fc" id="L256">        in.skip(2L);</span>
+<span class="fc" id="L257">        assertEquals('C', in.read());</span>
+<span class="fc" id="L258">    }</span>
+
+    public void testSkipWithBOM() throws Exception {
+<span class="fc" id="L261">        byte[] data = new byte[] { 'A', 'B', 'C', 'D' };</span>
+<span class="fc" id="L262">        InputStream in = new BOMInputStream(createDataStream(data, true));</span>
+<span class="fc" id="L263">        in.skip(2L);</span>
+<span class="fc" id="L264">        assertEquals('C', in.read());</span>
+<span class="fc" id="L265">    }</span>
+
+    public void testMarkResetAfterReadWithoutBOM() throws Exception {
+<span class="fc" id="L268">        byte[] data = new byte[] { 'A', 'B', 'C', 'D' };</span>
+<span class="fc" id="L269">        InputStream in = new BOMInputStream(createDataStream(data, false));</span>
+<span class="fc" id="L270">        assertTrue(in.markSupported());</span>
+
+<span class="fc" id="L272">        in.read();</span>
+<span class="fc" id="L273">        in.mark(10);</span>
+
+<span class="fc" id="L275">        in.read();</span>
+<span class="fc" id="L276">        in.read();</span>
+<span class="fc" id="L277">        in.reset();</span>
+<span class="fc" id="L278">        assertEquals('B', in.read());</span>
+<span class="fc" id="L279">    }</span>
+
+    public void testMarkResetAfterReadWithBOM() throws Exception {
+<span class="fc" id="L282">        byte[] data = new byte[] { 'A', 'B', 'C', 'D' };</span>
+<span class="fc" id="L283">        InputStream in = new BOMInputStream(createDataStream(data, true));</span>
+<span class="fc" id="L284">        assertTrue(in.markSupported());</span>
+
+<span class="fc" id="L286">        in.read();</span>
+<span class="fc" id="L287">        in.mark(10);</span>
+
+<span class="fc" id="L289">        in.read();</span>
+<span class="fc" id="L290">        in.read();</span>
+<span class="fc" id="L291">        in.reset();</span>
+<span class="fc" id="L292">        assertEquals('B', in.read());</span>
+<span class="fc" id="L293">    }</span>
+
+    public void testMarkResetBeforeReadWithoutBOM() throws Exception {
+<span class="fc" id="L296">        byte[] data = new byte[] { 'A', 'B', 'C', 'D' };</span>
+<span class="fc" id="L297">        InputStream in = new BOMInputStream(createDataStream(data, false));</span>
+<span class="fc" id="L298">        assertTrue(in.markSupported());</span>
+
+<span class="fc" id="L300">        in.mark(10);</span>
+
+<span class="fc" id="L302">        in.read();</span>
+<span class="fc" id="L303">        in.read();</span>
+<span class="fc" id="L304">        in.reset();</span>
+<span class="fc" id="L305">        assertEquals('A', in.read());</span>
+<span class="fc" id="L306">    }</span>
+
+    public void testMarkResetBeforeReadWithBOM() throws Exception {
+<span class="fc" id="L309">        byte[] data = new byte[] { 'A', 'B', 'C', 'D' };</span>
+<span class="fc" id="L310">        InputStream in = new BOMInputStream(createDataStream(data, true));</span>
+<span class="fc" id="L311">        assertTrue(in.markSupported());</span>
+
+<span class="fc" id="L313">        in.mark(10);</span>
+
+<span class="fc" id="L315">        in.read();</span>
+<span class="fc" id="L316">        in.read();</span>
+<span class="fc" id="L317">        in.reset();</span>
+<span class="fc" id="L318">        assertEquals('A', in.read());</span>
+<span class="fc" id="L319">    }</span>
+
+    public void testAvailableWithoutBOM() throws Exception {
+<span class="fc" id="L322">        byte[] data = new byte[] { 'A', 'B', 'C', 'D' };</span>
+<span class="fc" id="L323">        InputStream in = new BOMInputStream(createDataStream(data, false));</span>
+<span class="fc" id="L324">        assertEquals(4, in.available());</span>
+<span class="fc" id="L325">    }</span>
+
+    public void testAvailableWithBOM() throws Exception {
+<span class="fc" id="L328">        byte[] data = new byte[] { 'A', 'B', 'C', 'D' };</span>
+<span class="fc" id="L329">        InputStream in = new BOMInputStream(createDataStream(data, true));</span>
+<span class="fc" id="L330">        assertEquals(7, in.available());</span>
+<span class="fc" id="L331">    }</span>
+
+    public void testNoBoms() throws Exception {
+<span class="fc" id="L334">        byte[] data = new byte[] { 'A', 'B', 'C' };</span>
+        try {
+<span class="nc" id="L336">            new BOMInputStream(createDataStream(data, true), false, (ByteOrderMark[])null);</span>
+<span class="nc" id="L337">            fail(&quot;Null BOMs, expected IllegalArgumentException&quot;);</span>
+<span class="fc" id="L338">        } catch (IllegalArgumentException e) {</span>
+            // expected
+<span class="nc" id="L340">        }</span>
+        try {
+<span class="nc" id="L342">            new BOMInputStream(createDataStream(data, true), false, new ByteOrderMark[0]);</span>
+<span class="nc" id="L343">            fail(&quot;Null BOMs, expected IllegalArgumentException&quot;);</span>
+<span class="fc" id="L344">        } catch (IllegalArgumentException e) {</span>
+            // expected
+<span class="nc" id="L346">        }</span>
+<span class="fc" id="L347">    }</span>
+
+    // this is here for coverage
+    public void testClose() throws Exception {
+<span class="fc" id="L351">        ExpectCloseInputStream del = new ExpectCloseInputStream();</span>
+<span class="fc" id="L352">        InputStream in = new BOMInputStream(del);</span>
+
+<span class="fc" id="L354">        in.close();</span>
+<span class="fc" id="L355">        del.assertCloseCalled();</span>
+<span class="fc" id="L356">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.0 (Apr 20, 2019 6:00:46 PM)</div></body></html>

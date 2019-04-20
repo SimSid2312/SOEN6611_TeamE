@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>SwappedDataInputStreamTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-io (Apr 20, 2019 6:11:46 PM)</a> &gt; <a href="../../index.html" class="el_group">commons-io</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.input</a> &gt; <span class="el_source">SwappedDataInputStreamTest.java</span></div><h1>SwappedDataInputStreamTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.input;
+
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
+
+/**
+ * Test for the SwappedDataInputStream. This also 
+ * effectively tests the underlying EndianUtils Stream methods.
+ *
+ * @version $Id$
+ */
+
+<span class="fc" id="L38">public class SwappedDataInputStreamTest {</span>
+
+    private SwappedDataInputStream sdis;
+    private byte[] bytes;
+
+    @Before
+    public void setUp() {
+<span class="fc" id="L45">        bytes = new byte[] {</span>
+            0x01,
+            0x02,
+            0x03,
+            0x04,
+            0x05,
+            0x06,
+            0x07,
+            0x08
+        };
+<span class="fc" id="L55">        final ByteArrayInputStream bais = new ByteArrayInputStream( bytes );</span>
+<span class="fc" id="L56">        this.sdis = new SwappedDataInputStream( bais );</span>
+<span class="fc" id="L57">    }</span>
+
+    @After
+    public void tearDown() {
+<span class="fc" id="L61">        this.sdis = null;</span>
+<span class="fc" id="L62">    }</span>
+
+    @Test
+    public void testReadBoolean() throws IOException {
+<span class="fc" id="L66">        bytes = new byte[] {</span>
+            0x00,
+            0x01,
+            0x02,
+        };
+<span class="fc" id="L71">        final ByteArrayInputStream bais = new ByteArrayInputStream( bytes );</span>
+<span class="fc" id="L72">        final SwappedDataInputStream sdis = new SwappedDataInputStream( bais );</span>
+<span class="fc" id="L73">        assertEquals( false, sdis.readBoolean() );</span>
+<span class="fc" id="L74">        assertEquals( true, sdis.readBoolean() );</span>
+<span class="fc" id="L75">        assertEquals( true, sdis.readBoolean() );</span>
+<span class="fc" id="L76">        sdis.close();</span>
+<span class="fc" id="L77">    }</span>
+
+    @Test
+    public void testReadByte() throws IOException {
+<span class="fc" id="L81">        assertEquals( 0x01, this.sdis.readByte() );</span>
+<span class="fc" id="L82">    }</span>
+
+    @Test
+    public void testReadChar() throws IOException {
+<span class="fc" id="L86">        assertEquals( (char) 0x0201, this.sdis.readChar() );</span>
+<span class="fc" id="L87">    }</span>
+
+    @Test
+    public void testReadDouble() throws IOException {
+<span class="fc" id="L91">        assertEquals( Double.longBitsToDouble(0x0807060504030201L), this.sdis.readDouble(), 0 );</span>
+<span class="fc" id="L92">    }</span>
+
+    @Test
+    public void testReadFloat() throws IOException {
+<span class="fc" id="L96">        assertEquals( Float.intBitsToFloat(0x04030201), this.sdis.readFloat(), 0 );</span>
+<span class="fc" id="L97">    }</span>
+
+    @Test
+    public void testReadFully() throws IOException {
+<span class="fc" id="L101">        final byte[] bytesIn = new byte[8];</span>
+<span class="fc" id="L102">        this.sdis.readFully(bytesIn);</span>
+<span class="fc bfc" id="L103" title="All 2 branches covered.">        for( int i=0; i&lt;8; i++) {</span>
+<span class="fc" id="L104">            assertEquals( bytes[i], bytesIn[i] );</span>
+        }
+<span class="fc" id="L106">    }</span>
+
+    @Test
+    public void testReadInt() throws IOException {
+<span class="fc" id="L110">        assertEquals( 0x04030201, this.sdis.readInt() );</span>
+<span class="fc" id="L111">    }</span>
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testReadLine() throws IOException {
+<span class="nc" id="L115">        this.sdis.readLine();</span>
+<span class="nc" id="L116">        fail(&quot;readLine should be unsupported. &quot;);</span>
+<span class="nc" id="L117">    }</span>
+
+    @Test
+    public void testReadLong() throws IOException {
+<span class="fc" id="L121">        assertEquals( 0x0807060504030201L, this.sdis.readLong() );</span>
+<span class="fc" id="L122">    }</span>
+
+    @Test
+    public void testReadShort() throws IOException {
+<span class="fc" id="L126">        assertEquals( (short) 0x0201, this.sdis.readShort() );</span>
+<span class="fc" id="L127">    }</span>
+
+    @Test
+    public void testReadUnsignedByte() throws IOException {
+<span class="fc" id="L131">        assertEquals( 0x01, this.sdis.readUnsignedByte() );</span>
+<span class="fc" id="L132">    }</span>
+
+    @Test
+    public void testReadUnsignedShort() throws IOException {
+<span class="fc" id="L136">        assertEquals( (short) 0x0201, this.sdis.readUnsignedShort() );</span>
+<span class="fc" id="L137">    }</span>
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void testReadUTF() throws IOException {
+<span class="nc" id="L141">        this.sdis.readUTF();</span>
+<span class="nc" id="L142">        fail(&quot;readUTF should be unsupported. &quot;);</span>
+<span class="nc" id="L143">    }</span>
+
+    @Test
+    public void testSkipBytes() throws IOException {
+<span class="fc" id="L147">        this.sdis.skipBytes(4);</span>
+<span class="fc" id="L148">        assertEquals( 0x08070605, this.sdis.readInt() );</span>
+<span class="fc" id="L149">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>commons-io (Apr 20, 2019 6:11:46 PM)</div></body></html>

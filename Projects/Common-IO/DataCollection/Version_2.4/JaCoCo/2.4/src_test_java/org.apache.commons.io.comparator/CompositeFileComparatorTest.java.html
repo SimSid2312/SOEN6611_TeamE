@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>CompositeFileComparatorTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.4 (Apr 20, 2019 6:07:50 PM)</a> &gt; <a href="../../index.html" class="el_group">2.4</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.comparator</a> &gt; <span class="el_source">CompositeFileComparatorTest.java</span></div><h1>CompositeFileComparatorTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.comparator;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
+/**
+ * Test case for {@link CompositeFileComparator}.
+ */
+public class CompositeFileComparatorTest extends ComparatorAbstractTestCase {
+
+    /**
+     * Construct a new test case with the specified name.
+     *
+     * @param name Name of the test
+     */
+    public CompositeFileComparatorTest(String name) {
+<span class="fc" id="L35">        super(name);</span>
+<span class="fc" id="L36">    }</span>
+
+    /** @see junit.framework.TestCase#setUp() */
+    @Override
+    protected void setUp() throws Exception {
+<span class="fc" id="L41">        super.setUp();</span>
+<span class="fc" id="L42">        comparator = new CompositeFileComparator(SizeFileComparator.SIZE_COMPARATOR,</span>
+<span class="fc" id="L43">                                                 ExtensionFileComparator.EXTENSION_COMPARATOR);</span>
+<span class="fc" id="L44">        reverse = new ReverseComparator(comparator);</span>
+<span class="fc" id="L45">        File dir = getTestDirectory();</span>
+<span class="fc" id="L46">        lessFile   = new File(dir, &quot;xyz.txt&quot;);</span>
+<span class="fc" id="L47">        equalFile1 = new File(dir, &quot;foo.txt&quot;);</span>
+<span class="fc" id="L48">        equalFile2 = new File(dir, &quot;bar.txt&quot;);</span>
+<span class="fc" id="L49">        moreFile   = new File(dir, &quot;foo.xyz&quot;);</span>
+<span class="fc" id="L50">        createFile(lessFile,   32);</span>
+<span class="fc" id="L51">        createFile(equalFile1, 48);</span>
+<span class="fc" id="L52">        createFile(equalFile2, 48);</span>
+<span class="fc" id="L53">        createFile(moreFile,   48);</span>
+<span class="fc" id="L54">    }</span>
+
+    /**
+     * Test Constructor with null Iterable
+     */
+    public void testConstructorIterable() {
+<span class="fc" id="L60">        List&lt;Comparator&lt;File&gt;&gt; list = new ArrayList&lt;Comparator&lt;File&gt;&gt;();</span>
+<span class="fc" id="L61">        list.add(SizeFileComparator.SIZE_COMPARATOR);</span>
+<span class="fc" id="L62">        list.add(ExtensionFileComparator.EXTENSION_COMPARATOR);</span>
+<span class="fc" id="L63">        Comparator&lt;File&gt; c = new CompositeFileComparator(list);</span>
+
+<span class="fc" id="L65">        assertEquals(&quot;equal&quot;, 0, c.compare(equalFile1, equalFile2));</span>
+<span class="pc bpc" id="L66" title="1 of 2 branches missed.">        assertTrue(&quot;less&quot;,  c.compare(lessFile, moreFile) &lt; 0);</span>
+<span class="pc bpc" id="L67" title="1 of 2 branches missed.">        assertTrue(&quot;more&quot;,  c.compare(moreFile, lessFile) &gt; 0);</span>
+<span class="fc" id="L68">    }</span>
+
+    /**
+     * Test Constructor with null Iterable
+     */
+    public void testConstructorIterableNull() {
+<span class="fc" id="L74">        Comparator&lt;File&gt; c = new CompositeFileComparator((Iterable&lt;Comparator&lt;File&gt;&gt;)null);</span>
+<span class="fc" id="L75">        assertEquals(&quot;less,more&quot;, 0, c.compare(lessFile, moreFile));</span>
+<span class="fc" id="L76">        assertEquals(&quot;more,less&quot;, 0, c.compare(moreFile, lessFile));</span>
+<span class="fc" id="L77">        assertEquals(&quot;toString&quot;, &quot;CompositeFileComparator{}&quot;, c.toString());</span>
+<span class="fc" id="L78">    }</span>
+
+    /**
+     * Test Constructor with null array
+     */
+    public void testConstructorArrayNull() {
+<span class="fc" id="L84">        Comparator&lt;File&gt; c = new CompositeFileComparator((Comparator&lt;File&gt;[])null);</span>
+<span class="fc" id="L85">        assertEquals(&quot;less,more&quot;, 0, c.compare(lessFile, moreFile));</span>
+<span class="fc" id="L86">        assertEquals(&quot;more,less&quot;, 0, c.compare(moreFile, lessFile));</span>
+<span class="fc" id="L87">        assertEquals(&quot;toString&quot;, &quot;CompositeFileComparator{}&quot;, c.toString());</span>
+<span class="fc" id="L88">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.4 (Apr 20, 2019 6:07:50 PM)</div></body></html>

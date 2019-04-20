@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>CopyUtilsTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.0 (Apr 20, 2019 6:00:46 PM)</a> &gt; <a href="../../index.html" class="el_group">2.0</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io</a> &gt; <span class="el_source">CopyUtilsTest.java</span></div><h1>CopyUtilsTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.util.Arrays;
+
+import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.apache.commons.io.testtools.FileBasedTestCase;
+import org.apache.commons.io.testtools.YellOnCloseInputStream;
+import org.apache.commons.io.testtools.YellOnFlushAndCloseOutputStream;
+
+@SuppressWarnings(&quot;deprecation&quot;) // these are test cases for the deprecated CopyUtils
+
+/**
+ * JUnit tests for CopyUtils.
+ * 
+ * @author Jeff Turner
+ * @author Matthew Hawthorne
+ * @author &lt;a href=&quot;mailto:jeremias@apache.org&quot;&gt;Jeremias Maerki&lt;/a&gt;
+ * @version $Id$
+ * @see CopyUtils
+ */
+public class CopyUtilsTest extends FileBasedTestCase {
+
+    /*
+     * NOTE this is not particularly beautiful code. A better way to check for
+     * flush and close status would be to implement &quot;trojan horse&quot; wrapper
+     * implementations of the various stream classes, which set a flag when
+     * relevant methods are called. (JT)
+     */
+
+    private static final int FILE_SIZE = 1024 * 4 + 1;
+
+
+<span class="fc" id="L55">    private byte[] inData = generateTestData(FILE_SIZE);</span>
+
+    public CopyUtilsTest(String testName) {
+<span class="fc" id="L58">        super(testName);</span>
+<span class="fc" id="L59">    }</span>
+
+    // ----------------------------------------------------------------
+    // Setup
+    // ----------------------------------------------------------------
+
+    @Override
+    public void setUp() throws Exception {
+<span class="fc" id="L67">    }</span>
+
+    @Override
+    public void tearDown() throws Exception {
+<span class="fc" id="L71">    }</span>
+
+    // ----------------------------------------------------------------
+    // Tests
+    // ----------------------------------------------------------------
+
+    public void testCtor() {
+<span class="fc" id="L78">        new CopyUtils();</span>
+        // Nothing to assert, the constructor is public and does not blow up.
+<span class="fc" id="L80">    }</span>
+    
+    public void testCopy_byteArrayToOutputStream() throws Exception {
+<span class="fc" id="L83">        ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L84">        OutputStream out = new YellOnFlushAndCloseOutputStream(baout, false, true);</span>
+        
+<span class="fc" id="L86">        CopyUtils.copy(inData, out);</span>
+
+<span class="fc" id="L88">        assertEquals(&quot;Sizes differ&quot;, inData.length, baout.size());</span>
+<span class="fc" id="L89">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, baout.toByteArray()));</span>
+<span class="fc" id="L90">    }</span>
+
+    public void testCopy_byteArrayToWriter() throws Exception {
+<span class="fc" id="L93">        ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L94">        OutputStream out = new YellOnFlushAndCloseOutputStream(baout, false, true);</span>
+<span class="fc" id="L95">        Writer writer = new java.io.OutputStreamWriter(out, &quot;US-ASCII&quot;);</span>
+        
+<span class="fc" id="L97">        CopyUtils.copy(inData, writer);</span>
+<span class="fc" id="L98">        writer.flush();</span>
+
+<span class="fc" id="L100">        assertEquals(&quot;Sizes differ&quot;, inData.length, baout.size());</span>
+<span class="fc" id="L101">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, baout.toByteArray()));</span>
+<span class="fc" id="L102">    }</span>
+
+    public void testCopy_byteArrayToWriterWithEncoding() throws Exception {
+<span class="fc" id="L105">        String inDataStr = &quot;data&quot;;</span>
+<span class="fc" id="L106">        String charsetName = &quot;UTF-8&quot;;</span>
+<span class="fc" id="L107">        StringWriter writer = new StringWriter(); </span>
+<span class="fc" id="L108">        CopyUtils.copy(inDataStr.getBytes(charsetName), writer, charsetName);</span>
+<span class="fc" id="L109">        assertEquals(inDataStr, writer.toString());</span>
+<span class="fc" id="L110">    }</span>
+
+    public void testCopy_inputStreamToOutputStream() throws Exception {
+<span class="fc" id="L113">        InputStream in = new ByteArrayInputStream(inData);</span>
+<span class="fc" id="L114">        in = new YellOnCloseInputStream(in);</span>
+
+<span class="fc" id="L116">        ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L117">        OutputStream out = new YellOnFlushAndCloseOutputStream(baout, false, true);</span>
+
+<span class="fc" id="L119">        int count = CopyUtils.copy(in, out);</span>
+        
+<span class="fc" id="L121">        assertEquals(&quot;Not all bytes were read&quot;, 0, in.available());</span>
+<span class="fc" id="L122">        assertEquals(&quot;Sizes differ&quot;, inData.length, baout.size());</span>
+<span class="fc" id="L123">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, baout.toByteArray()));</span>
+<span class="fc" id="L124">        assertEquals(inData.length, count);</span>
+<span class="fc" id="L125">    }</span>
+
+    public void testCopy_inputStreamToWriter() throws Exception {
+<span class="fc" id="L128">        InputStream in = new ByteArrayInputStream(inData);</span>
+<span class="fc" id="L129">        in = new YellOnCloseInputStream(in);</span>
+
+<span class="fc" id="L131">        ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L132">        OutputStream out = new YellOnFlushAndCloseOutputStream(baout, false, true);</span>
+<span class="fc" id="L133">        Writer writer = new java.io.OutputStreamWriter(out, &quot;US-ASCII&quot;);</span>
+        
+<span class="fc" id="L135">        CopyUtils.copy(in, writer);</span>
+<span class="fc" id="L136">        writer.flush();</span>
+
+<span class="fc" id="L138">        assertEquals(&quot;Not all bytes were read&quot;, 0, in.available());</span>
+<span class="fc" id="L139">        assertEquals(&quot;Sizes differ&quot;, inData.length, baout.size());</span>
+<span class="fc" id="L140">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, baout.toByteArray()));</span>
+<span class="fc" id="L141">    }</span>
+
+    public void testCopy_inputStreamToWriterWithEncoding() throws Exception {
+<span class="fc" id="L144">        String inDataStr = &quot;data&quot;;</span>
+<span class="fc" id="L145">        String charsetName = &quot;UTF-8&quot;;</span>
+<span class="fc" id="L146">        StringWriter writer = new StringWriter();</span>
+<span class="fc" id="L147">        CopyUtils.copy(new ByteArrayInputStream(inDataStr.getBytes(charsetName)), writer, charsetName);</span>
+<span class="fc" id="L148">        assertEquals(inDataStr, writer.toString());</span>
+<span class="fc" id="L149">    }</span>
+
+    public void testCopy_readerToOutputStream() throws Exception {
+<span class="fc" id="L152">        InputStream in = new ByteArrayInputStream(inData);</span>
+<span class="fc" id="L153">        in = new YellOnCloseInputStream(in);</span>
+<span class="fc" id="L154">        Reader reader = new java.io.InputStreamReader(in, &quot;US-ASCII&quot;);</span>
+        
+<span class="fc" id="L156">        ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L157">        OutputStream out = new YellOnFlushAndCloseOutputStream(baout, false, true);</span>
+        
+<span class="fc" id="L159">        CopyUtils.copy(reader, out);</span>
+        //Note: this method *does* flush. It is equivalent to:
+        //  OutputStreamWriter _out = new OutputStreamWriter(fout);
+        //  IOUtils.copy( fin, _out, 4096 ); // copy( Reader, Writer, int );
+        //  _out.flush();
+        //  out = fout;
+
+        // Note: rely on the method to flush
+<span class="fc" id="L167">        assertEquals(&quot;Sizes differ&quot;, inData.length, baout.size());</span>
+<span class="fc" id="L168">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, baout.toByteArray()));</span>
+<span class="fc" id="L169">    }</span>
+
+    public void testCopy_readerToWriter() throws Exception {
+<span class="fc" id="L172">        InputStream in = new ByteArrayInputStream(inData);</span>
+<span class="fc" id="L173">        in = new YellOnCloseInputStream(in);</span>
+<span class="fc" id="L174">        Reader reader = new java.io.InputStreamReader(in, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L176">        ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L177">        OutputStream out = new YellOnFlushAndCloseOutputStream(baout, false, true);</span>
+<span class="fc" id="L178">        Writer writer = new java.io.OutputStreamWriter(out, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L180">        int count = CopyUtils.copy(reader, writer);</span>
+<span class="fc" id="L181">        writer.flush();</span>
+<span class="fc" id="L182">        assertEquals(</span>
+            &quot;The number of characters returned by copy is wrong&quot;,
+            inData.length,
+            count);
+<span class="fc" id="L186">        assertEquals(&quot;Sizes differ&quot;, inData.length, baout.size());</span>
+<span class="fc" id="L187">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, baout.toByteArray()));</span>
+<span class="fc" id="L188">    }</span>
+
+    public void testCopy_stringToOutputStream() throws Exception {
+<span class="fc" id="L191">        String str = new String(inData, &quot;US-ASCII&quot;);</span>
+        
+<span class="fc" id="L193">        ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L194">        OutputStream out = new YellOnFlushAndCloseOutputStream(baout, false, true);</span>
+
+<span class="fc" id="L196">        CopyUtils.copy(str, out);</span>
+        //Note: this method *does* flush. It is equivalent to:
+        //  OutputStreamWriter _out = new OutputStreamWriter(fout);
+        //  IOUtils.copy( str, _out, 4096 ); // copy( Reader, Writer, int );
+        //  _out.flush();
+        //  out = fout;
+        // note: we don't flush here; this IOUtils method does it for us
+
+<span class="fc" id="L204">        assertEquals(&quot;Sizes differ&quot;, inData.length, baout.size());</span>
+<span class="fc" id="L205">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, baout.toByteArray()));</span>
+<span class="fc" id="L206">    }</span>
+
+    public void testCopy_stringToWriter() throws Exception {
+<span class="fc" id="L209">        String str = new String(inData, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L211">        ByteArrayOutputStream baout = new ByteArrayOutputStream();</span>
+<span class="fc" id="L212">        OutputStream out = new YellOnFlushAndCloseOutputStream(baout, false, true);</span>
+<span class="fc" id="L213">        Writer writer = new java.io.OutputStreamWriter(out, &quot;US-ASCII&quot;);</span>
+
+<span class="fc" id="L215">        CopyUtils.copy(str, writer);</span>
+<span class="fc" id="L216">        writer.flush();</span>
+
+<span class="fc" id="L218">        assertEquals(&quot;Sizes differ&quot;, inData.length, baout.size());</span>
+<span class="fc" id="L219">        assertTrue(&quot;Content differs&quot;, Arrays.equals(inData, baout.toByteArray()));</span>
+<span class="fc" id="L220">    }</span>
+
+} // CopyUtilsTest
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.0 (Apr 20, 2019 6:00:46 PM)</div></body></html>

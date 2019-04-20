@@ -1,0 +1,1090 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>IOUtilsTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.4 (Apr 20, 2019 6:07:50 PM)</a> &gt; <a href="../../index.html" class="el_group">2.4</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io</a> &gt; <span class="el_source">IOUtilsTestCase.java</span></div><h1>IOUtilsTestCase.java</h1><pre class="source lang-java linenums"><span class="fc" id="L1">/*</span>
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io;
+
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.CharArrayReader;
+import java.io.CharArrayWriter;
+import java.io.Closeable;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLConnection;
+import java.nio.channels.Selector;
+import java.util.Arrays;
+import java.util.List;
+
+import org.apache.commons.io.testtools.FileBasedTestCase;
+import org.junit.Assert;
+
+/**
+ * This is used to test IOUtils for correctness. The following checks are performed:
+ * &lt;ul&gt;
+ * &lt;li&gt;The return must not be null, must be the same type and equals() to the method's second arg&lt;/li&gt;
+ * &lt;li&gt;All bytes must have been read from the source (available() == 0)&lt;/li&gt;
+ * &lt;li&gt;The source and destination content must be identical (byte-wise comparison check)&lt;/li&gt;
+ * &lt;li&gt;The output stream must not have been closed (a byte/char is written to test this, and subsequent size checked)&lt;/li&gt;
+ * &lt;/ul&gt;
+ * Due to interdependencies in IOUtils and IOUtilsTestlet, one bug may cause multiple tests to fail.
+ */
+public class IOUtilsTestCase extends FileBasedTestCase {
+
+    /** Determine if this is windows. */
+<span class="pc bpc" id="L61" title="1 of 2 branches missed.">    private static final boolean WINDOWS = File.separatorChar == '\\';</span>
+    /*
+     * Note: this is not particularly beautiful code. A better way to check for flush and close status would be to
+     * implement &quot;trojan horse&quot; wrapper implementations of the various stream classes, which set a flag when relevant
+     * methods are called. (JT)
+     */
+
+<span class="fc" id="L68">    private static final int FILE_SIZE = 1024 * 4 + 1;</span>
+
+    private File m_testFile;
+
+    @Override
+    public void setUp() {
+        try {
+<span class="fc" id="L75">            getTestDirectory().mkdirs();</span>
+<span class="fc" id="L76">            m_testFile = new File(getTestDirectory(), &quot;file2-test.txt&quot;);</span>
+
+<span class="fc" id="L78">            createFile(m_testFile, FILE_SIZE);</span>
+<span class="pc" id="L79">        } catch (IOException ioe) {</span>
+<span class="nc" id="L80">            throw new RuntimeException(&quot;Can't run this test because the environment could not be built: &quot;</span>
+<span class="nc" id="L81">                    + ioe.getMessage());</span>
+        }
+        // Create and init a byte array as input data
+<span class="fc" id="L84">        iarr = new byte[200];</span>
+<span class="fc" id="L85">        Arrays.fill( iarr, (byte)-1);</span>
+<span class="fc bfc" id="L86" title="All 2 branches covered.">        for( int i=0; i&lt; 80; i++){</span>
+<span class="fc" id="L87">            iarr[i] = (byte) i;</span>
+        }
+<span class="fc" id="L89">        carr = new char[200];</span>
+<span class="fc" id="L90">        Arrays.fill( carr, (char)-1);</span>
+<span class="fc bfc" id="L91" title="All 2 branches covered.">        for( int i=0; i&lt; 80; i++){</span>
+<span class="fc" id="L92">            carr[i] = (char) i;</span>
+        }
+<span class="fc" id="L94">    }</span>
+
+    @Override
+    public void tearDown() {
+<span class="fc" id="L98">        carr = null;</span>
+<span class="fc" id="L99">        iarr = null;</span>
+        try {
+<span class="fc" id="L101">            FileUtils.deleteDirectory(getTestDirectory());</span>
+<span class="pc" id="L102">        } catch (IOException e) {</span>
+<span class="nc" id="L103">            throw new RuntimeException(&quot;Could not clear up &quot; + getTestDirectory() + &quot;: &quot; + e);</span>
+        }
+<span class="fc" id="L105">    }</span>
+
+    public IOUtilsTestCase(String name) {
+<span class="fc" id="L108">        super(name);</span>
+<span class="fc" id="L109">    }</span>
+
+    public void testCloseQuietlyNullSelector() {
+<span class="fc" id="L112">        Selector selector = null;</span>
+<span class="fc" id="L113">        IOUtils.closeQuietly(selector);</span>
+<span class="fc" id="L114">    }</span>
+
+    public void testCloseableCloseQuietlyOnException() {
+<span class="fc" id="L117">        IOUtils.closeQuietly(new Closeable() {            </span>
+            public void close() throws IOException {
+<span class="fc" id="L119">                throw new IOException();</span>
+            }
+        });
+<span class="fc" id="L122">    }</span>
+
+    public void testSocketCloseQuietlyOnException() {
+<span class="fc" id="L125">        IOUtils.closeQuietly(new Socket() {            </span>
+            @Override
+            public void close() throws IOException {
+<span class="fc" id="L128">                throw new IOException();</span>
+            }
+        });
+<span class="fc" id="L131">    }</span>
+
+    public void testServerSocketCloseQuietlyOnException() throws IOException {
+<span class="fc" id="L134">        IOUtils.closeQuietly(new ServerSocket() {            </span>
+            @Override
+            public void close() throws IOException {
+<span class="fc" id="L137">                throw new IOException();</span>
+            }
+        });
+<span class="fc" id="L140">    }</span>
+
+    public void testSocketCloseQuietly() {
+<span class="fc" id="L143">        IOUtils.closeQuietly((Socket) null);</span>
+<span class="fc" id="L144">        IOUtils.closeQuietly(new Socket());</span>
+<span class="fc" id="L145">    }</span>
+
+    public void testServerSocketCloseQuietly() throws IOException {
+<span class="fc" id="L148">        IOUtils.closeQuietly((ServerSocket) null);</span>
+<span class="fc" id="L149">        IOUtils.closeQuietly(new ServerSocket());</span>
+<span class="fc" id="L150">    }</span>
+
+    public void testCloseQuietlySelector() {
+<span class="fc" id="L153">        Selector selector = null;</span>
+        try {
+<span class="fc" id="L155">            selector = Selector.open();</span>
+<span class="pc" id="L156">        } catch (IOException e) {</span>
+        } finally {
+<span class="fc" id="L158">            IOUtils.closeQuietly(selector);</span>
+        }
+<span class="fc" id="L160">    }</span>
+
+    public void testCloseQuietlySelectorIOException() {
+<span class="fc" id="L163">        Selector selector = new SelectorAdapter() {</span>
+            @Override
+            public void close() throws IOException {
+<span class="fc" id="L166">                throw new IOException();</span>
+            }
+        };
+<span class="fc" id="L169">        IOUtils.closeQuietly(selector);</span>
+<span class="fc" id="L170">    }</span>
+
+    public void testCloseQuietlySelectorTwice() {
+<span class="fc" id="L173">        Selector selector = null;</span>
+        try {
+<span class="fc" id="L175">            selector = Selector.open();</span>
+<span class="pc" id="L176">        } catch (IOException e) {</span>
+        } finally {
+<span class="fc" id="L178">            IOUtils.closeQuietly(selector);</span>
+<span class="fc" id="L179">            IOUtils.closeQuietly(selector);</span>
+        }
+<span class="fc" id="L181">    }</span>
+
+    // -----------------------------------------------------------------------
+    public void testConstants() throws Exception {
+<span class="fc" id="L185">        assertEquals('/', IOUtils.DIR_SEPARATOR_UNIX);</span>
+<span class="fc" id="L186">        assertEquals('\\', IOUtils.DIR_SEPARATOR_WINDOWS);</span>
+<span class="fc" id="L187">        assertEquals(&quot;\n&quot;, IOUtils.LINE_SEPARATOR_UNIX);</span>
+<span class="fc" id="L188">        assertEquals(&quot;\r\n&quot;, IOUtils.LINE_SEPARATOR_WINDOWS);</span>
+<span class="pc bpc" id="L189" title="1 of 2 branches missed.">        if (WINDOWS) {</span>
+<span class="nc" id="L190">            assertEquals('\\', IOUtils.DIR_SEPARATOR);</span>
+<span class="nc" id="L191">            assertEquals(&quot;\r\n&quot;, IOUtils.LINE_SEPARATOR);</span>
+<span class="nc" id="L192">        } else {</span>
+<span class="fc" id="L193">            assertEquals('/', IOUtils.DIR_SEPARATOR);</span>
+<span class="fc" id="L194">            assertEquals(&quot;\n&quot;, IOUtils.LINE_SEPARATOR);</span>
+        }
+<span class="fc" id="L196">    }</span>
+
+    // -----------------------------------------------------------------------
+    /** Assert that the contents of two byte arrays are the same. */
+    private void assertEqualContent(byte[] b0, byte[] b1) {
+<span class="fc" id="L201">        assertTrue(&quot;Content not equal according to java.util.Arrays#equals()&quot;, Arrays.equals(b0, b1));</span>
+<span class="fc" id="L202">    }</span>
+
+    public void testInputStreamToString() throws Exception {
+<span class="fc" id="L205">        FileInputStream fin = new FileInputStream(m_testFile);</span>
+        try {
+<span class="fc" id="L207">            String out = IOUtils.toString(fin);</span>
+<span class="fc" id="L208">            assertNotNull(out);</span>
+<span class="fc" id="L209">            assertEquals(&quot;Not all bytes were read&quot;, 0, fin.available());</span>
+<span class="fc" id="L210">            assertEquals(&quot;Wrong output size&quot;, FILE_SIZE, out.length());</span>
+<span class="fc" id="L211">        } finally {</span>
+<span class="fc" id="L212">            fin.close();</span>
+        }
+<span class="fc" id="L214">    }</span>
+
+    public void testReaderToString() throws Exception {
+<span class="fc" id="L217">        FileReader fin = new FileReader(m_testFile);</span>
+        try {
+<span class="fc" id="L219">            String out = IOUtils.toString(fin);</span>
+<span class="fc" id="L220">            assertNotNull(out);</span>
+<span class="fc" id="L221">            assertEquals(&quot;Wrong output size&quot;, FILE_SIZE, out.length());</span>
+<span class="fc" id="L222">        } finally {</span>
+<span class="fc" id="L223">            fin.close();</span>
+        }
+<span class="fc" id="L225">    }</span>
+
+    @SuppressWarnings(&quot;deprecation&quot;)
+    // testing deprecated method
+    public void testStringToOutputStream() throws Exception {
+<span class="fc" id="L230">        File destination = newFile(&quot;copy5.txt&quot;);</span>
+<span class="fc" id="L231">        FileReader fin = new FileReader(m_testFile);</span>
+        String str;
+        try {
+            // Create our String. Rely on testReaderToString() to make sure this is valid.
+<span class="fc" id="L235">            str = IOUtils.toString(fin);</span>
+<span class="fc" id="L236">        } finally {</span>
+<span class="fc" id="L237">            fin.close();</span>
+        }
+
+<span class="fc" id="L240">        FileOutputStream fout = new FileOutputStream(destination);</span>
+        try {
+<span class="fc" id="L242">            CopyUtils.copy(str, fout);</span>
+            // Note: this method *does* flush. It is equivalent to:
+            // OutputStreamWriter _out = new OutputStreamWriter(fout);
+            // CopyUtils.copy( str, _out, 4096 ); // copy( Reader, Writer, int );
+            // _out.flush();
+            // out = fout;
+            // note: we don't flush here; this IOUtils method does it for us
+
+<span class="fc" id="L250">            checkFile(destination, m_testFile);</span>
+<span class="fc" id="L251">            checkWrite(fout);</span>
+<span class="fc" id="L252">        } finally {</span>
+<span class="fc" id="L253">            fout.close();</span>
+        }
+<span class="fc" id="L255">        deleteFile(destination);</span>
+<span class="fc" id="L256">    }</span>
+
+    @SuppressWarnings(&quot;deprecation&quot;)
+    // testing deprecated method
+    public void testStringToWriter() throws Exception {
+<span class="fc" id="L261">        File destination = newFile(&quot;copy6.txt&quot;);</span>
+<span class="fc" id="L262">        FileReader fin = new FileReader(m_testFile);</span>
+        String str;
+        try {
+            // Create our String. Rely on testReaderToString() to make sure this is valid.
+<span class="fc" id="L266">            str = IOUtils.toString(fin);</span>
+<span class="fc" id="L267">        } finally {</span>
+<span class="fc" id="L268">            fin.close();</span>
+        }
+
+<span class="fc" id="L271">        FileWriter fout = new FileWriter(destination);</span>
+        try {
+<span class="fc" id="L273">            CopyUtils.copy(str, fout);</span>
+<span class="fc" id="L274">            fout.flush();</span>
+
+<span class="fc" id="L276">            checkFile(destination, m_testFile);</span>
+<span class="fc" id="L277">            checkWrite(fout);</span>
+<span class="fc" id="L278">        } finally {</span>
+<span class="fc" id="L279">            fout.close();</span>
+        }
+<span class="fc" id="L281">        deleteFile(destination);</span>
+<span class="fc" id="L282">    }</span>
+
+    public void testToByteArray_Reader() throws IOException {
+<span class="fc" id="L285">        final String charsetName = &quot;UTF-8&quot;;</span>
+<span class="fc" id="L286">        final byte[] expecteds = charsetName.getBytes(charsetName);</span>
+<span class="fc" id="L287">        byte[] actuals = IOUtils.toByteArray(new InputStreamReader(new ByteArrayInputStream(expecteds)));</span>
+<span class="fc" id="L288">        Assert.assertArrayEquals(expecteds, actuals);</span>
+<span class="fc" id="L289">        actuals = IOUtils.toByteArray(new InputStreamReader(new ByteArrayInputStream(expecteds)), charsetName);</span>
+<span class="fc" id="L290">        Assert.assertArrayEquals(expecteds, actuals);</span>
+<span class="fc" id="L291">    }</span>
+    
+    public void testInputStreamToByteArray() throws Exception {
+<span class="fc" id="L294">        FileInputStream fin = new FileInputStream(m_testFile);</span>
+        try {
+<span class="fc" id="L296">            byte[] out = IOUtils.toByteArray(fin);</span>
+<span class="fc" id="L297">            assertNotNull(out);</span>
+<span class="fc" id="L298">            assertEquals(&quot;Not all bytes were read&quot;, 0, fin.available());</span>
+<span class="fc" id="L299">            assertEquals(&quot;Wrong output size&quot;, FILE_SIZE, out.length);</span>
+<span class="fc" id="L300">            assertEqualContent(out, m_testFile);</span>
+<span class="fc" id="L301">        } finally {</span>
+<span class="fc" id="L302">            fin.close();</span>
+        }
+<span class="fc" id="L304">    }</span>
+
+    public void testInputStreamToByteArray_Size() throws Exception {
+<span class="fc" id="L307">        FileInputStream fin = new FileInputStream(m_testFile);</span>
+        try {
+<span class="fc" id="L309">            byte[] out = IOUtils.toByteArray(fin, m_testFile.length());</span>
+<span class="fc" id="L310">            assertNotNull(out);</span>
+<span class="fc" id="L311">            assertEquals(&quot;Not all bytes were read&quot;, 0, fin.available());</span>
+<span class="fc" id="L312">            assertEquals(&quot;Wrong output size: out.length=&quot; + out.length + &quot;!=&quot; + FILE_SIZE, FILE_SIZE, out.length);</span>
+<span class="fc" id="L313">            assertEqualContent(out, m_testFile);</span>
+<span class="fc" id="L314">        } finally {</span>
+<span class="fc" id="L315">            fin.close();</span>
+        }
+<span class="fc" id="L317">    }</span>
+
+    public void testInputStreamToByteArray_NegativeSize() throws Exception {
+<span class="fc" id="L320">        FileInputStream fin = new FileInputStream(m_testFile);</span>
+
+        try {
+<span class="nc" id="L323">            IOUtils.toByteArray(fin, -1);</span>
+<span class="nc" id="L324">            fail(&quot;IllegalArgumentException excepted&quot;);</span>
+<span class="pc" id="L325">        } catch (IllegalArgumentException exc) {</span>
+<span class="fc" id="L326">            assertTrue(&quot;Exception message does not start with \&quot;Size must be equal or greater than zero\&quot;&quot;, exc</span>
+<span class="fc" id="L327">                    .getMessage().startsWith(&quot;Size must be equal or greater than zero&quot;));</span>
+        } finally {
+<span class="fc" id="L329">            fin.close();</span>
+        }
+
+<span class="fc" id="L332">    }</span>
+
+    public void testInputStreamToByteArray_ZeroSize() throws Exception {
+<span class="fc" id="L335">        FileInputStream fin = new FileInputStream(m_testFile);</span>
+
+        try {
+<span class="fc" id="L338">            byte[] out = IOUtils.toByteArray(fin, 0);</span>
+<span class="fc" id="L339">            assertNotNull(&quot;Out cannot be null&quot;, out);</span>
+<span class="fc" id="L340">            assertEquals(&quot;Out length must be 0&quot;, 0, out.length);</span>
+<span class="fc" id="L341">        } finally {</span>
+<span class="fc" id="L342">            fin.close();</span>
+        }
+<span class="fc" id="L344">    }</span>
+
+    public void testInputStreamToByteArray_IllegalSize() throws Exception {
+<span class="fc" id="L347">        FileInputStream fin = new FileInputStream(m_testFile);</span>
+
+        try {
+<span class="nc" id="L350">            IOUtils.toByteArray(fin, m_testFile.length() + 1);</span>
+<span class="nc" id="L351">            fail(&quot;IOException excepted&quot;);</span>
+<span class="pc" id="L352">        } catch (IOException exc) {</span>
+<span class="fc" id="L353">            assertTrue(&quot;Exception message does not start with \&quot;Unexpected readed size\&quot;&quot;,</span>
+<span class="fc" id="L354">                    exc.getMessage().startsWith(&quot;Unexpected readed size&quot;));</span>
+        } finally {
+<span class="fc" id="L356">            fin.close();</span>
+        }
+
+<span class="fc" id="L359">    }</span>
+
+    public void testInputStreamToByteArray_LongSize() throws Exception {
+<span class="fc" id="L362">        FileInputStream fin = new FileInputStream(m_testFile);</span>
+
+        try {
+<span class="nc" id="L365">            IOUtils.toByteArray(fin, (long) Integer.MAX_VALUE + 1);</span>
+<span class="nc" id="L366">            fail(&quot;IOException excepted&quot;);</span>
+<span class="pc" id="L367">        } catch (IllegalArgumentException exc) {</span>
+<span class="fc" id="L368">            assertTrue(&quot;Exception message does not start with \&quot;Size cannot be greater than Integer max value\&quot;&quot;, exc</span>
+<span class="fc" id="L369">                    .getMessage().startsWith(&quot;Size cannot be greater than Integer max value&quot;));</span>
+        } finally {
+<span class="fc" id="L371">            fin.close();</span>
+        }
+
+<span class="fc" id="L374">    }</span>
+
+    public void testInputStreamToBufferedInputStream() throws Exception {
+<span class="fc" id="L377">        FileInputStream fin = new FileInputStream(m_testFile);</span>
+        try {
+<span class="fc" id="L379">            InputStream in = IOUtils.toBufferedInputStream(fin);</span>
+<span class="fc" id="L380">            byte[] out = IOUtils.toByteArray(in);</span>
+<span class="fc" id="L381">            assertNotNull(out);</span>
+<span class="fc" id="L382">            assertEquals(&quot;Not all bytes were read&quot;, 0, fin.available());</span>
+<span class="fc" id="L383">            assertEquals(&quot;Wrong output size&quot;, FILE_SIZE, out.length);</span>
+<span class="fc" id="L384">            assertEqualContent(out, m_testFile);</span>
+<span class="fc" id="L385">        } finally {</span>
+<span class="fc" id="L386">            fin.close();</span>
+        }
+<span class="fc" id="L388">    }</span>
+
+    @SuppressWarnings(&quot;deprecation&quot;)
+    // testing deprecated method
+    public void testStringToByteArray() throws Exception {
+<span class="fc" id="L393">        FileReader fin = new FileReader(m_testFile);</span>
+        try {
+            // Create our String. Rely on testReaderToString() to make sure this is valid.
+<span class="fc" id="L396">            String str = IOUtils.toString(fin);</span>
+
+<span class="fc" id="L398">            byte[] out = IOUtils.toByteArray(str);</span>
+<span class="fc" id="L399">            assertEqualContent(str.getBytes(), out);</span>
+<span class="fc" id="L400">        } finally {</span>
+<span class="fc" id="L401">            fin.close();</span>
+        }
+<span class="fc" id="L403">    }</span>
+
+    @SuppressWarnings(&quot;deprecation&quot;)
+    // testing deprecated method
+    public void testByteArrayToWriter() throws Exception {
+<span class="fc" id="L408">        File destination = newFile(&quot;copy7.txt&quot;);</span>
+<span class="fc" id="L409">        FileInputStream fin = new FileInputStream(m_testFile);</span>
+        byte[] in;
+        try {
+            // Create our byte[]. Rely on testInputStreamToByteArray() to make sure this is valid.
+<span class="fc" id="L413">            in = IOUtils.toByteArray(fin);</span>
+<span class="fc" id="L414">        } finally {</span>
+<span class="fc" id="L415">            fin.close();</span>
+        }
+
+<span class="fc" id="L418">        FileWriter fout = new FileWriter(destination);</span>
+        try {
+<span class="fc" id="L420">            CopyUtils.copy(in, fout);</span>
+<span class="fc" id="L421">            fout.flush();</span>
+<span class="fc" id="L422">            checkFile(destination, m_testFile);</span>
+<span class="fc" id="L423">            checkWrite(fout);</span>
+<span class="fc" id="L424">        } finally {</span>
+<span class="fc" id="L425">            fout.close();</span>
+        }
+<span class="fc" id="L427">        deleteFile(destination);</span>
+<span class="fc" id="L428">    }</span>
+
+    @SuppressWarnings(&quot;deprecation&quot;)
+    // testing deprecated method
+    public void testByteArrayToString() throws Exception {
+<span class="fc" id="L433">        FileInputStream fin = new FileInputStream(m_testFile);</span>
+        try {
+<span class="fc" id="L435">            byte[] in = IOUtils.toByteArray(fin);</span>
+            // Create our byte[]. Rely on testInputStreamToByteArray() to make sure this is valid.
+<span class="fc" id="L437">            String str = IOUtils.toString(in);</span>
+<span class="fc" id="L438">            assertEqualContent(in, str.getBytes());</span>
+<span class="fc" id="L439">        } finally {</span>
+<span class="fc" id="L440">            fin.close();</span>
+        }
+<span class="fc" id="L442">    }</span>
+
+    public void testToByteArrayFromURI() throws Exception {
+<span class="fc" id="L445">        URI url = m_testFile.toURI();</span>
+<span class="fc" id="L446">        byte[] actual = IOUtils.toByteArray(url);</span>
+<span class="fc" id="L447">        Assert.assertEquals(FILE_SIZE, actual.length);</span>
+<span class="fc" id="L448">    }</span>
+
+    public void testToByteArrayFromURL() throws Exception {
+<span class="fc" id="L451">        URL url = m_testFile.toURI().toURL();</span>
+<span class="fc" id="L452">        byte[] actual = IOUtils.toByteArray(url);</span>
+<span class="fc" id="L453">        Assert.assertEquals(FILE_SIZE, actual.length);</span>
+<span class="fc" id="L454">    }</span>
+
+    public void testToByteArrayFromURLConnection() throws Exception {
+<span class="fc" id="L457">        URLConnection urlConn = m_testFile.toURI().toURL().openConnection();</span>
+        byte[] actual;
+        try {
+<span class="fc" id="L460">            actual = IOUtils.toByteArray(urlConn);</span>
+<span class="fc" id="L461">        } finally {</span>
+<span class="fc" id="L462">            IOUtils.close(urlConn);</span>
+        }
+<span class="fc" id="L464">        Assert.assertEquals(FILE_SIZE, actual.length);</span>
+<span class="fc" id="L465">    }</span>
+
+    /**
+     * Test for {@link IOUtils#toInputStream(CharSequence)} and {@link IOUtils#toInputStream(CharSequence, String)}.
+     * Note, this test utilizes on {@link IOUtils#toByteArray(java.io.InputStream)} and so relies on
+     * {@link #testInputStreamToByteArray()} to ensure this method functions correctly.
+     * 
+     * @throws Exception
+     *             on error
+     */
+    public void testCharSequenceToInputStream() throws Exception {
+<span class="fc" id="L476">        CharSequence csq = new StringBuilder(&quot;Abc123Xyz!&quot;);</span>
+<span class="fc" id="L477">        InputStream inStream = IOUtils.toInputStream(csq);</span>
+<span class="fc" id="L478">        byte[] bytes = IOUtils.toByteArray(inStream);</span>
+<span class="fc" id="L479">        assertEqualContent(csq.toString().getBytes(), bytes);</span>
+<span class="fc" id="L480">        inStream = IOUtils.toInputStream(csq, (String) null);</span>
+<span class="fc" id="L481">        bytes = IOUtils.toByteArray(inStream);</span>
+<span class="fc" id="L482">        assertEqualContent(csq.toString().getBytes(), bytes);</span>
+<span class="fc" id="L483">        inStream = IOUtils.toInputStream(csq, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L484">        bytes = IOUtils.toByteArray(inStream);</span>
+<span class="fc" id="L485">        assertEqualContent(csq.toString().getBytes(&quot;UTF-8&quot;), bytes);</span>
+<span class="fc" id="L486">    }</span>
+
+    /**
+     * Test for {@link IOUtils#toInputStream(String)} and {@link IOUtils#toInputStream(String, String)}. Note, this test
+     * utilizes on {@link IOUtils#toByteArray(java.io.InputStream)} and so relies on
+     * {@link #testInputStreamToByteArray()} to ensure this method functions correctly.
+     * 
+     * @throws Exception
+     *             on error
+     */
+    public void testStringToInputStream() throws Exception {
+<span class="fc" id="L497">        String str = &quot;Abc123Xyz!&quot;;</span>
+<span class="fc" id="L498">        InputStream inStream = IOUtils.toInputStream(str);</span>
+<span class="fc" id="L499">        byte[] bytes = IOUtils.toByteArray(inStream);</span>
+<span class="fc" id="L500">        assertEqualContent(str.getBytes(), bytes);</span>
+<span class="fc" id="L501">        inStream = IOUtils.toInputStream(str, (String) null);</span>
+<span class="fc" id="L502">        bytes = IOUtils.toByteArray(inStream);</span>
+<span class="fc" id="L503">        assertEqualContent(str.getBytes(), bytes);</span>
+<span class="fc" id="L504">        inStream = IOUtils.toInputStream(str, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L505">        bytes = IOUtils.toByteArray(inStream);</span>
+<span class="fc" id="L506">        assertEqualContent(str.getBytes(&quot;UTF-8&quot;), bytes);</span>
+<span class="fc" id="L507">    }</span>
+
+    @SuppressWarnings(&quot;deprecation&quot;)
+    // testing deprecated method
+    public void testByteArrayToOutputStream() throws Exception {
+<span class="fc" id="L512">        File destination = newFile(&quot;copy8.txt&quot;);</span>
+<span class="fc" id="L513">        FileInputStream fin = new FileInputStream(m_testFile);</span>
+        byte[] in;
+        try {
+            // Create our byte[]. Rely on testInputStreamToByteArray() to make sure this is valid.
+<span class="fc" id="L517">            in = IOUtils.toByteArray(fin);</span>
+<span class="fc" id="L518">        } finally {</span>
+<span class="fc" id="L519">            fin.close();</span>
+        }
+
+<span class="fc" id="L522">        FileOutputStream fout = new FileOutputStream(destination);</span>
+        try {
+<span class="fc" id="L524">            CopyUtils.copy(in, fout);</span>
+
+<span class="fc" id="L526">            fout.flush();</span>
+
+<span class="fc" id="L528">            checkFile(destination, m_testFile);</span>
+<span class="fc" id="L529">            checkWrite(fout);</span>
+<span class="fc" id="L530">        } finally {</span>
+<span class="fc" id="L531">            fout.close();</span>
+        }
+<span class="fc" id="L533">        deleteFile(destination);</span>
+<span class="fc" id="L534">    }</span>
+
+    public void testInputStreamToCharArray() throws Exception {
+<span class="fc" id="L537">        FileInputStream fin = new FileInputStream(m_testFile);</span>
+        try {
+<span class="fc" id="L539">            char[] out = IOUtils.toCharArray(fin);</span>
+<span class="fc" id="L540">            assertNotNull(out);</span>
+<span class="fc" id="L541">            assertEquals(&quot;Not all chars were read&quot;, 0, fin.available());</span>
+<span class="fc" id="L542">            assertEquals(&quot;Wrong output size&quot;, FILE_SIZE, out.length);</span>
+<span class="fc" id="L543">            assertEqualContent(out, m_testFile);</span>
+<span class="fc" id="L544">        } finally {</span>
+<span class="fc" id="L545">            fin.close();</span>
+        }
+<span class="fc" id="L547">    }</span>
+
+    public void testInputStreamToCharArrayWithEncoding() throws Exception {
+<span class="fc" id="L550">        FileInputStream fin = new FileInputStream(m_testFile);</span>
+        try {
+<span class="fc" id="L552">            char[] out = IOUtils.toCharArray(fin, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L553">            assertNotNull(out);</span>
+<span class="fc" id="L554">            assertEquals(&quot;Not all chars were read&quot;, 0, fin.available());</span>
+<span class="fc" id="L555">            assertEquals(&quot;Wrong output size&quot;, FILE_SIZE, out.length);</span>
+<span class="fc" id="L556">            assertEqualContent(out, m_testFile);</span>
+<span class="fc" id="L557">        } finally {</span>
+<span class="fc" id="L558">            fin.close();</span>
+        }
+<span class="fc" id="L560">    }</span>
+
+    public void testReaderToCharArray() throws Exception {
+<span class="fc" id="L563">        FileReader fr = new FileReader(m_testFile);</span>
+        try {
+<span class="fc" id="L565">            char[] out = IOUtils.toCharArray(fr);</span>
+<span class="fc" id="L566">            assertNotNull(out);</span>
+<span class="fc" id="L567">            assertEquals(&quot;Wrong output size&quot;, FILE_SIZE, out.length);</span>
+<span class="fc" id="L568">            assertEqualContent(out, m_testFile);</span>
+<span class="fc" id="L569">        } finally {</span>
+<span class="fc" id="L570">            fr.close();</span>
+        }
+<span class="fc" id="L572">    }</span>
+
+    // -----------------------------------------------------------------------
+    public void testReadLines_InputStream() throws Exception {
+<span class="fc" id="L576">        File file = newFile(&quot;lines.txt&quot;);</span>
+<span class="fc" id="L577">        InputStream in = null;</span>
+        try {
+<span class="fc" id="L579">            String[] data = new String[] { &quot;hello&quot;, &quot;world&quot;, &quot;&quot;, &quot;this is&quot;, &quot;some text&quot; };</span>
+<span class="fc" id="L580">            createLineBasedFile(file, data);</span>
+
+<span class="fc" id="L582">            in = new FileInputStream(file);</span>
+<span class="fc" id="L583">            List&lt;String&gt; lines = IOUtils.readLines(in);</span>
+<span class="fc" id="L584">            assertEquals(Arrays.asList(data), lines);</span>
+<span class="fc" id="L585">            assertEquals(-1, in.read());</span>
+<span class="fc" id="L586">        } finally {</span>
+<span class="fc" id="L587">            IOUtils.closeQuietly(in);</span>
+<span class="fc" id="L588">            deleteFile(file);</span>
+        }
+<span class="fc" id="L590">    }</span>
+
+    // -----------------------------------------------------------------------
+    public void testReadLines_InputStream_String() throws Exception {
+<span class="fc" id="L594">        File file = newFile(&quot;lines.txt&quot;);</span>
+<span class="fc" id="L595">        InputStream in = null;</span>
+        try {
+<span class="fc" id="L597">            String[] data = new String[] { &quot;hello&quot;, &quot;/u1234&quot;, &quot;&quot;, &quot;this is&quot;, &quot;some text&quot; };</span>
+<span class="fc" id="L598">            createLineBasedFile(file, data);</span>
+
+<span class="fc" id="L600">            in = new FileInputStream(file);</span>
+<span class="fc" id="L601">            List&lt;String&gt; lines = IOUtils.readLines(in, &quot;UTF-8&quot;);</span>
+<span class="fc" id="L602">            assertEquals(Arrays.asList(data), lines);</span>
+<span class="fc" id="L603">            assertEquals(-1, in.read());</span>
+<span class="fc" id="L604">        } finally {</span>
+<span class="fc" id="L605">            IOUtils.closeQuietly(in);</span>
+<span class="fc" id="L606">            deleteFile(file);</span>
+        }
+<span class="fc" id="L608">    }</span>
+
+    // -----------------------------------------------------------------------
+    public void testReadLines_Reader() throws Exception {
+<span class="fc" id="L612">        File file = newFile(&quot;lines.txt&quot;);</span>
+<span class="fc" id="L613">        Reader in = null;</span>
+        try {
+<span class="fc" id="L615">            String[] data = new String[] { &quot;hello&quot;, &quot;/u1234&quot;, &quot;&quot;, &quot;this is&quot;, &quot;some text&quot; };</span>
+<span class="fc" id="L616">            createLineBasedFile(file, data);</span>
+
+<span class="fc" id="L618">            in = new InputStreamReader(new FileInputStream(file));</span>
+<span class="fc" id="L619">            List&lt;String&gt; lines = IOUtils.readLines(in);</span>
+<span class="fc" id="L620">            assertEquals(Arrays.asList(data), lines);</span>
+<span class="fc" id="L621">            assertEquals(-1, in.read());</span>
+<span class="fc" id="L622">        } finally {</span>
+<span class="fc" id="L623">            IOUtils.closeQuietly(in);</span>
+<span class="fc" id="L624">            deleteFile(file);</span>
+        }
+<span class="fc" id="L626">    }</span>
+
+    public void testSkipStream() throws Exception {
+<span class="fc" id="L629">        final int size = 1027;</span>
+
+<span class="fc" id="L631">        InputStream input = new ByteArrayInputStream(new byte[size]);</span>
+        try {
+<span class="nc" id="L633">            IOUtils.skipFully(input, -1);</span>
+<span class="nc" id="L634">            fail(&quot;Should have failed with IllegalArgumentException&quot;);</span>
+<span class="pc" id="L635">        } catch (IllegalArgumentException expected) {</span>
+            // expected
+        }
+<span class="fc" id="L638">        IOUtils.skipFully(input, 0);</span>
+<span class="fc" id="L639">        IOUtils.skipFully(input, size - 1);</span>
+        try {
+<span class="nc" id="L641">            IOUtils.skipFully(input, 2);</span>
+<span class="nc" id="L642">            fail(&quot;Should have failed with IOException&quot;);</span>
+<span class="pc" id="L643">        } catch (IOException expected) {</span>
+            // expected
+        }
+<span class="fc" id="L646">        IOUtils.closeQuietly(input);</span>
+
+<span class="fc" id="L648">    }</span>
+
+    public void testSkipReader() throws Exception {
+<span class="fc" id="L651">        final int size = 1027;</span>
+
+<span class="fc" id="L653">        Reader input = new CharArrayReader(new char[size]);</span>
+<span class="fc" id="L654">        IOUtils.skipFully(input, 0);</span>
+<span class="fc" id="L655">        IOUtils.skipFully(input, size - 3);</span>
+        try {
+<span class="nc" id="L657">            IOUtils.skipFully(input, -1);</span>
+<span class="nc" id="L658">            fail(&quot;Should have failed with IllegalArgumentException&quot;);</span>
+<span class="pc" id="L659">        } catch (IllegalArgumentException expected) {</span>
+            // expected
+        }
+        try {
+<span class="nc" id="L663">            IOUtils.skipFully(input, 5);</span>
+<span class="nc" id="L664">            fail(&quot;Should have failed with IOException&quot;);</span>
+<span class="pc" id="L665">        } catch (IOException expected) {</span>
+            // expected
+        }
+<span class="fc" id="L668">        IOUtils.closeQuietly(input);</span>
+<span class="fc" id="L669">    }</span>
+
+    public void testSkipFileReader() throws Exception {
+<span class="fc" id="L672">        FileReader in = new FileReader(m_testFile);</span>
+        try {
+<span class="fc" id="L674">            assertEquals(FILE_SIZE - 10, IOUtils.skip(in, FILE_SIZE - 10));</span>
+<span class="fc" id="L675">            assertEquals(10, IOUtils.skip(in, 20));</span>
+<span class="fc" id="L676">            assertEquals(0, IOUtils.skip(in, 10));</span>
+<span class="fc" id="L677">        } finally {</span>
+<span class="fc" id="L678">            in.close();</span>
+        }
+<span class="fc" id="L680">    }</span>
+
+    public void testSkipFileInput() throws Exception {
+<span class="fc" id="L683">        InputStream in = new FileInputStream(m_testFile);</span>
+        try {
+<span class="fc" id="L685">            assertEquals(FILE_SIZE - 10, IOUtils.skip(in, FILE_SIZE - 10));</span>
+<span class="fc" id="L686">            assertEquals(10, IOUtils.skip(in, 20));</span>
+<span class="fc" id="L687">            assertEquals(0, IOUtils.skip(in, 10));</span>
+<span class="fc" id="L688">        } finally {</span>
+<span class="fc" id="L689">            in.close();</span>
+        }
+<span class="fc" id="L691">    }</span>
+
+    private void testURIToString(String encoding) throws Exception {
+<span class="fc" id="L694">        URI url = m_testFile.toURI();</span>
+<span class="fc" id="L695">        String out = IOUtils.toString(url, encoding);</span>
+<span class="fc" id="L696">        assertNotNull(out);</span>
+<span class="fc" id="L697">        assertEquals(&quot;Wrong output size&quot;, FILE_SIZE, out.length());</span>
+<span class="fc" id="L698">    }</span>
+
+    public void testURIToStringNoEncoding() throws Exception {
+<span class="fc" id="L701">        URI url = m_testFile.toURI();</span>
+<span class="fc" id="L702">        String out = IOUtils.toString(url);</span>
+<span class="fc" id="L703">        assertNotNull(out);</span>
+<span class="fc" id="L704">        assertEquals(&quot;Wrong output size&quot;, FILE_SIZE, out.length());</span>
+<span class="fc" id="L705">    }</span>
+
+    public void testURIToStringNullEncoding() throws Exception {
+<span class="fc" id="L708">        testURIToString(null);</span>
+<span class="fc" id="L709">    }</span>
+
+    public void testURIToStringUsAciiEncoding() throws Exception {
+<span class="fc" id="L712">        testURIToString(&quot;US-ASCII&quot;);</span>
+<span class="fc" id="L713">    }</span>
+
+    private void testURLToString(String encoding) throws Exception {
+<span class="fc" id="L716">        URL url = m_testFile.toURI().toURL();</span>
+<span class="fc" id="L717">        String out = IOUtils.toString(url, encoding);</span>
+<span class="fc" id="L718">        assertNotNull(out);</span>
+<span class="fc" id="L719">        assertEquals(&quot;Wrong output size&quot;, FILE_SIZE, out.length());</span>
+<span class="fc" id="L720">    }</span>
+
+    public void testURLToStringNoEncoding() throws Exception {
+<span class="fc" id="L723">        URL url = m_testFile.toURI().toURL();</span>
+<span class="fc" id="L724">        String out = IOUtils.toString(url);</span>
+<span class="fc" id="L725">        assertNotNull(out);</span>
+<span class="fc" id="L726">        assertEquals(&quot;Wrong output size&quot;, FILE_SIZE, out.length());</span>
+<span class="fc" id="L727">    }</span>
+
+    public void testURLToStringNullEncoding() throws Exception {
+<span class="fc" id="L730">        testURLToString(null);</span>
+<span class="fc" id="L731">    }</span>
+
+    public void testURLToStringUsAciiEncoding() throws Exception {
+<span class="fc" id="L734">        testURLToString(&quot;US-ASCII&quot;);</span>
+<span class="fc" id="L735">    }</span>
+
+    public void testContentEqualsIgnoreEOL() throws Exception {
+        Reader r1;
+        Reader r2;
+
+<span class="fc" id="L741">        r1 = new CharArrayReader(&quot;&quot;.toCharArray());</span>
+<span class="fc" id="L742">        r2 = new CharArrayReader(&quot;&quot;.toCharArray());</span>
+<span class="fc" id="L743">        assertTrue(IOUtils.contentEqualsIgnoreEOL(r1, r2));</span>
+
+<span class="fc" id="L745">        r1 = new CharArrayReader(&quot;1&quot;.toCharArray());</span>
+<span class="fc" id="L746">        r2 = new CharArrayReader(&quot;1&quot;.toCharArray());</span>
+<span class="fc" id="L747">        assertTrue(IOUtils.contentEqualsIgnoreEOL(r1, r2));</span>
+
+<span class="fc" id="L749">        r1 = new CharArrayReader(&quot;1&quot;.toCharArray());</span>
+<span class="fc" id="L750">        r2 = new CharArrayReader(&quot;2&quot;.toCharArray());</span>
+<span class="fc" id="L751">        assertFalse(IOUtils.contentEqualsIgnoreEOL(r1, r2));</span>
+
+<span class="fc" id="L753">        r1 = new CharArrayReader(&quot;123\rabc&quot;.toCharArray());</span>
+<span class="fc" id="L754">        r2 = new CharArrayReader(&quot;123\nabc&quot;.toCharArray());</span>
+<span class="fc" id="L755">        assertTrue(IOUtils.contentEqualsIgnoreEOL(r1, r2));</span>
+
+<span class="fc" id="L757">        r1 = new CharArrayReader(&quot;321&quot;.toCharArray());</span>
+<span class="fc" id="L758">        r2 = new CharArrayReader(&quot;321\r\n&quot;.toCharArray());</span>
+<span class="fc" id="L759">        assertTrue(IOUtils.contentEqualsIgnoreEOL(r1, r2));</span>
+<span class="fc" id="L760">    }</span>
+
+    public void testContentEqualsReaderReader() throws Exception {
+<span class="fc" id="L763">        assertTrue(IOUtils.contentEquals(new StringReader(&quot;&quot;), new StringReader(&quot;&quot;)));</span>
+<span class="fc" id="L764">        assertTrue(IOUtils.contentEquals(new BufferedReader(new StringReader(&quot;&quot;)), new BufferedReader(new StringReader(&quot;&quot;))));</span>
+<span class="fc" id="L765">        assertTrue(IOUtils.contentEquals(new StringReader(&quot;ABC&quot;), new StringReader(&quot;ABC&quot;)));</span>
+<span class="fc" id="L766">        assertFalse(IOUtils.contentEquals(new StringReader(&quot;ABCD&quot;), new StringReader(&quot;ABC&quot;)));</span>
+<span class="fc" id="L767">        assertFalse(IOUtils.contentEquals(new StringReader(&quot;ABC&quot;), new StringReader(&quot;ABCD&quot;)));</span>
+<span class="fc" id="L768">    }</span>
+
+    public void testReadStream() throws Exception {
+<span class="fc" id="L771">        final int size = 1027;</span>
+
+<span class="fc" id="L773">        byte[] buffer = new byte[size];</span>
+
+<span class="fc" id="L775">        InputStream input = new ByteArrayInputStream(new byte[size]);</span>
+        try {
+<span class="nc" id="L777">            IOUtils.readFully(input, buffer, 0, -1);</span>
+<span class="nc" id="L778">            fail(&quot;Should have failed with IllegalArgumentException&quot;);</span>
+<span class="pc" id="L779">        } catch (IllegalArgumentException expected) {</span>
+            // expected
+        }
+<span class="fc" id="L782">        IOUtils.readFully(input, buffer, 0, 0);</span>
+<span class="fc" id="L783">        IOUtils.readFully(input, buffer, 0, size - 1);</span>
+        try {
+<span class="nc" id="L785">            IOUtils.readFully(input, buffer, 0, 2);</span>
+<span class="nc" id="L786">            fail(&quot;Should have failed with EOFxception&quot;);</span>
+<span class="pc" id="L787">        } catch (EOFException expected) {</span>
+            // expected
+        }
+<span class="fc" id="L790">        IOUtils.closeQuietly(input);</span>
+
+<span class="fc" id="L792">    }</span>
+
+    public void testReadReader() throws Exception {
+<span class="fc" id="L795">        final int size = 1027;</span>
+
+<span class="fc" id="L797">        char[] buffer = new char[size];</span>
+
+<span class="fc" id="L799">        Reader input = new CharArrayReader(new char[size]);</span>
+<span class="fc" id="L800">        IOUtils.readFully(input, buffer, 0, 0);</span>
+<span class="fc" id="L801">        IOUtils.readFully(input, buffer, 0, size - 3);</span>
+        try {
+<span class="nc" id="L803">            IOUtils.readFully(input, buffer, 0, -1);</span>
+<span class="nc" id="L804">            fail(&quot;Should have failed with IllegalArgumentException&quot;);</span>
+<span class="pc" id="L805">        } catch (IllegalArgumentException expected) {</span>
+            // expected
+        }
+        try {
+<span class="nc" id="L809">            IOUtils.readFully(input, buffer, 0, 5);</span>
+<span class="nc" id="L810">            fail(&quot;Should have failed with EOFException&quot;);</span>
+<span class="pc" id="L811">        } catch (EOFException expected) {</span>
+            // expected
+        }
+<span class="fc" id="L814">        IOUtils.closeQuietly(input);</span>
+<span class="fc" id="L815">    }</span>
+    
+    public void testReadReaderWithOffset() throws Exception {
+<span class="fc" id="L818">        Reader reader = new StringReader(&quot;abcd1234&quot;);</span>
+<span class="fc" id="L819">        char[] buffer = &quot;wx00000000&quot;.toCharArray();</span>
+<span class="fc" id="L820">        IOUtils.readFully(reader, buffer, 2, 8);</span>
+<span class="fc" id="L821">        assertEquals(&quot;wxabcd1234&quot;, new String(buffer));</span>
+<span class="fc" id="L822">        IOUtils.closeQuietly(reader);</span>
+<span class="fc" id="L823">    }</span>
+    
+    public void testReadStreamWithOffset() throws Exception {
+<span class="fc" id="L826">        byte[] bytes = &quot;abcd1234&quot;.getBytes(&quot;UTF-8&quot;);</span>
+<span class="fc" id="L827">        ByteArrayInputStream stream = new ByteArrayInputStream(bytes);</span>
+<span class="fc" id="L828">        byte[] buffer = &quot;wx00000000&quot;.getBytes(&quot;UTF-8&quot;);</span>
+<span class="fc" id="L829">        IOUtils.readFully(stream, buffer, 2, 8);</span>
+<span class="fc" id="L830">        assertEquals(&quot;wxabcd1234&quot;, new String(buffer, 0, buffer.length, &quot;UTF-8&quot;));</span>
+<span class="fc" id="L831">        IOUtils.closeQuietly(stream);</span>
+<span class="fc" id="L832">    }</span>
+
+    // Tests from IO-305
+    
+<span class="fc" id="L836">    private byte[] iarr = null;</span>
+    
+    public void testNoSkip() throws IOException {
+<span class="fc" id="L839">        ByteArrayInputStream is = null;</span>
+<span class="fc" id="L840">        ByteArrayOutputStream os = null;</span>
+        try {
+            // Create streams
+<span class="fc" id="L843">            is = new ByteArrayInputStream( iarr);</span>
+<span class="fc" id="L844">            os = new ByteArrayOutputStream();</span>
+
+            // Test our copy method 
+<span class="fc" id="L847">            assertEquals(100, IOUtils.copyLarge( is, os, 0, 100));</span>
+<span class="fc" id="L848">            byte[] oarr = os.toByteArray();</span>
+            
+            // check that output length is correct
+<span class="fc" id="L851">            assertEquals( 100, oarr.length );</span>
+            // check that output data corresponds to input data
+<span class="fc" id="L853">            assertEquals( 1, oarr[1] );</span>
+<span class="fc" id="L854">            assertEquals( 79, oarr[79] );</span>
+<span class="fc" id="L855">            assertEquals( -1, oarr[80] );</span>
+            
+<span class="fc" id="L857">        }</span>
+        finally {
+<span class="fc" id="L859">            IOUtils.closeQuietly(is);</span>
+<span class="fc" id="L860">            IOUtils.closeQuietly(os);</span>
+        }
+<span class="fc" id="L862">    }</span>
+
+    public void testSkip() throws IOException {
+<span class="fc" id="L865">        ByteArrayInputStream is = null;</span>
+<span class="fc" id="L866">        ByteArrayOutputStream os = null;</span>
+        try {
+            // Create streams
+<span class="fc" id="L869">            is = new ByteArrayInputStream( iarr);</span>
+<span class="fc" id="L870">            os = new ByteArrayOutputStream();</span>
+
+            // Test our copy method 
+<span class="fc" id="L873">            assertEquals(100, IOUtils.copyLarge( is, os, 10, 100));</span>
+<span class="fc" id="L874">            byte[] oarr = os.toByteArray();</span>
+            
+            // check that output length is correct
+<span class="fc" id="L877">            assertEquals( 100, oarr.length );</span>
+            // check that output data corresponds to input data
+<span class="fc" id="L879">            assertEquals( 11, oarr[1] );</span>
+<span class="fc" id="L880">            assertEquals( 79, oarr[69] );</span>
+<span class="fc" id="L881">            assertEquals( -1, oarr[70] );</span>
+            
+<span class="fc" id="L883">        }</span>
+        finally {
+<span class="fc" id="L885">            IOUtils.closeQuietly(is);</span>
+<span class="fc" id="L886">            IOUtils.closeQuietly(os);</span>
+        }
+<span class="fc" id="L888">    }</span>
+
+    public void testSkipInvalid() throws IOException {
+<span class="fc" id="L891">        ByteArrayInputStream is = null;</span>
+<span class="fc" id="L892">        ByteArrayOutputStream os = null;</span>
+        try {
+            // Create streams
+<span class="fc" id="L895">            is = new ByteArrayInputStream( iarr);</span>
+<span class="fc" id="L896">            os = new ByteArrayOutputStream();</span>
+
+            // Test our copy method 
+<span class="nc" id="L899">            IOUtils.copyLarge( is, os, 1000, 100);</span>
+<span class="nc" id="L900">            fail( &quot;Should have thrown EOFException&quot;);</span>
+<span class="nc" id="L901">        }</span>
+<span class="fc" id="L902">        catch( EOFException eofe){</span>
+        }
+        finally {
+<span class="fc" id="L905">            IOUtils.closeQuietly(is);</span>
+<span class="fc" id="L906">            IOUtils.closeQuietly(os);</span>
+        }
+<span class="fc" id="L908">    }</span>
+
+    public void testFullLength() throws IOException {
+<span class="fc" id="L911">        ByteArrayInputStream is = null;</span>
+<span class="fc" id="L912">        ByteArrayOutputStream os = null;</span>
+        try {
+            // Create streams
+<span class="fc" id="L915">            is = new ByteArrayInputStream( iarr);</span>
+<span class="fc" id="L916">            os = new ByteArrayOutputStream();</span>
+
+            // Test our copy method 
+<span class="fc" id="L919">            assertEquals(200, IOUtils.copyLarge( is, os, 0, -1));</span>
+<span class="fc" id="L920">            byte[] oarr = os.toByteArray();</span>
+            
+            // check that output length is correct
+<span class="fc" id="L923">            assertEquals( 200, oarr.length );</span>
+            // check that output data corresponds to input data
+<span class="fc" id="L925">            assertEquals( 1, oarr[1] );</span>
+<span class="fc" id="L926">            assertEquals( 79, oarr[79] );</span>
+<span class="fc" id="L927">            assertEquals( -1, oarr[80] );</span>
+            
+<span class="fc" id="L929">        }</span>
+        finally {
+<span class="fc" id="L931">            IOUtils.closeQuietly(is);</span>
+<span class="fc" id="L932">            IOUtils.closeQuietly(os);</span>
+        }
+<span class="fc" id="L934">    }</span>
+
+    public void testExtraLength() throws IOException {
+<span class="fc" id="L937">        ByteArrayInputStream is = null;</span>
+<span class="fc" id="L938">        ByteArrayOutputStream os = null;</span>
+        try {
+            // Create streams
+<span class="fc" id="L941">            is = new ByteArrayInputStream( iarr);</span>
+<span class="fc" id="L942">            os = new ByteArrayOutputStream();</span>
+
+            // Test our copy method
+            // for extra length, it reads till EOF
+<span class="fc" id="L946">            assertEquals(200, IOUtils.copyLarge( is, os, 0, 2000));</span>
+<span class="fc" id="L947">            byte[] oarr = os.toByteArray();</span>
+            
+            // check that output length is correct
+<span class="fc" id="L950">            assertEquals( 200, oarr.length );</span>
+            // check that output data corresponds to input data
+<span class="fc" id="L952">            assertEquals( 1, oarr[1] );</span>
+<span class="fc" id="L953">            assertEquals( 79, oarr[79] );</span>
+<span class="fc" id="L954">            assertEquals( -1, oarr[80] );</span>
+            
+<span class="fc" id="L956">        }</span>
+        finally {
+<span class="fc" id="L958">            IOUtils.closeQuietly(is);</span>
+<span class="fc" id="L959">            IOUtils.closeQuietly(os);</span>
+        }
+<span class="fc" id="L961">    }</span>
+
+<span class="fc" id="L963">    private char[] carr = null;</span>
+
+    public void testCharNoSkip() throws IOException {
+<span class="fc" id="L966">        CharArrayReader is = null;</span>
+<span class="fc" id="L967">        CharArrayWriter os = null;</span>
+        try {
+            // Create streams
+<span class="fc" id="L970">            is = new CharArrayReader( carr);</span>
+<span class="fc" id="L971">            os = new CharArrayWriter();</span>
+
+            // Test our copy method 
+<span class="fc" id="L974">            assertEquals(100, IOUtils.copyLarge( is, os, 0, 100));</span>
+<span class="fc" id="L975">            char[] oarr = os.toCharArray();</span>
+            
+            // check that output length is correct
+<span class="fc" id="L978">            assertEquals( 100, oarr.length );</span>
+            // check that output data corresponds to input data
+<span class="fc" id="L980">            assertEquals( 1, oarr[1] );</span>
+<span class="fc" id="L981">            assertEquals( 79, oarr[79] );</span>
+<span class="fc" id="L982">            assertEquals((char) -1, oarr[80] );</span>
+            
+<span class="fc" id="L984">        }</span>
+        finally {
+<span class="fc" id="L986">            IOUtils.closeQuietly(is);</span>
+<span class="fc" id="L987">            IOUtils.closeQuietly(os);</span>
+        }
+<span class="fc" id="L989">    }</span>
+
+    public void testCharSkip() throws IOException {
+<span class="fc" id="L992">        CharArrayReader is = null;</span>
+<span class="fc" id="L993">        CharArrayWriter os = null;</span>
+        try {
+            // Create streams
+<span class="fc" id="L996">            is = new CharArrayReader( carr);</span>
+<span class="fc" id="L997">            os = new CharArrayWriter();</span>
+
+            // Test our copy method 
+<span class="fc" id="L1000">            assertEquals(100, IOUtils.copyLarge( is, os, 10, 100));</span>
+<span class="fc" id="L1001">            char[] oarr = os.toCharArray();</span>
+            
+            // check that output length is correct
+<span class="fc" id="L1004">            assertEquals( 100, oarr.length );</span>
+            // check that output data corresponds to input data
+<span class="fc" id="L1006">            assertEquals( 11, oarr[1] );</span>
+<span class="fc" id="L1007">            assertEquals( 79, oarr[69] );</span>
+<span class="fc" id="L1008">            assertEquals((char) -1, oarr[70] );</span>
+            
+<span class="fc" id="L1010">        }</span>
+        finally {
+<span class="fc" id="L1012">            IOUtils.closeQuietly(is);</span>
+<span class="fc" id="L1013">            IOUtils.closeQuietly(os);</span>
+        }
+<span class="fc" id="L1015">    }</span>
+
+    public void testCharSkipInvalid() throws IOException {
+<span class="fc" id="L1018">        CharArrayReader is = null;</span>
+<span class="fc" id="L1019">        CharArrayWriter os = null;</span>
+        try {
+            // Create streams
+<span class="fc" id="L1022">            is = new CharArrayReader( carr);</span>
+<span class="fc" id="L1023">            os = new CharArrayWriter();</span>
+
+            // Test our copy method 
+<span class="nc" id="L1026">            IOUtils.copyLarge( is, os, 1000, 100);</span>
+<span class="nc" id="L1027">            fail( &quot;Should have thrown EOFException&quot;);</span>
+<span class="nc" id="L1028">        }</span>
+<span class="fc" id="L1029">        catch( EOFException eofe){</span>
+        }
+        finally {
+<span class="fc" id="L1032">            IOUtils.closeQuietly(is);</span>
+<span class="fc" id="L1033">            IOUtils.closeQuietly(os);</span>
+        }
+<span class="fc" id="L1035">    }</span>
+
+    public void testCharFullLength() throws IOException {
+<span class="fc" id="L1038">        CharArrayReader is = null;</span>
+<span class="fc" id="L1039">        CharArrayWriter os = null;</span>
+        try {
+            // Create streams
+<span class="fc" id="L1042">            is = new CharArrayReader( carr);</span>
+<span class="fc" id="L1043">            os = new CharArrayWriter();</span>
+
+            // Test our copy method 
+<span class="fc" id="L1046">            assertEquals(200, IOUtils.copyLarge( is, os, 0, -1));</span>
+<span class="fc" id="L1047">            char[] oarr = os.toCharArray();</span>
+            
+            // check that output length is correct
+<span class="fc" id="L1050">            assertEquals( 200, oarr.length );</span>
+            // check that output data corresponds to input data
+<span class="fc" id="L1052">            assertEquals( 1, oarr[1] );</span>
+<span class="fc" id="L1053">            assertEquals( 79, oarr[79] );</span>
+<span class="fc" id="L1054">            assertEquals((char) -1, oarr[80] );</span>
+            
+<span class="fc" id="L1056">        }</span>
+        finally {
+<span class="fc" id="L1058">            IOUtils.closeQuietly(is);</span>
+<span class="fc" id="L1059">            IOUtils.closeQuietly(os);</span>
+        }
+<span class="fc" id="L1061">    }</span>
+
+    public void testCharExtraLength() throws IOException {
+<span class="fc" id="L1064">        CharArrayReader is = null;</span>
+<span class="fc" id="L1065">        CharArrayWriter os = null;</span>
+        try {
+            // Create streams
+<span class="fc" id="L1068">            is = new CharArrayReader( carr);</span>
+<span class="fc" id="L1069">            os = new CharArrayWriter();</span>
+
+            // Test our copy method
+            // for extra length, it reads till EOF
+<span class="fc" id="L1073">            assertEquals(200, IOUtils.copyLarge( is, os, 0, 2000));</span>
+<span class="fc" id="L1074">            char[] oarr = os.toCharArray();</span>
+            
+            // check that output length is correct
+<span class="fc" id="L1077">            assertEquals( 200, oarr.length );</span>
+            // check that output data corresponds to input data
+<span class="fc" id="L1079">            assertEquals( 1, oarr[1] );</span>
+<span class="fc" id="L1080">            assertEquals( 79, oarr[79] );</span>
+<span class="fc" id="L1081">            assertEquals((char) -1, oarr[80] );</span>
+            
+<span class="fc" id="L1083">        }</span>
+        finally {
+<span class="fc" id="L1085">            IOUtils.closeQuietly(is);</span>
+<span class="fc" id="L1086">            IOUtils.closeQuietly(os);</span>
+        }
+<span class="fc" id="L1088">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.4 (Apr 20, 2019 6:07:50 PM)</div></body></html>

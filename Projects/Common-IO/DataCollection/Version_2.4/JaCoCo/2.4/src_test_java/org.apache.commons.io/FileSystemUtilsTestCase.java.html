@@ -1,0 +1,540 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileSystemUtilsTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.4 (Apr 20, 2019 6:07:50 PM)</a> &gt; <a href="../../index.html" class="el_group">2.4</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io</a> &gt; <span class="el_source">FileSystemUtilsTestCase.java</span></div><h1>FileSystemUtilsTestCase.java</h1><pre class="source lang-java linenums"><span class="fc" id="L1">/*</span>
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io;
+
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.util.Locale;
+
+import junit.framework.Assert;
+
+import org.apache.commons.io.testtools.FileBasedTestCase;
+
+/**
+ * This is used to test FileSystemUtils.
+ *
+ * @version $Id$
+ */
+public class FileSystemUtilsTestCase extends FileBasedTestCase {
+
+    public FileSystemUtilsTestCase(String name) {
+<span class="fc" id="L40">        super(name);</span>
+<span class="fc" id="L41">    }</span>
+
+    @Override
+    protected void setUp() throws Exception {
+<span class="fc" id="L45">    }</span>
+
+    @Override
+    protected void tearDown() throws Exception {
+<span class="fc" id="L49">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testGetFreeSpace_String() throws Exception {
+        // test coverage, as we can't check value
+<span class="pc bpc" id="L54" title="1 of 2 branches missed.">        if (File.separatorChar == '/') {</span>
+            // have to figure out unix block size
+<span class="fc" id="L56">            String[] cmd = null;</span>
+<span class="fc" id="L57">            String osName = System.getProperty(&quot;os.name&quot;);</span>
+<span class="fc" id="L58">            osName = osName.toLowerCase(Locale.ENGLISH);</span>
+
+<span class="pc bpc" id="L60" title="2 of 4 branches missed.">            if (osName.indexOf(&quot;hp-ux&quot;) &gt;= 0 || osName.indexOf(&quot;aix&quot;) &gt;= 0) {</span>
+<span class="nc" id="L61">                cmd = new String[] {&quot;df&quot;, &quot;-P&quot;, &quot;/&quot;};</span>
+<span class="pc bpc" id="L62" title="2 of 4 branches missed.">            } else if (osName.indexOf(&quot;sunos&quot;) &gt;= 0 || osName.indexOf(&quot;sun os&quot;) &gt;= 0</span>
+<span class="pc bpc" id="L63" title="1 of 2 branches missed.">                       || osName.indexOf(&quot;solaris&quot;) &gt;= 0) {</span>
+<span class="nc" id="L64">                cmd = new String[] {&quot;/usr/xpg4/bin/df&quot;, &quot;-P&quot;, &quot;/&quot;};</span>
+<span class="nc" id="L65">            } else {</span>
+<span class="fc" id="L66">                cmd = new String[] {&quot;df&quot;, &quot;/&quot;};</span>
+            }
+<span class="fc" id="L68">            Process proc = Runtime.getRuntime().exec(cmd);</span>
+<span class="fc" id="L69">            boolean kilobyteBlock = true;</span>
+<span class="fc" id="L70">            BufferedReader r = null;</span>
+            try {
+<span class="fc" id="L72">                r = new BufferedReader(new InputStreamReader(proc.getInputStream()));</span>
+<span class="fc" id="L73">                String line = r.readLine();</span>
+<span class="fc" id="L74">                Assert.assertNotNull(&quot;Unexpected null line&quot;, line);</span>
+<span class="pc bpc" id="L75" title="1 of 2 branches missed.">                if (line.indexOf(&quot;512&quot;) &gt;= 0) {</span>
+<span class="fc" id="L76">                    kilobyteBlock = false;</span>
+                }
+<span class="fc" id="L78">            } finally {</span>
+<span class="fc" id="L79">                IOUtils.closeQuietly(r);</span>
+            }
+            
+            // now perform the test
+            @SuppressWarnings(&quot;deprecation&quot;)
+<span class="fc" id="L84">            long free = FileSystemUtils.freeSpace(&quot;/&quot;);</span>
+<span class="fc" id="L85">            long kb = FileSystemUtils.freeSpaceKb(&quot;/&quot;);</span>
+<span class="pc bpc" id="L86" title="1 of 2 branches missed.">            if (kilobyteBlock) {</span>
+<span class="nc" id="L87">                assertEquals(free, kb, 256d);</span>
+<span class="nc" id="L88">            } else {</span>
+<span class="fc" id="L89">                assertEquals(free / 2d, kb, 256d);</span>
+            }
+<span class="fc" id="L91">        } else {</span>
+            @SuppressWarnings(&quot;deprecation&quot;)
+<span class="nc" id="L93">            long bytes = FileSystemUtils.freeSpace(&quot;&quot;);</span>
+<span class="nc" id="L94">            long kb = FileSystemUtils.freeSpaceKb(&quot;&quot;);</span>
+<span class="nc" id="L95">            assertEquals((double) bytes / 1024, kb, 256d);</span>
+        }
+<span class="fc" id="L97">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testGetFreeSpaceOS_String_NullPath() throws Exception {
+<span class="fc" id="L101">        FileSystemUtils fsu = new FileSystemUtils();</span>
+        try {
+<span class="nc" id="L103">            fsu.freeSpaceOS(null, 1, false, -1);</span>
+<span class="nc" id="L104">            fail();</span>
+<span class="pc" id="L105">        } catch (IllegalArgumentException ex) {}</span>
+        try {
+<span class="nc" id="L107">            fsu.freeSpaceOS(null, 1, true, -1);</span>
+<span class="nc" id="L108">            fail();</span>
+<span class="pc" id="L109">        } catch (IllegalArgumentException ex) {}</span>
+<span class="fc" id="L110">    }</span>
+
+    public void testGetFreeSpaceOS_String_InitError() throws Exception {
+<span class="fc" id="L113">        FileSystemUtils fsu = new FileSystemUtils();</span>
+        try {
+<span class="nc" id="L115">            fsu.freeSpaceOS(&quot;&quot;, -1, false, -1);</span>
+<span class="nc" id="L116">            fail();</span>
+<span class="pc" id="L117">        } catch (IllegalStateException ex) {}</span>
+        try {
+<span class="nc" id="L119">            fsu.freeSpaceOS(&quot;&quot;, -1, true, -1);</span>
+<span class="nc" id="L120">            fail();</span>
+<span class="pc" id="L121">        } catch (IllegalStateException ex) {}</span>
+<span class="fc" id="L122">    }</span>
+
+    public void testGetFreeSpaceOS_String_Other() throws Exception {
+<span class="fc" id="L125">        FileSystemUtils fsu = new FileSystemUtils();</span>
+        try {
+<span class="nc" id="L127">            fsu.freeSpaceOS(&quot;&quot;, 0, false, -1);</span>
+<span class="nc" id="L128">            fail();</span>
+<span class="pc" id="L129">        } catch (IllegalStateException ex) {}</span>
+        try {
+<span class="nc" id="L131">            fsu.freeSpaceOS(&quot;&quot;, 0, true, -1);</span>
+<span class="nc" id="L132">            fail();</span>
+<span class="pc" id="L133">        } catch (IllegalStateException ex) {}</span>
+<span class="fc" id="L134">    }</span>
+
+    public void testGetFreeSpaceOS_String_Windows() throws Exception {
+<span class="fc" id="L137">        FileSystemUtils fsu = new FileSystemUtils() {</span>
+            @Override
+            protected long freeSpaceWindows(String path, long timeout) throws IOException {
+<span class="fc" id="L140">                return 12345L;</span>
+            }
+        };
+<span class="fc" id="L143">        assertEquals(12345L, fsu.freeSpaceOS(&quot;&quot;, 1, false, -1));</span>
+<span class="fc" id="L144">        assertEquals(12345L / 1024, fsu.freeSpaceOS(&quot;&quot;, 1, true, -1));</span>
+<span class="fc" id="L145">    }</span>
+
+    public void testGetFreeSpaceOS_String_Unix() throws Exception {
+<span class="fc" id="L148">        FileSystemUtils fsu = new FileSystemUtils() {</span>
+            @Override
+            protected long freeSpaceUnix(String path, boolean kb, boolean posix, long timeout) throws IOException {
+<span class="fc bfc" id="L151" title="All 2 branches covered.">                return kb ? 12345L : 54321;</span>
+            }
+        };
+<span class="fc" id="L154">        assertEquals(54321L, fsu.freeSpaceOS(&quot;&quot;, 2, false, -1));</span>
+<span class="fc" id="L155">        assertEquals(12345L, fsu.freeSpaceOS(&quot;&quot;, 2, true, -1));</span>
+<span class="fc" id="L156">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testGetFreeSpaceWindows_String_ParseCommaFormatBytes() throws Exception {
+        // this is the format of response when calling dir /c
+        // we have now switched to dir /-c, so we should never get this
+<span class="fc" id="L162">        String lines =</span>
+<span class="fc" id="L163">            &quot; Volume in drive C is HDD\n&quot; +</span>
+            &quot; Volume Serial Number is XXXX-YYYY\n&quot; +
+            &quot;\n&quot; +
+            &quot; Directory of C:\\Documents and Settings\\Xxxx\n&quot; +
+            &quot;\n&quot; +
+            &quot;19/08/2005  22:43    &lt;DIR&gt;          .\n&quot; +
+            &quot;19/08/2005  22:43    &lt;DIR&gt;          ..\n&quot; +
+            &quot;11/08/2005  01:07                81 build.properties\n&quot; +
+            &quot;17/08/2005  21:44    &lt;DIR&gt;          Desktop\n&quot; +
+            &quot;               7 File(s)        180,260 bytes\n&quot; +
+            &quot;              10 Dir(s)  41,411,551,232 bytes free&quot;;
+<span class="fc" id="L174">        FileSystemUtils fsu = new MockFileSystemUtils(0, lines);</span>
+<span class="fc" id="L175">        assertEquals(41411551232L, fsu.freeSpaceWindows(&quot;&quot;, -1));</span>
+<span class="fc" id="L176">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testGetFreeSpaceWindows_String_EmptyPath() throws Exception {
+<span class="fc" id="L180">        String lines =</span>
+<span class="fc" id="L181">            &quot; Volume in drive C is HDD\n&quot; +</span>
+            &quot; Volume Serial Number is XXXX-YYYY\n&quot; +
+            &quot;\n&quot; +
+            &quot; Directory of C:\\Documents and Settings\\Xxxx\n&quot; +
+            &quot;\n&quot; +
+            &quot;19/08/2005  22:43    &lt;DIR&gt;          .\n&quot; +
+            &quot;19/08/2005  22:43    &lt;DIR&gt;          ..\n&quot; +
+            &quot;11/08/2005  01:07                81 build.properties\n&quot; +
+            &quot;17/08/2005  21:44    &lt;DIR&gt;          Desktop\n&quot; +
+            &quot;               7 File(s)         180260 bytes\n&quot; +
+            &quot;              10 Dir(s)     41411551232 bytes free&quot;;
+<span class="fc" id="L192">        FileSystemUtils fsu = new MockFileSystemUtils(0, lines, &quot;dir /a /-c &quot;);</span>
+<span class="fc" id="L193">        assertEquals(41411551232L, fsu.freeSpaceWindows(&quot;&quot;, -1));</span>
+<span class="fc" id="L194">    }</span>
+
+    public void testGetFreeSpaceWindows_String_NormalResponse() throws Exception {
+<span class="fc" id="L197">        String lines =</span>
+<span class="fc" id="L198">            &quot; Volume in drive C is HDD\n&quot; +</span>
+            &quot; Volume Serial Number is XXXX-YYYY\n&quot; +
+            &quot;\n&quot; +
+            &quot; Directory of C:\\Documents and Settings\\Xxxx\n&quot; +
+            &quot;\n&quot; +
+            &quot;19/08/2005  22:43    &lt;DIR&gt;          .\n&quot; +
+            &quot;19/08/2005  22:43    &lt;DIR&gt;          ..\n&quot; +
+            &quot;11/08/2005  01:07                81 build.properties\n&quot; +
+            &quot;17/08/2005  21:44    &lt;DIR&gt;          Desktop\n&quot; +
+            &quot;               7 File(s)         180260 bytes\n&quot; +
+            &quot;              10 Dir(s)     41411551232 bytes free&quot;;
+<span class="fc" id="L209">        FileSystemUtils fsu = new MockFileSystemUtils(0, lines, &quot;dir /a /-c \&quot;C:\&quot;&quot;);</span>
+<span class="fc" id="L210">        assertEquals(41411551232L, fsu.freeSpaceWindows(&quot;C:&quot;, -1));</span>
+<span class="fc" id="L211">    }</span>
+
+    public void testGetFreeSpaceWindows_String_StripDrive() throws Exception {
+<span class="fc" id="L214">        String lines =</span>
+<span class="fc" id="L215">            &quot; Volume in drive C is HDD\n&quot; +</span>
+            &quot; Volume Serial Number is XXXX-YYYY\n&quot; +
+            &quot;\n&quot; +
+            &quot; Directory of C:\\Documents and Settings\\Xxxx\n&quot; +
+            &quot;\n&quot; +
+            &quot;19/08/2005  22:43    &lt;DIR&gt;          .\n&quot; +
+            &quot;19/08/2005  22:43    &lt;DIR&gt;          ..\n&quot; +
+            &quot;11/08/2005  01:07                81 build.properties\n&quot; +
+            &quot;17/08/2005  21:44    &lt;DIR&gt;          Desktop\n&quot; +
+            &quot;               7 File(s)         180260 bytes\n&quot; +
+            &quot;              10 Dir(s)     41411551232 bytes free&quot;;
+<span class="fc" id="L226">        FileSystemUtils fsu = new MockFileSystemUtils(0, lines, &quot;dir /a /-c \&quot;C:\\somedir\&quot;&quot;);</span>
+<span class="fc" id="L227">        assertEquals(41411551232L, fsu.freeSpaceWindows(&quot;C:\\somedir&quot;, -1));</span>
+<span class="fc" id="L228">    }</span>
+
+    public void testGetFreeSpaceWindows_String_quoted() throws Exception {
+<span class="fc" id="L231">        String lines =</span>
+<span class="fc" id="L232">            &quot; Volume in drive C is HDD\n&quot; +</span>
+            &quot; Volume Serial Number is XXXX-YYYY\n&quot; +
+            &quot;\n&quot; +
+            &quot; Directory of C:\\Documents and Settings\\Xxxx\n&quot; +
+            &quot;\n&quot; +
+            &quot;19/08/2005  22:43    &lt;DIR&gt;          .\n&quot; +
+            &quot;19/08/2005  22:43    &lt;DIR&gt;          ..\n&quot; +
+            &quot;11/08/2005  01:07                81 build.properties\n&quot; +
+            &quot;17/08/2005  21:44    &lt;DIR&gt;          Desktop\n&quot; +
+            &quot;               7 File(s)         180260 bytes\n&quot; +
+            &quot;              10 Dir(s)     41411551232 bytes free&quot;;
+<span class="fc" id="L243">        FileSystemUtils fsu = new MockFileSystemUtils(0, lines, &quot;dir /a /-c \&quot;C:\\somedir\&quot;&quot;);</span>
+<span class="fc" id="L244">        assertEquals(41411551232L, fsu.freeSpaceWindows(&quot;\&quot;C:\\somedir\&quot;&quot;, -1));</span>
+<span class="fc" id="L245">    }</span>
+
+    public void testGetFreeSpaceWindows_String_EmptyResponse() throws Exception {
+<span class="fc" id="L248">        String lines = &quot;&quot;;</span>
+<span class="fc" id="L249">        FileSystemUtils fsu = new MockFileSystemUtils(0, lines);</span>
+        try {
+<span class="nc" id="L251">            fsu.freeSpaceWindows(&quot;C:&quot;, -1);</span>
+<span class="nc" id="L252">            fail();</span>
+<span class="pc" id="L253">        } catch (IOException ex) {}</span>
+<span class="fc" id="L254">    }</span>
+
+    public void testGetFreeSpaceWindows_String_EmptyMultiLineResponse() throws Exception {
+<span class="fc" id="L257">        String lines = &quot;\n\n&quot;;</span>
+<span class="fc" id="L258">        FileSystemUtils fsu = new MockFileSystemUtils(0, lines);</span>
+        try {
+<span class="nc" id="L260">            fsu.freeSpaceWindows(&quot;C:&quot;, -1);</span>
+<span class="nc" id="L261">            fail();</span>
+<span class="pc" id="L262">        } catch (IOException ex) {}</span>
+<span class="fc" id="L263">    }</span>
+
+    public void testGetFreeSpaceWindows_String_InvalidTextResponse() throws Exception {
+<span class="fc" id="L266">        String lines = &quot;BlueScreenOfDeath&quot;;</span>
+<span class="fc" id="L267">        FileSystemUtils fsu = new MockFileSystemUtils(0, lines);</span>
+        try {
+<span class="nc" id="L269">            fsu.freeSpaceWindows(&quot;C:&quot;, -1);</span>
+<span class="nc" id="L270">            fail();</span>
+<span class="pc" id="L271">        } catch (IOException ex) {}</span>
+<span class="fc" id="L272">    }</span>
+
+    public void testGetFreeSpaceWindows_String_NoSuchDirectoryResponse() throws Exception {
+<span class="fc" id="L275">        String lines =</span>
+<span class="fc" id="L276">            &quot; Volume in drive C is HDD\n&quot; +</span>
+            &quot; Volume Serial Number is XXXX-YYYY\n&quot; +
+            &quot;\n&quot; +
+            &quot; Directory of C:\\Documents and Settings\\empty&quot; +
+            &quot;\n&quot;;
+<span class="fc" id="L281">        FileSystemUtils fsu = new MockFileSystemUtils(1, lines);</span>
+        try {
+<span class="nc" id="L283">            fsu.freeSpaceWindows(&quot;C:&quot;, -1);</span>
+<span class="nc" id="L284">            fail();</span>
+<span class="pc" id="L285">        } catch (IOException ex) {}</span>
+<span class="fc" id="L286">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testGetFreeSpaceUnix_String_EmptyPath() throws Exception {
+<span class="fc" id="L290">        String lines =</span>
+<span class="fc" id="L291">            &quot;Filesystem           1K-blocks      Used Available Use% Mounted on\n&quot; +</span>
+            &quot;xxx:/home/users/s     14428928  12956424   1472504  90% /home/users/s&quot;;
+<span class="fc" id="L293">        FileSystemUtils fsu = new MockFileSystemUtils(0, lines);</span>
+        try {
+<span class="nc" id="L295">            fsu.freeSpaceUnix(&quot;&quot;, false, false, -1);</span>
+<span class="nc" id="L296">            fail();</span>
+<span class="pc" id="L297">        } catch (IllegalArgumentException ex) {}</span>
+        try {
+<span class="nc" id="L299">            fsu.freeSpaceUnix(&quot;&quot;, true, false, -1);</span>
+<span class="nc" id="L300">            fail();</span>
+<span class="pc" id="L301">        } catch (IllegalArgumentException ex) {}</span>
+        try {
+<span class="nc" id="L303">            fsu.freeSpaceUnix(&quot;&quot;, true, true, -1);</span>
+<span class="nc" id="L304">            fail();</span>
+<span class="pc" id="L305">        } catch (IllegalArgumentException ex) {}</span>
+        try {
+<span class="nc" id="L307">            fsu.freeSpaceUnix(&quot;&quot;, false, true, -1);</span>
+<span class="nc" id="L308">            fail();</span>
+<span class="pc" id="L309">        } catch (IllegalArgumentException ex) {}</span>
+        
+<span class="fc" id="L311">    }</span>
+
+    public void testGetFreeSpaceUnix_String_NormalResponseLinux() throws Exception {
+        // from Sourceforge 'GNU bash, version 2.05b.0(1)-release (i386-redhat-linux-gnu)'
+<span class="fc" id="L315">        String lines =</span>
+<span class="fc" id="L316">            &quot;Filesystem           1K-blocks      Used Available Use% Mounted on\n&quot; +</span>
+            &quot;/dev/xxx                497944    308528    189416  62% /&quot;;
+<span class="fc" id="L318">        FileSystemUtils fsu = new MockFileSystemUtils(0, lines);</span>
+<span class="fc" id="L319">        assertEquals(189416L, fsu.freeSpaceUnix(&quot;/&quot;, false, false, -1));</span>
+<span class="fc" id="L320">    }</span>
+
+    public void testGetFreeSpaceUnix_String_NormalResponseFreeBSD() throws Exception {
+        // from Apache 'FreeBSD 6.1-RELEASE (SMP-turbo)'
+<span class="fc" id="L324">        String lines =</span>
+<span class="fc" id="L325">            &quot;Filesystem  1K-blocks      Used    Avail Capacity  Mounted on\n&quot; +</span>
+            &quot;/dev/xxxxxx    128990    102902    15770    87%    /&quot;;
+<span class="fc" id="L327">        FileSystemUtils fsu = new MockFileSystemUtils(0, lines);</span>
+<span class="fc" id="L328">        assertEquals(15770L, fsu.freeSpaceUnix(&quot;/&quot;, false, false, -1));</span>
+<span class="fc" id="L329">    }</span>
+
+    //-----------------------------------------------------------------------
+    public void testGetFreeSpaceUnix_String_NormalResponseKbLinux() throws Exception {
+        // from Sourceforge 'GNU bash, version 2.05b.0(1)-release (i386-redhat-linux-gnu)'
+        // df, df -k and df -kP are all identical
+<span class="fc" id="L335">        String lines =</span>
+<span class="fc" id="L336">            &quot;Filesystem           1K-blocks      Used Available Use% Mounted on\n&quot; +</span>
+            &quot;/dev/xxx                497944    308528    189416  62% /&quot;;
+<span class="fc" id="L338">        FileSystemUtils fsu = new MockFileSystemUtils(0, lines);</span>
+<span class="fc" id="L339">        assertEquals(189416L, fsu.freeSpaceUnix(&quot;/&quot;, true, false, -1));</span>
+<span class="fc" id="L340">    }</span>
+
+    public void testGetFreeSpaceUnix_String_NormalResponseKbFreeBSD() throws Exception {
+        // from Apache 'FreeBSD 6.1-RELEASE (SMP-turbo)'
+        // df and df -k are identical, but df -kP uses 512 blocks (not relevant as not used)
+<span class="fc" id="L345">        String lines =</span>
+<span class="fc" id="L346">            &quot;Filesystem  1K-blocks      Used    Avail Capacity  Mounted on\n&quot; +</span>
+            &quot;/dev/xxxxxx    128990    102902    15770    87%    /&quot;;
+<span class="fc" id="L348">        FileSystemUtils fsu = new MockFileSystemUtils(0, lines);</span>
+<span class="fc" id="L349">        assertEquals(15770L, fsu.freeSpaceUnix(&quot;/&quot;, true, false, -1));</span>
+<span class="fc" id="L350">    }</span>
+
+    public void testGetFreeSpaceUnix_String_NormalResponseKbSolaris() throws Exception {
+        // from IO-91 - ' SunOS et 5.10 Generic_118822-25 sun4u sparc SUNW,Ultra-4'
+        // non-kb response does not contain free space - see IO-91
+<span class="fc" id="L355">        String lines =</span>
+<span class="fc" id="L356">            &quot;Filesystem            kbytes    used   avail capacity  Mounted on\n&quot; +</span>
+            &quot;/dev/dsk/x0x0x0x0    1350955  815754  481163    63%&quot;;
+<span class="fc" id="L358">        FileSystemUtils fsu = new MockFileSystemUtils(0, lines);</span>
+<span class="fc" id="L359">        assertEquals(481163L, fsu.freeSpaceUnix(&quot;/dev/dsk/x0x0x0x0&quot;, true, false, -1));</span>
+<span class="fc" id="L360">    }</span>
+
+    public void testGetFreeSpaceUnix_String_LongResponse() throws Exception {
+<span class="fc" id="L363">        String lines =</span>
+<span class="fc" id="L364">            &quot;Filesystem           1K-blocks      Used Available Use% Mounted on\n&quot; +</span>
+            &quot;xxx-yyyyyyy-zzz:/home/users/s\n&quot; +
+            &quot;                      14428928  12956424   1472504  90% /home/users/s&quot;;
+<span class="fc" id="L367">        FileSystemUtils fsu = new MockFileSystemUtils(0, lines);</span>
+<span class="fc" id="L368">        assertEquals(1472504L, fsu.freeSpaceUnix(&quot;/home/users/s&quot;, false, false, -1));</span>
+<span class="fc" id="L369">    }</span>
+
+    public void testGetFreeSpaceUnix_String_LongResponseKb() throws Exception {
+<span class="fc" id="L372">        String lines =</span>
+<span class="fc" id="L373">            &quot;Filesystem           1K-blocks      Used Available Use% Mounted on\n&quot; +</span>
+            &quot;xxx-yyyyyyy-zzz:/home/users/s\n&quot; +
+            &quot;                      14428928  12956424   1472504  90% /home/users/s&quot;;
+<span class="fc" id="L376">        FileSystemUtils fsu = new MockFileSystemUtils(0, lines);</span>
+<span class="fc" id="L377">        assertEquals(1472504L, fsu.freeSpaceUnix(&quot;/home/users/s&quot;, true, false, -1));</span>
+<span class="fc" id="L378">    }</span>
+
+    public void testGetFreeSpaceUnix_String_EmptyResponse() throws Exception {
+<span class="fc" id="L381">        String lines = &quot;&quot;;</span>
+<span class="fc" id="L382">        FileSystemUtils fsu = new MockFileSystemUtils(0, lines);</span>
+        try {
+<span class="nc" id="L384">            fsu.freeSpaceUnix(&quot;/home/users/s&quot;, false, false, -1);</span>
+<span class="nc" id="L385">            fail();</span>
+<span class="pc" id="L386">        } catch (IOException ex) {}</span>
+        try {
+<span class="nc" id="L388">            fsu.freeSpaceUnix(&quot;/home/users/s&quot;, true, false, -1);</span>
+<span class="nc" id="L389">            fail();</span>
+<span class="pc" id="L390">        } catch (IOException ex) {}</span>
+        try {
+<span class="nc" id="L392">            fsu.freeSpaceUnix(&quot;/home/users/s&quot;, false, true, -1);</span>
+<span class="nc" id="L393">            fail();</span>
+<span class="pc" id="L394">        } catch (IOException ex) {}</span>
+        try {
+<span class="nc" id="L396">            fsu.freeSpaceUnix(&quot;/home/users/s&quot;, true, true, -1);</span>
+<span class="nc" id="L397">            fail();</span>
+<span class="pc" id="L398">        } catch (IOException ex) {}</span>
+<span class="fc" id="L399">    }</span>
+
+    public void testGetFreeSpaceUnix_String_InvalidResponse1() throws Exception {
+<span class="fc" id="L402">        String lines =</span>
+<span class="fc" id="L403">            &quot;Filesystem           1K-blocks      Used Available Use% Mounted on\n&quot; +</span>
+            &quot;                      14428928  12956424       100&quot;;
+<span class="fc" id="L405">        FileSystemUtils fsu = new MockFileSystemUtils(0, lines);</span>
+        try {
+<span class="nc" id="L407">            fsu.freeSpaceUnix(&quot;/home/users/s&quot;, false, false, -1);</span>
+<span class="nc" id="L408">            fail();</span>
+<span class="pc" id="L409">        } catch (IOException ex) {}</span>
+        try {
+<span class="nc" id="L411">            fsu.freeSpaceUnix(&quot;/home/users/s&quot;, true, false, -1);</span>
+<span class="nc" id="L412">            fail();</span>
+<span class="pc" id="L413">        } catch (IOException ex) {}</span>
+        try {
+<span class="nc" id="L415">            fsu.freeSpaceUnix(&quot;/home/users/s&quot;, false, true, -1);</span>
+<span class="nc" id="L416">            fail();</span>
+<span class="pc" id="L417">        } catch (IOException ex) {}</span>
+        try {
+<span class="nc" id="L419">            fsu.freeSpaceUnix(&quot;/home/users/s&quot;, true, true, -1);</span>
+<span class="nc" id="L420">            fail();</span>
+<span class="pc" id="L421">        } catch (IOException ex) {}</span>
+<span class="fc" id="L422">    }</span>
+
+    public void testGetFreeSpaceUnix_String_InvalidResponse2() throws Exception {
+<span class="fc" id="L425">        String lines =</span>
+<span class="fc" id="L426">            &quot;Filesystem           1K-blocks      Used Available Use% Mounted on\n&quot; +</span>
+            &quot;xxx:/home/users/s     14428928  12956424   nnnnnnn  90% /home/users/s&quot;;
+<span class="fc" id="L428">        FileSystemUtils fsu = new MockFileSystemUtils(0, lines);</span>
+        try {
+<span class="nc" id="L430">            fsu.freeSpaceUnix(&quot;/home/users/s&quot;, false, false, -1);</span>
+<span class="nc" id="L431">            fail();</span>
+<span class="pc" id="L432">        } catch (IOException ex) {}</span>
+        try {
+<span class="nc" id="L434">            fsu.freeSpaceUnix(&quot;/home/users/s&quot;, true, false, -1);</span>
+<span class="nc" id="L435">            fail();</span>
+<span class="pc" id="L436">        } catch (IOException ex) {}</span>
+        try {
+<span class="nc" id="L438">            fsu.freeSpaceUnix(&quot;/home/users/s&quot;, false, true, -1);</span>
+<span class="nc" id="L439">            fail();</span>
+<span class="pc" id="L440">        } catch (IOException ex) {}</span>
+        try {
+<span class="nc" id="L442">            fsu.freeSpaceUnix(&quot;/home/users/s&quot;, true, true, -1);</span>
+<span class="nc" id="L443">            fail();</span>
+<span class="pc" id="L444">        } catch (IOException ex) {}</span>
+<span class="fc" id="L445">    }</span>
+
+    public void testGetFreeSpaceUnix_String_InvalidResponse3() throws Exception {
+<span class="fc" id="L448">        String lines =</span>
+<span class="fc" id="L449">            &quot;Filesystem           1K-blocks      Used Available Use% Mounted on\n&quot; +</span>
+            &quot;xxx:/home/users/s     14428928  12956424        -1  90% /home/users/s&quot;;
+<span class="fc" id="L451">        FileSystemUtils fsu = new MockFileSystemUtils(0, lines);</span>
+        try {
+<span class="nc" id="L453">            fsu.freeSpaceUnix(&quot;/home/users/s&quot;, false, false, -1);</span>
+<span class="nc" id="L454">            fail();</span>
+<span class="pc" id="L455">        } catch (IOException ex) {}</span>
+        try {
+<span class="nc" id="L457">            fsu.freeSpaceUnix(&quot;/home/users/s&quot;, true, false, -1);</span>
+<span class="nc" id="L458">            fail();</span>
+<span class="pc" id="L459">        } catch (IOException ex) {}</span>
+        try {
+<span class="nc" id="L461">            fsu.freeSpaceUnix(&quot;/home/users/s&quot;, false, true, -1);</span>
+<span class="nc" id="L462">            fail();</span>
+<span class="pc" id="L463">        } catch (IOException ex) {}</span>
+        try {
+<span class="nc" id="L465">            fsu.freeSpaceUnix(&quot;/home/users/s&quot;, true, true, -1);</span>
+<span class="nc" id="L466">            fail();</span>
+<span class="pc" id="L467">        } catch (IOException ex) {}</span>
+<span class="fc" id="L468">    }</span>
+
+    public void testGetFreeSpaceUnix_String_InvalidResponse4() throws Exception {
+<span class="fc" id="L471">        String lines =</span>
+<span class="fc" id="L472">            &quot;Filesystem           1K-blocks      Used Available Use% Mounted on\n&quot; +</span>
+            &quot;xxx-yyyyyyy-zzz:/home/users/s&quot;;
+<span class="fc" id="L474">        FileSystemUtils fsu = new MockFileSystemUtils(0, lines);</span>
+        try {
+<span class="nc" id="L476">            fsu.freeSpaceUnix(&quot;/home/users/s&quot;, false, false, -1);</span>
+<span class="nc" id="L477">            fail();</span>
+<span class="pc" id="L478">        } catch (IOException ex) {}</span>
+        try {
+<span class="nc" id="L480">            fsu.freeSpaceUnix(&quot;/home/users/s&quot;, true, false, -1);</span>
+<span class="nc" id="L481">            fail();</span>
+<span class="pc" id="L482">        } catch (IOException ex) {}</span>
+        try {
+<span class="nc" id="L484">            fsu.freeSpaceUnix(&quot;/home/users/s&quot;, false, true, -1);</span>
+<span class="nc" id="L485">            fail();</span>
+<span class="pc" id="L486">        } catch (IOException ex) {}</span>
+        try {
+<span class="nc" id="L488">            fsu.freeSpaceUnix(&quot;/home/users/s&quot;, true, true, -1);</span>
+<span class="nc" id="L489">            fail();</span>
+<span class="pc" id="L490">        } catch (IOException ex) {}</span>
+<span class="fc" id="L491">    }</span>
+
+    //-----------------------------------------------------------------------
+    static class MockFileSystemUtils extends FileSystemUtils {
+        private final int exitCode;
+        private final byte[] bytes;
+        private final String cmd;
+        public MockFileSystemUtils(int exitCode, String lines) {
+<span class="fc" id="L499">            this(exitCode, lines, null);</span>
+<span class="fc" id="L500">        }</span>
+<span class="fc" id="L501">        public MockFileSystemUtils(int exitCode, String lines, String cmd) {</span>
+<span class="fc" id="L502">            this.exitCode = exitCode;</span>
+<span class="fc" id="L503">            this.bytes = lines.getBytes();</span>
+<span class="fc" id="L504">            this.cmd = cmd;</span>
+<span class="fc" id="L505">        }</span>
+        @Override
+        Process openProcess(String[] params) {
+<span class="fc bfc" id="L508" title="All 2 branches covered.">            if (cmd != null) {</span>
+<span class="fc" id="L509">                assertEquals(cmd, params[params.length - 1]);</span>
+            }
+<span class="fc" id="L511">            return new Process() {</span>
+                @Override
+                public InputStream getErrorStream() {
+<span class="fc" id="L514">                    return null;</span>
+                }
+                @Override
+                public InputStream getInputStream() {
+<span class="fc" id="L518">                    return new ByteArrayInputStream(bytes);</span>
+                }
+                @Override
+                public OutputStream getOutputStream() {
+<span class="fc" id="L522">                    return null;</span>
+                }
+                @Override
+                public int waitFor() throws InterruptedException {
+<span class="fc" id="L526">                    return exitCode;</span>
+                }
+                @Override
+                public int exitValue() {
+<span class="fc" id="L530">                    return exitCode;</span>
+                }
+                @Override
+                public void destroy() {
+<span class="fc" id="L534">                }</span>
+            };
+        }
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.4 (Apr 20, 2019 6:07:50 PM)</div></body></html>

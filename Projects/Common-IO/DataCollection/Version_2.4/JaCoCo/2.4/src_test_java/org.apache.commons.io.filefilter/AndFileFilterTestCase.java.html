@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>AndFileFilterTestCase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">2.4 (Apr 20, 2019 6:07:50 PM)</a> &gt; <a href="../../index.html" class="el_group">2.4</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.io.filefilter</a> &gt; <span class="el_source">AndFileFilterTestCase.java</span></div><h1>AndFileFilterTestCase.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.io.filefilter;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class AndFileFilterTestCase extends ConditionalFileFilterAbstractTestCase {
+  
+  private static final String DEFAULT_WORKING_PATH = &quot;./AndFileFilterTestCase/&quot;;
+<span class="fc" id="L25">  private static final String WORKING_PATH_NAME_PROPERTY_KEY = AndFileFilterTestCase.class.getName() + &quot;.workingDirectory&quot;;</span>
+  
+  private List&lt;List&lt;IOFileFilter&gt;&gt; testFilters;
+  private List&lt;boolean[]&gt; testTrueResults;
+  private List&lt;boolean[]&gt; testFalseResults;
+  private List&lt;Boolean&gt; testFileResults;
+  private List&lt;Boolean&gt; testFilenameResults;
+  
+  public AndFileFilterTestCase(final String name) {
+<span class="fc" id="L34">    super(name);</span>
+<span class="fc" id="L35">  }</span>
+  
+  @Override
+  public void setUp() throws Exception {
+<span class="fc" id="L39">    super.setUp();</span>
+<span class="fc" id="L40">    this.setUpTestFilters();</span>
+<span class="fc" id="L41">  }</span>
+  
+  @Override
+  protected IOFileFilter buildFilterUsingAdd(final List&lt;IOFileFilter&gt; filters) {
+<span class="fc" id="L45">    AndFileFilter filter = new AndFileFilter();</span>
+<span class="fc bfc" id="L46" title="All 2 branches covered.">    for(int i = 0; i &lt; filters.size(); i++) {</span>
+<span class="fc" id="L47">      filter.addFileFilter(filters.get(i));</span>
+    }
+<span class="fc" id="L49">    return filter;</span>
+  }
+  
+  @Override
+  protected IOFileFilter buildFilterUsingConstructor(final List&lt;IOFileFilter&gt; filters) {
+<span class="fc" id="L54">    return new AndFileFilter(filters);</span>
+  }
+  
+  @Override
+  protected ConditionalFileFilter getConditionalFileFilter() {
+<span class="fc" id="L59">    return new AndFileFilter();</span>
+  }
+  
+  @Override
+  protected String getDefaultWorkingPath() {
+<span class="fc" id="L64">    return DEFAULT_WORKING_PATH;</span>
+  }
+  
+  @Override
+  protected List&lt;boolean[]&gt; getFalseResults() {
+<span class="fc" id="L69">    return this.testFalseResults;</span>
+  }
+  
+  @Override
+  protected List&lt;Boolean&gt; getFileResults() {
+<span class="fc" id="L74">    return this.testFileResults;</span>
+  }
+  
+  @Override
+  protected List&lt;Boolean&gt; getFilenameResults() {
+<span class="fc" id="L79">    return this.testFilenameResults;</span>
+  }
+  
+  @Override
+  protected List&lt;List&lt;IOFileFilter&gt;&gt; getTestFilters() {
+<span class="fc" id="L84">    return this.testFilters;</span>
+  }
+  
+  @Override
+  protected List&lt;boolean[]&gt; getTrueResults() {
+<span class="fc" id="L89">    return this.testTrueResults;</span>
+  }
+  
+  @Override
+  protected String getWorkingPathNamePropertyKey() {
+<span class="fc" id="L94">    return WORKING_PATH_NAME_PROPERTY_KEY;</span>
+  }
+  
+  private void setUpTestFilters() {
+    // filters
+    //tests
+<span class="fc" id="L100">    this.testFilters = new ArrayList&lt;List&lt;IOFileFilter&gt;&gt;();</span>
+<span class="fc" id="L101">    this.testTrueResults = new ArrayList&lt;boolean[]&gt;();</span>
+<span class="fc" id="L102">    this.testFalseResults = new ArrayList&lt;boolean[]&gt;();</span>
+<span class="fc" id="L103">    this.testFileResults = new ArrayList&lt;Boolean&gt;();</span>
+<span class="fc" id="L104">    this.testFilenameResults = new ArrayList&lt;Boolean&gt;();</span>
+
+    // test 0 - add empty elements
+    {
+<span class="fc" id="L108">      testFilters.add(0, null);</span>
+<span class="fc" id="L109">      testTrueResults.add(0, null);</span>
+<span class="fc" id="L110">      testFalseResults.add(0, null);</span>
+<span class="fc" id="L111">      testFileResults.add(0, null);</span>
+<span class="fc" id="L112">      testFilenameResults.add(0, null);</span>
+    }
+      
+    // test 1 - Test conditional and with all filters returning true
+    {
+      // test 1 filters
+<span class="fc" id="L118">      List&lt;IOFileFilter&gt; filters = new ArrayList&lt;IOFileFilter&gt;();</span>
+<span class="fc" id="L119">      filters.add(trueFilters[1]);</span>
+<span class="fc" id="L120">      filters.add(trueFilters[2]);</span>
+<span class="fc" id="L121">      filters.add(trueFilters[3]);</span>
+      // test 1 true results
+<span class="fc" id="L123">      boolean[] trueResults = new boolean[] {true, true, true};</span>
+      // test 1 false results
+<span class="fc" id="L125">      boolean[] falseResults = new boolean[] {false, false, false};</span>
+
+<span class="fc" id="L127">      testFilters.add(1, filters);</span>
+<span class="fc" id="L128">      testTrueResults.add(1, trueResults);</span>
+<span class="fc" id="L129">      testFalseResults.add(1, falseResults);</span>
+<span class="fc" id="L130">      testFileResults.add(1, Boolean.TRUE);</span>
+<span class="fc" id="L131">      testFilenameResults.add(1, Boolean.TRUE);</span>
+    }
+
+    // test 2 - Test conditional and with first filter returning false
+    {
+      // test 2 filters
+<span class="fc" id="L137">      List&lt;IOFileFilter&gt; filters = new ArrayList&lt;IOFileFilter&gt;();</span>
+<span class="fc" id="L138">      filters.add(falseFilters[1]);</span>
+<span class="fc" id="L139">      filters.add(trueFilters[1]);</span>
+<span class="fc" id="L140">      filters.add(trueFilters[2]);</span>
+<span class="fc" id="L141">      filters.add(trueFilters[3]);</span>
+<span class="fc" id="L142">      filters.add(falseFilters[2]);</span>
+<span class="fc" id="L143">      filters.add(falseFilters[3]);</span>
+      // test 2 true results
+<span class="fc" id="L145">      boolean[] trueResults = new boolean[] {false, false, false};</span>
+      // test 2 false results
+<span class="fc" id="L147">      boolean[] falseResults = new boolean[] {true, false, false};</span>
+
+<span class="fc" id="L149">      testFilters.add(2, filters);</span>
+<span class="fc" id="L150">      testTrueResults.add(2, trueResults);</span>
+<span class="fc" id="L151">      testFalseResults.add(2, falseResults);</span>
+<span class="fc" id="L152">      testFileResults.add(2, Boolean.FALSE);</span>
+<span class="fc" id="L153">      testFilenameResults.add(2, Boolean.FALSE);</span>
+    }
+    
+    // test 3 - Test conditional and with second filter returning false
+    {
+      // test 3 filters
+<span class="fc" id="L159">      List&lt;IOFileFilter&gt; filters = new ArrayList&lt;IOFileFilter&gt;();</span>
+<span class="fc" id="L160">      filters.add(trueFilters[1]);</span>
+<span class="fc" id="L161">      filters.add(falseFilters[1]);</span>
+<span class="fc" id="L162">      filters.add(trueFilters[2]);</span>
+<span class="fc" id="L163">      filters.add(trueFilters[3]);</span>
+<span class="fc" id="L164">      filters.add(falseFilters[2]);</span>
+<span class="fc" id="L165">      filters.add(falseFilters[3]);</span>
+      // test 3 true results
+<span class="fc" id="L167">      boolean[] trueResults = new boolean[] {true, false, false};</span>
+      // test 3 false results
+<span class="fc" id="L169">      boolean[] falseResults = new boolean[] {true, false, false};</span>
+
+<span class="fc" id="L171">      testFilters.add(3, filters);</span>
+<span class="fc" id="L172">      testTrueResults.add(3, trueResults);</span>
+<span class="fc" id="L173">      testFalseResults.add(3, falseResults);</span>
+<span class="fc" id="L174">      testFileResults.add(3, Boolean.FALSE);</span>
+<span class="fc" id="L175">      testFilenameResults.add(3, Boolean.FALSE);</span>
+    }
+    
+    // test 4 - Test conditional and with third filter returning false
+    {
+      // test 4 filters
+<span class="fc" id="L181">      List&lt;IOFileFilter&gt; filters = new ArrayList&lt;IOFileFilter&gt;();</span>
+<span class="fc" id="L182">      filters.add(trueFilters[1]);</span>
+<span class="fc" id="L183">      filters.add(trueFilters[2]);</span>
+<span class="fc" id="L184">      filters.add(falseFilters[1]);</span>
+<span class="fc" id="L185">      filters.add(trueFilters[3]);</span>
+<span class="fc" id="L186">      filters.add(falseFilters[2]);</span>
+<span class="fc" id="L187">      filters.add(falseFilters[3]);</span>
+      // test 4 true results
+<span class="fc" id="L189">      boolean[] trueResults = new boolean[] {true, true, false};</span>
+      // test 4 false results
+<span class="fc" id="L191">      boolean[] falseResults = new boolean[] {true, false, false};</span>
+    
+<span class="fc" id="L193">      testFilters.add(4, filters);</span>
+<span class="fc" id="L194">      testTrueResults.add(4, trueResults);</span>
+<span class="fc" id="L195">      testFalseResults.add(4, falseResults);</span>
+<span class="fc" id="L196">      testFileResults.add(4, Boolean.FALSE);</span>
+<span class="fc" id="L197">      testFilenameResults.add(4, Boolean.FALSE);</span>
+    }
+
+    // test 5 - Test conditional and with first and third filters returning false
+    {
+      // test 5 filters
+<span class="fc" id="L203">      List&lt;IOFileFilter&gt; filters = new ArrayList&lt;IOFileFilter&gt;();</span>
+<span class="fc" id="L204">      filters.add(falseFilters[1]);</span>
+<span class="fc" id="L205">      filters.add(trueFilters[1]);</span>
+<span class="fc" id="L206">      filters.add(falseFilters[2]);</span>
+<span class="fc" id="L207">      filters.add(falseFilters[3]);</span>
+<span class="fc" id="L208">      filters.add(trueFilters[2]);</span>
+<span class="fc" id="L209">      filters.add(trueFilters[3]);</span>
+      // test 5 true results
+<span class="fc" id="L211">      boolean[] trueResults = new boolean[] {false, false, false};</span>
+      // test 5 false results
+<span class="fc" id="L213">      boolean[] falseResults = new boolean[] {true, false, false};</span>
+    
+<span class="fc" id="L215">      testFilters.add(5, filters);</span>
+<span class="fc" id="L216">      testTrueResults.add(5, trueResults);</span>
+<span class="fc" id="L217">      testFalseResults.add(5, falseResults);</span>
+<span class="fc" id="L218">      testFileResults.add(5, Boolean.FALSE);</span>
+<span class="fc" id="L219">      testFilenameResults.add(5, Boolean.FALSE);</span>
+    }
+    
+    // test 6 - Test conditional and with second and third filters returning false
+    {
+<span class="fc" id="L224">      List&lt;IOFileFilter&gt; filters = new ArrayList&lt;IOFileFilter&gt;();</span>
+<span class="fc" id="L225">      filters.add(trueFilters[1]);</span>
+<span class="fc" id="L226">      filters.add(falseFilters[1]);</span>
+<span class="fc" id="L227">      filters.add(falseFilters[2]);</span>
+<span class="fc" id="L228">      filters.add(trueFilters[2]);</span>
+<span class="fc" id="L229">      filters.add(trueFilters[3]);</span>
+<span class="fc" id="L230">      filters.add(falseFilters[3]);</span>
+      // test 6 true results
+<span class="fc" id="L232">      boolean[] trueResults = new boolean[] {true, false, false};</span>
+      // test 6 false results
+<span class="fc" id="L234">      boolean[] falseResults = new boolean[] {true, false, false};</span>
+    
+<span class="fc" id="L236">      testFilters.add(6, filters);</span>
+<span class="fc" id="L237">      testTrueResults.add(6, trueResults);</span>
+<span class="fc" id="L238">      testFalseResults.add(6, falseResults);</span>
+<span class="fc" id="L239">      testFileResults.add(6, Boolean.FALSE);</span>
+<span class="fc" id="L240">      testFilenameResults.add(6, Boolean.FALSE);</span>
+    }
+    
+    // test 7 - Test conditional and with first and second filters returning false
+    {
+<span class="fc" id="L245">      List&lt;IOFileFilter&gt; filters = new ArrayList&lt;IOFileFilter&gt;();</span>
+<span class="fc" id="L246">      filters.add(falseFilters[1]);</span>
+<span class="fc" id="L247">      filters.add(falseFilters[2]);</span>
+<span class="fc" id="L248">      filters.add(trueFilters[3]);</span>
+<span class="fc" id="L249">      filters.add(falseFilters[3]);</span>
+<span class="fc" id="L250">      filters.add(trueFilters[2]);</span>
+<span class="fc" id="L251">      filters.add(trueFilters[3]);</span>
+      // test 7 true results
+<span class="fc" id="L253">      boolean[] trueResults = new boolean[] {false, false, false};</span>
+      // test 7 false results
+<span class="fc" id="L255">      boolean[] falseResults = new boolean[] {true, false, false};</span>
+    
+<span class="fc" id="L257">      testFilters.add(7, filters);</span>
+<span class="fc" id="L258">      testTrueResults.add(7, trueResults);</span>
+<span class="fc" id="L259">      testFalseResults.add(7, falseResults);</span>
+<span class="fc" id="L260">      testFileResults.add(7, Boolean.FALSE);</span>
+<span class="fc" id="L261">      testFilenameResults.add(7, Boolean.FALSE);</span>
+    }
+    
+    // test 8 - Test conditional and with fourth filters returning false
+    {
+<span class="fc" id="L266">      List&lt;IOFileFilter&gt; filters = new ArrayList&lt;IOFileFilter&gt;();</span>
+<span class="fc" id="L267">      filters.add(trueFilters[1]);</span>
+<span class="fc" id="L268">      filters.add(trueFilters[2]);</span>
+<span class="fc" id="L269">      filters.add(trueFilters[3]);</span>
+<span class="fc" id="L270">      filters.add(falseFilters[1]);</span>
+      // test 8 true results
+<span class="fc" id="L272">      boolean[] trueResults = new boolean[] {true, true, true};</span>
+      // test 8 false results
+<span class="fc" id="L274">      boolean[] falseResults = new boolean[] {true, false, false};</span>
+    
+<span class="fc" id="L276">      testFilters.add(8, filters);</span>
+<span class="fc" id="L277">      testTrueResults.add(8, trueResults);</span>
+<span class="fc" id="L278">      testFalseResults.add(8, falseResults);</span>
+<span class="fc" id="L279">      testFileResults.add(8, Boolean.FALSE);</span>
+<span class="fc" id="L280">      testFilenameResults.add(8, Boolean.FALSE);</span>
+    }
+
+    // test 9 - Test conditional and with all filters returning false
+    {
+<span class="fc" id="L285">      List&lt;IOFileFilter&gt; filters = new ArrayList&lt;IOFileFilter&gt;();</span>
+<span class="fc" id="L286">      filters.add(falseFilters[1]);</span>
+<span class="fc" id="L287">      filters.add(falseFilters[2]);</span>
+<span class="fc" id="L288">      filters.add(falseFilters[3]);</span>
+      // test 9 true results
+<span class="fc" id="L290">      boolean[] trueResults = new boolean[] {false, false, false};</span>
+      // test 9 false results
+<span class="fc" id="L292">      boolean[] falseResults = new boolean[] {true, false, false};</span>
+    
+<span class="fc" id="L294">      testFilters.add(9, filters);</span>
+<span class="fc" id="L295">      testTrueResults.add(9, trueResults);</span>
+<span class="fc" id="L296">      testFalseResults.add(9, falseResults);</span>
+<span class="fc" id="L297">      testFileResults.add(9, Boolean.FALSE);</span>
+<span class="fc" id="L298">      testFilenameResults.add(9, Boolean.FALSE);</span>
+    }
+<span class="fc" id="L300">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.1.201803210924</span>2.4 (Apr 20, 2019 6:07:50 PM)</div></body></html>
