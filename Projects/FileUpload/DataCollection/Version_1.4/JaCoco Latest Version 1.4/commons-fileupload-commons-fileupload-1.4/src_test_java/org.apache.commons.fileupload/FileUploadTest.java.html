@@ -1,0 +1,400 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileUploadTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-fileupload-commons-fileupload-1.4 (18-Apr-2019 3:46:35 AM)</a> &gt; <a href="../../index.html" class="el_group">commons-fileupload-commons-fileupload-1.4</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.fileupload</a> &gt; <span class="el_source">FileUploadTest.java</span></div><h1>FileUploadTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.fileupload;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.List;
+
+import org.apache.commons.fileupload.portlet.PortletFileUploadTest;
+import org.apache.commons.fileupload.servlet.ServletFileUploadTest;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
+
+/**
+ * Common tests for implementations of {@link FileUpload}. This is a parameterized test.
+ * Tests must be valid and common to all implementations of FileUpload added as parameter
+ * in this class.
+ *
+ * @see ServletFileUploadTest
+ * @see PortletFileUploadTest
+ * @since 1.4
+ */
+@RunWith(Parameterized.class)
+<span class="fc" id="L46">public class FileUploadTest {</span>
+
+    /**
+     * @return {@link FileUpload} classes under test.
+     */
+    @Parameters(name=&quot;{0}&quot;)
+    public static Iterable&lt;? extends Object&gt; data() {
+<span class="fc" id="L53">        return Util.fileUploadImplementations();</span>
+    }
+
+    /**
+     * Current parameterized FileUpload.
+     */
+    @Parameter
+    public FileUpload upload;
+
+    // --- Test methods common to all implementations of a FileUpload
+
+    @Test
+    public void testFileUpload()
+            throws IOException, FileUploadException {
+<span class="fc" id="L67">        List&lt;FileItem&gt; fileItems = Util.parseUpload(upload,</span>
+<span class="fc" id="L68">                                               &quot;-----1234\r\n&quot; +</span>
+                                               &quot;Content-Disposition: form-data; name=\&quot;file\&quot;; filename=\&quot;foo.tab\&quot;\r\n&quot; +
+                                               &quot;Content-Type: text/whatever\r\n&quot; +
+                                               &quot;\r\n&quot; +
+                                               &quot;This is the content of the file\n&quot; +
+                                               &quot;\r\n&quot; +
+                                               &quot;-----1234\r\n&quot; +
+                                               &quot;Content-Disposition: form-data; name=\&quot;field\&quot;\r\n&quot; +
+                                               &quot;\r\n&quot; +
+                                               &quot;fieldValue\r\n&quot; +
+                                               &quot;-----1234\r\n&quot; +
+                                               &quot;Content-Disposition: form-data; name=\&quot;multi\&quot;\r\n&quot; +
+                                               &quot;\r\n&quot; +
+                                               &quot;value1\r\n&quot; +
+                                               &quot;-----1234\r\n&quot; +
+                                               &quot;Content-Disposition: form-data; name=\&quot;multi\&quot;\r\n&quot; +
+                                               &quot;\r\n&quot; +
+                                               &quot;value2\r\n&quot; +
+                                               &quot;-----1234--\r\n&quot;);
+<span class="fc" id="L87">        assertEquals(4, fileItems.size());</span>
+
+<span class="fc" id="L89">        FileItem file = fileItems.get(0);</span>
+<span class="fc" id="L90">        assertEquals(&quot;file&quot;, file.getFieldName());</span>
+<span class="fc" id="L91">        assertFalse(file.isFormField());</span>
+<span class="fc" id="L92">        assertEquals(&quot;This is the content of the file\n&quot;, file.getString());</span>
+<span class="fc" id="L93">        assertEquals(&quot;text/whatever&quot;, file.getContentType());</span>
+<span class="fc" id="L94">        assertEquals(&quot;foo.tab&quot;, file.getName());</span>
+
+<span class="fc" id="L96">        FileItem field = fileItems.get(1);</span>
+<span class="fc" id="L97">        assertEquals(&quot;field&quot;, field.getFieldName());</span>
+<span class="fc" id="L98">        assertTrue(field.isFormField());</span>
+<span class="fc" id="L99">        assertEquals(&quot;fieldValue&quot;, field.getString());</span>
+
+<span class="fc" id="L101">        FileItem multi0 = fileItems.get(2);</span>
+<span class="fc" id="L102">        assertEquals(&quot;multi&quot;, multi0.getFieldName());</span>
+<span class="fc" id="L103">        assertTrue(multi0.isFormField());</span>
+<span class="fc" id="L104">        assertEquals(&quot;value1&quot;, multi0.getString());</span>
+
+<span class="fc" id="L106">        FileItem multi1 = fileItems.get(3);</span>
+<span class="fc" id="L107">        assertEquals(&quot;multi&quot;, multi1.getFieldName());</span>
+<span class="fc" id="L108">        assertTrue(multi1.isFormField());</span>
+<span class="fc" id="L109">        assertEquals(&quot;value2&quot;, multi1.getString());</span>
+<span class="fc" id="L110">    }</span>
+
+    @Test
+    public void testFilenameCaseSensitivity()
+            throws IOException, FileUploadException {
+<span class="fc" id="L115">        List&lt;FileItem&gt; fileItems = Util.parseUpload(upload,</span>
+<span class="fc" id="L116">                                               &quot;-----1234\r\n&quot; +</span>
+                                               &quot;Content-Disposition: form-data; name=\&quot;FiLe\&quot;; filename=\&quot;FOO.tab\&quot;\r\n&quot; +
+                                               &quot;Content-Type: text/whatever\r\n&quot; +
+                                               &quot;\r\n&quot; +
+                                               &quot;This is the content of the file\n&quot; +
+                                               &quot;\r\n&quot; +
+                                               &quot;-----1234--\r\n&quot;);
+<span class="fc" id="L123">        assertEquals(1, fileItems.size());</span>
+
+<span class="fc" id="L125">        FileItem file = fileItems.get(0);</span>
+<span class="fc" id="L126">        assertEquals(&quot;FiLe&quot;, file.getFieldName());</span>
+<span class="fc" id="L127">        assertEquals(&quot;FOO.tab&quot;, file.getName());</span>
+<span class="fc" id="L128">    }</span>
+
+    /**
+     * This is what the browser does if you submit the form without choosing a file.
+     */
+    @Test
+    public void testEmptyFile()
+            throws UnsupportedEncodingException, FileUploadException {
+<span class="fc" id="L136">        List&lt;FileItem&gt; fileItems = Util.parseUpload (upload,</span>
+<span class="fc" id="L137">                                                &quot;-----1234\r\n&quot; +</span>
+                                                &quot;Content-Disposition: form-data; name=\&quot;file\&quot;; filename=\&quot;\&quot;\r\n&quot; +
+                                                &quot;\r\n&quot; +
+                                                &quot;\r\n&quot; +
+                                                &quot;-----1234--\r\n&quot;);
+<span class="fc" id="L142">        assertEquals(1, fileItems.size());</span>
+
+<span class="fc" id="L144">        FileItem file = fileItems.get(0);</span>
+<span class="fc" id="L145">        assertFalse(file.isFormField());</span>
+<span class="fc" id="L146">        assertEquals(&quot;&quot;, file.getString());</span>
+<span class="fc" id="L147">        assertEquals(&quot;&quot;, file.getName());</span>
+<span class="fc" id="L148">    }</span>
+
+    /**
+     * Internet Explorer 5 for the Mac has a bug where the carriage
+     * return is missing on any boundary line immediately preceding
+     * an input with type=image. (type=submit does not have the bug.)
+     */
+    @Test
+    public void testIE5MacBug()
+            throws UnsupportedEncodingException, FileUploadException {
+<span class="fc" id="L158">        List&lt;FileItem&gt; fileItems = Util.parseUpload(upload,</span>
+<span class="fc" id="L159">                                               &quot;-----1234\r\n&quot; +</span>
+                                               &quot;Content-Disposition: form-data; name=\&quot;field1\&quot;\r\n&quot; +
+                                               &quot;\r\n&quot; +
+                                               &quot;fieldValue\r\n&quot; +
+                                               &quot;-----1234\n&quot; + // NOTE \r missing
+                                               &quot;Content-Disposition: form-data; name=\&quot;submitName.x\&quot;\r\n&quot; +
+                                               &quot;\r\n&quot; +
+                                               &quot;42\r\n&quot; +
+                                               &quot;-----1234\n&quot; + // NOTE \r missing
+                                               &quot;Content-Disposition: form-data; name=\&quot;submitName.y\&quot;\r\n&quot; +
+                                               &quot;\r\n&quot; +
+                                               &quot;21\r\n&quot; +
+                                               &quot;-----1234\r\n&quot; +
+                                               &quot;Content-Disposition: form-data; name=\&quot;field2\&quot;\r\n&quot; +
+                                               &quot;\r\n&quot; +
+                                               &quot;fieldValue2\r\n&quot; +
+                                               &quot;-----1234--\r\n&quot;);
+
+<span class="fc" id="L177">        assertEquals(4, fileItems.size());</span>
+
+<span class="fc" id="L179">        FileItem field1 = fileItems.get(0);</span>
+<span class="fc" id="L180">        assertEquals(&quot;field1&quot;, field1.getFieldName());</span>
+<span class="fc" id="L181">        assertTrue(field1.isFormField());</span>
+<span class="fc" id="L182">        assertEquals(&quot;fieldValue&quot;, field1.getString());</span>
+
+<span class="fc" id="L184">        FileItem submitX = fileItems.get(1);</span>
+<span class="fc" id="L185">        assertEquals(&quot;submitName.x&quot;, submitX.getFieldName());</span>
+<span class="fc" id="L186">        assertTrue(submitX.isFormField());</span>
+<span class="fc" id="L187">        assertEquals(&quot;42&quot;, submitX.getString());</span>
+
+<span class="fc" id="L189">        FileItem submitY = fileItems.get(2);</span>
+<span class="fc" id="L190">        assertEquals(&quot;submitName.y&quot;, submitY.getFieldName());</span>
+<span class="fc" id="L191">        assertTrue(submitY.isFormField());</span>
+<span class="fc" id="L192">        assertEquals(&quot;21&quot;, submitY.getString());</span>
+
+<span class="fc" id="L194">        FileItem field2 = fileItems.get(3);</span>
+<span class="fc" id="L195">        assertEquals(&quot;field2&quot;, field2.getFieldName());</span>
+<span class="fc" id="L196">        assertTrue(field2.isFormField());</span>
+<span class="fc" id="L197">        assertEquals(&quot;fieldValue2&quot;, field2.getString());</span>
+<span class="fc" id="L198">    }</span>
+
+    /**
+     * Test for &lt;a href=&quot;http://issues.apache.org/jira/browse/FILEUPLOAD-62&quot;&gt;FILEUPLOAD-62&lt;/a&gt;
+     */
+    @Test
+    public void testFILEUPLOAD62() throws Exception {
+<span class="fc" id="L205">        final String contentType = &quot;multipart/form-data; boundary=AaB03x&quot;;</span>
+<span class="fc" id="L206">        final String request =</span>
+<span class="fc" id="L207">            &quot;--AaB03x\r\n&quot; +</span>
+            &quot;content-disposition: form-data; name=\&quot;field1\&quot;\r\n&quot; +
+            &quot;\r\n&quot; +
+            &quot;Joe Blow\r\n&quot; +
+            &quot;--AaB03x\r\n&quot; +
+            &quot;content-disposition: form-data; name=\&quot;pics\&quot;\r\n&quot; +
+            &quot;Content-type: multipart/mixed; boundary=BbC04y\r\n&quot; +
+            &quot;\r\n&quot; +
+            &quot;--BbC04y\r\n&quot; +
+            &quot;Content-disposition: attachment; filename=\&quot;file1.txt\&quot;\r\n&quot; +
+            &quot;Content-Type: text/plain\r\n&quot; +
+            &quot;\r\n&quot; +
+            &quot;... contents of file1.txt ...\r\n&quot; +
+            &quot;--BbC04y\r\n&quot; +
+            &quot;Content-disposition: attachment; filename=\&quot;file2.gif\&quot;\r\n&quot; +
+            &quot;Content-type: image/gif\r\n&quot; +
+            &quot;Content-Transfer-Encoding: binary\r\n&quot; +
+            &quot;\r\n&quot; +
+            &quot;...contents of file2.gif...\r\n&quot; +
+            &quot;--BbC04y--\r\n&quot; +
+            &quot;--AaB03x--&quot;;
+<span class="fc" id="L228">        List&lt;FileItem&gt; fileItems = Util.parseUpload(upload, request.getBytes(&quot;US-ASCII&quot;), contentType);</span>
+<span class="fc" id="L229">        assertEquals(3, fileItems.size());</span>
+<span class="fc" id="L230">        FileItem item0 = fileItems.get(0);</span>
+<span class="fc" id="L231">        assertEquals(&quot;field1&quot;, item0.getFieldName());</span>
+<span class="fc" id="L232">        assertNull(item0.getName());</span>
+<span class="fc" id="L233">        assertEquals(&quot;Joe Blow&quot;, new String(item0.get()));</span>
+<span class="fc" id="L234">        FileItem item1 = fileItems.get(1);</span>
+<span class="fc" id="L235">        assertEquals(&quot;pics&quot;, item1.getFieldName());</span>
+<span class="fc" id="L236">        assertEquals(&quot;file1.txt&quot;, item1.getName());</span>
+<span class="fc" id="L237">        assertEquals(&quot;... contents of file1.txt ...&quot;, new String(item1.get()));</span>
+<span class="fc" id="L238">        FileItem item2 = fileItems.get(2);</span>
+<span class="fc" id="L239">        assertEquals(&quot;pics&quot;, item2.getFieldName());</span>
+<span class="fc" id="L240">        assertEquals(&quot;file2.gif&quot;, item2.getName());</span>
+<span class="fc" id="L241">        assertEquals(&quot;...contents of file2.gif...&quot;, new String(item2.get()));</span>
+<span class="fc" id="L242">    }</span>
+
+    /**
+     * Test for &lt;a href=&quot;http://issues.apache.org/jira/browse/FILEUPLOAD-111&quot;&gt;FILEUPLOAD-111&lt;/a&gt;
+     */
+    @Test
+    public void testFoldedHeaders()
+            throws IOException, FileUploadException {
+<span class="fc" id="L250">        List&lt;FileItem&gt; fileItems = Util.parseUpload(upload, &quot;-----1234\r\n&quot; +</span>
+                &quot;Content-Disposition: form-data; name=\&quot;file\&quot;; filename=\&quot;foo.tab\&quot;\r\n&quot; +
+                &quot;Content-Type: text/whatever\r\n&quot; +
+                &quot;\r\n&quot; +
+                &quot;This is the content of the file\n&quot; +
+                &quot;\r\n&quot; +
+                &quot;-----1234\r\n&quot; +
+                &quot;Content-Disposition: form-data; \r\n&quot; +
+                &quot;\tname=\&quot;field\&quot;\r\n&quot; +
+                &quot;\r\n&quot; +
+                &quot;fieldValue\r\n&quot; +
+                &quot;-----1234\r\n&quot; +
+                &quot;Content-Disposition: form-data;\r\n&quot; +
+                &quot;     name=\&quot;multi\&quot;\r\n&quot; +
+                &quot;\r\n&quot; +
+                &quot;value1\r\n&quot; +
+                &quot;-----1234\r\n&quot; +
+                &quot;Content-Disposition: form-data; name=\&quot;multi\&quot;\r\n&quot; +
+                &quot;\r\n&quot; +
+                &quot;value2\r\n&quot; +
+                &quot;-----1234--\r\n&quot;);
+<span class="fc" id="L271">        assertEquals(4, fileItems.size());</span>
+
+<span class="fc" id="L273">        FileItem file = fileItems.get(0);</span>
+<span class="fc" id="L274">        assertEquals(&quot;file&quot;, file.getFieldName());</span>
+<span class="fc" id="L275">        assertFalse(file.isFormField());</span>
+<span class="fc" id="L276">        assertEquals(&quot;This is the content of the file\n&quot;, file.getString());</span>
+<span class="fc" id="L277">        assertEquals(&quot;text/whatever&quot;, file.getContentType());</span>
+<span class="fc" id="L278">        assertEquals(&quot;foo.tab&quot;, file.getName());</span>
+
+<span class="fc" id="L280">        FileItem field = fileItems.get(1);</span>
+<span class="fc" id="L281">        assertEquals(&quot;field&quot;, field.getFieldName());</span>
+<span class="fc" id="L282">        assertTrue(field.isFormField());</span>
+<span class="fc" id="L283">        assertEquals(&quot;fieldValue&quot;, field.getString());</span>
+
+<span class="fc" id="L285">        FileItem multi0 = fileItems.get(2);</span>
+<span class="fc" id="L286">        assertEquals(&quot;multi&quot;, multi0.getFieldName());</span>
+<span class="fc" id="L287">        assertTrue(multi0.isFormField());</span>
+<span class="fc" id="L288">        assertEquals(&quot;value1&quot;, multi0.getString());</span>
+
+<span class="fc" id="L290">        FileItem multi1 = fileItems.get(3);</span>
+<span class="fc" id="L291">        assertEquals(&quot;multi&quot;, multi1.getFieldName());</span>
+<span class="fc" id="L292">        assertTrue(multi1.isFormField());</span>
+<span class="fc" id="L293">        assertEquals(&quot;value2&quot;, multi1.getString());</span>
+<span class="fc" id="L294">    }</span>
+
+    /**
+     * Test case for &lt;a href=&quot;http://issues.apache.org/jira/browse/FILEUPLOAD-130&quot;&gt;
+     */
+    @Test
+    public void testFileUpload130()
+            throws Exception {
+<span class="fc" id="L302">        final String[] headerNames = new String[]</span>
+<span class="fc" id="L303">        {</span>
+<span class="fc" id="L304">            &quot;SomeHeader&quot;, &quot;OtherHeader&quot;, &quot;YetAnotherHeader&quot;, &quot;WhatAHeader&quot;</span>
+        };
+<span class="fc" id="L306">        final String[] headerValues = new String[]</span>
+<span class="fc" id="L307">        {</span>
+<span class="fc" id="L308">            &quot;present&quot;, &quot;Is there&quot;, &quot;Here&quot;, &quot;Is That&quot;</span>
+        };
+<span class="fc" id="L310">        List&lt;FileItem&gt; fileItems = Util.parseUpload(upload,</span>
+<span class="fc" id="L311">                                               &quot;-----1234\r\n&quot; +</span>
+                                               &quot;Content-Disposition: form-data; name=\&quot;file\&quot;; filename=\&quot;foo.tab\&quot;\r\n&quot; +
+                                               &quot;Content-Type: text/whatever\r\n&quot; +
+<span class="fc" id="L314">                                               headerNames[0] + &quot;: &quot; + headerValues[0] + &quot;\r\n&quot; +</span>
+<span class="fc" id="L315">                                               &quot;\r\n&quot; +</span>
+<span class="fc" id="L316">                                               &quot;This is the content of the file\n&quot; +</span>
+<span class="fc" id="L317">                                               &quot;\r\n&quot; +</span>
+<span class="fc" id="L318">                                               &quot;-----1234\r\n&quot; +</span>
+<span class="fc" id="L319">                                               &quot;Content-Disposition: form-data; \r\n&quot; +</span>
+<span class="fc" id="L320">                                               &quot;\tname=\&quot;field\&quot;\r\n&quot; +</span>
+<span class="fc" id="L321">                                               headerNames[1] + &quot;: &quot; + headerValues[1] + &quot;\r\n&quot; +</span>
+<span class="fc" id="L322">                                               &quot;\r\n&quot; +</span>
+<span class="fc" id="L323">                                               &quot;fieldValue\r\n&quot; +</span>
+<span class="fc" id="L324">                                               &quot;-----1234\r\n&quot; +</span>
+<span class="fc" id="L325">                                               &quot;Content-Disposition: form-data;\r\n&quot; +</span>
+<span class="fc" id="L326">                                               &quot;     name=\&quot;multi\&quot;\r\n&quot; +</span>
+<span class="fc" id="L327">                                               headerNames[2] + &quot;: &quot; + headerValues[2] + &quot;\r\n&quot; +</span>
+<span class="fc" id="L328">                                               &quot;\r\n&quot; +</span>
+<span class="fc" id="L329">                                               &quot;value1\r\n&quot; +</span>
+<span class="fc" id="L330">                                               &quot;-----1234\r\n&quot; +</span>
+<span class="fc" id="L331">                                               &quot;Content-Disposition: form-data; name=\&quot;multi\&quot;\r\n&quot; +</span>
+<span class="fc" id="L332">                                               headerNames[3] + &quot;: &quot; + headerValues[3] + &quot;\r\n&quot; +</span>
+<span class="fc" id="L333">                                               &quot;\r\n&quot; +</span>
+<span class="fc" id="L334">                                               &quot;value2\r\n&quot; +</span>
+<span class="fc" id="L335">                                               &quot;-----1234--\r\n&quot;);</span>
+<span class="fc" id="L336">        assertEquals(4, fileItems.size());</span>
+
+<span class="fc" id="L338">        FileItem file = fileItems.get(0);</span>
+<span class="fc" id="L339">        assertHeaders(headerNames, headerValues, file, 0);</span>
+
+<span class="fc" id="L341">        FileItem field = fileItems.get(1);</span>
+<span class="fc" id="L342">        assertHeaders(headerNames, headerValues, field, 1);</span>
+
+<span class="fc" id="L344">        FileItem multi0 = fileItems.get(2);</span>
+<span class="fc" id="L345">        assertHeaders(headerNames, headerValues, multi0, 2);</span>
+
+<span class="fc" id="L347">        FileItem multi1 = fileItems.get(3);</span>
+<span class="fc" id="L348">        assertHeaders(headerNames, headerValues, multi1, 3);</span>
+<span class="fc" id="L349">    }</span>
+
+    /**
+     * Test for &lt;a href=&quot;http://issues.apache.org/jira/browse/FILEUPLOAD-239&quot;&gt;FILEUPLOAD-239&lt;/a&gt;
+     */
+    @Test
+    public void testContentTypeAttachment()
+            throws IOException, FileUploadException {
+<span class="fc" id="L357">        List&lt;FileItem&gt; fileItems = Util.parseUpload(upload,</span>
+<span class="fc" id="L358">                &quot;-----1234\r\n&quot; +</span>
+                &quot;content-disposition: form-data; name=\&quot;field1\&quot;\r\n&quot; +
+                &quot;\r\n&quot; +
+                &quot;Joe Blow\r\n&quot; +
+                &quot;-----1234\r\n&quot; +
+                &quot;content-disposition: form-data; name=\&quot;pics\&quot;\r\n&quot; +
+                &quot;Content-type: multipart/mixed, boundary=---9876\r\n&quot; +
+                &quot;\r\n&quot; +
+                &quot;-----9876\r\n&quot; +
+                &quot;Content-disposition: attachment; filename=\&quot;file1.txt\&quot;\r\n&quot; +
+                &quot;Content-Type: text/plain\r\n&quot; +
+                &quot;\r\n&quot; +
+                &quot;... contents of file1.txt ...\r\n&quot; +
+                &quot;-----9876--\r\n&quot; +
+                &quot;-----1234--\r\n&quot;);
+<span class="fc" id="L373">        assertEquals(2, fileItems.size());</span>
+
+<span class="fc" id="L375">        FileItem field = fileItems.get(0);</span>
+<span class="fc" id="L376">        assertEquals(&quot;field1&quot;, field.getFieldName());</span>
+<span class="fc" id="L377">        assertTrue(field.isFormField());</span>
+<span class="fc" id="L378">        assertEquals(&quot;Joe Blow&quot;, field.getString());</span>
+
+<span class="fc" id="L380">        FileItem file = fileItems.get(1);</span>
+<span class="fc" id="L381">        assertEquals(&quot;pics&quot;, file.getFieldName());</span>
+<span class="fc" id="L382">        assertFalse(file.isFormField());</span>
+<span class="fc" id="L383">        assertEquals(&quot;... contents of file1.txt ...&quot;, file.getString());</span>
+<span class="fc" id="L384">        assertEquals(&quot;text/plain&quot;, file.getContentType());</span>
+<span class="fc" id="L385">        assertEquals(&quot;file1.txt&quot;, file.getName());</span>
+<span class="fc" id="L386">    }</span>
+
+    private void assertHeaders(String[] pHeaderNames, String[] pHeaderValues,
+            FileItem pItem, int pIndex) {
+<span class="fc bfc" id="L390" title="All 2 branches covered.">        for (int i = 0; i &lt; pHeaderNames.length; i++) {</span>
+<span class="fc" id="L391">            final String value = pItem.getHeaders().getHeader(pHeaderNames[i]);</span>
+<span class="fc bfc" id="L392" title="All 2 branches covered.">            if (i == pIndex) {</span>
+<span class="fc" id="L393">                assertEquals(pHeaderValues[i], value);</span>
+<span class="fc" id="L394">            } else {</span>
+<span class="fc" id="L395">                assertNull(value);</span>
+            }
+        }
+<span class="fc" id="L398">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.3.201901230119</span>commons-fileupload-commons-fileupload-1.4 (18-Apr-2019 3:46:35 AM)</div></body></html>

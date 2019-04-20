@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>DefaultFileItemTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">commons-fileupload-commons-fileupload-1.4 (18-Apr-2019 3:46:35 AM)</a> &gt; <a href="../../index.html" class="el_group">commons-fileupload-commons-fileupload-1.4</a> &gt; <a href="../index.html" class="el_bundle">src/test/java</a> &gt; <a href="index.source.html" class="el_package">org.apache.commons.fileupload</a> &gt; <span class="el_source">DefaultFileItemTest.java</span></div><h1>DefaultFileItemTest.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the &quot;License&quot;); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.commons.fileupload;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Arrays;
+import org.apache.commons.io.FileUtils;
+
+import org.junit.Test;
+
+/**
+ * Unit tests for {@link org.apache.commons.fileupload.DefaultFileItem}.
+ */
+@SuppressWarnings({&quot;deprecation&quot;, &quot;javadoc&quot;}) // unit tests for deprecated class
+<span class="fc" id="L38">public class DefaultFileItemTest {</span>
+
+    /**
+     * Content type for regular form items.
+     */
+    private static final String textContentType = &quot;text/plain&quot;;
+
+    /**
+     * Content type for file uploads.
+     */
+    private static final String fileContentType = &quot;application/octet-stream&quot;;
+
+    /**
+     * Very low threshold for testing memory versus disk options.
+     */
+    private static final int threshold = 16;
+
+    /**
+     * Test construction of a regular text field.
+     */
+    @Test
+    public void testTextFieldConstruction() {
+<span class="fc" id="L60">        FileItemFactory factory = createFactory(null);</span>
+<span class="fc" id="L61">        String textFieldName = &quot;textField&quot;;</span>
+
+<span class="fc" id="L63">        FileItem item = factory.createItem(</span>
+<span class="fc" id="L64">                textFieldName,</span>
+<span class="fc" id="L65">                textContentType,</span>
+<span class="fc" id="L66">                true,</span>
+<span class="fc" id="L67">                null</span>
+        );
+<span class="fc" id="L69">        assertNotNull(item);</span>
+<span class="fc" id="L70">        assertEquals(item.getFieldName(), textFieldName);</span>
+<span class="fc" id="L71">        assertEquals(item.getContentType(), textContentType);</span>
+<span class="fc" id="L72">        assertTrue(item.isFormField());</span>
+<span class="fc" id="L73">        assertNull(item.getName());</span>
+<span class="fc" id="L74">    }</span>
+
+    /**
+     * Test construction of a file field.
+     */
+    @Test
+    public void testFileFieldConstruction() {
+<span class="fc" id="L81">        FileItemFactory factory = createFactory(null);</span>
+<span class="fc" id="L82">        String fileFieldName = &quot;fileField&quot;;</span>
+<span class="fc" id="L83">        String fileName = &quot;originalFileName&quot;;</span>
+
+<span class="fc" id="L85">        FileItem item = factory.createItem(</span>
+<span class="fc" id="L86">                fileFieldName,</span>
+<span class="fc" id="L87">                fileContentType,</span>
+<span class="fc" id="L88">                false,</span>
+<span class="fc" id="L89">                fileName</span>
+        );
+<span class="fc" id="L91">        assertNotNull(item);</span>
+<span class="fc" id="L92">        assertEquals(item.getFieldName(), fileFieldName);</span>
+<span class="fc" id="L93">        assertEquals(item.getContentType(), fileContentType);</span>
+<span class="fc" id="L94">        assertFalse(item.isFormField());</span>
+<span class="fc" id="L95">        assertEquals(item.getName(), fileName);</span>
+<span class="fc" id="L96">    }</span>
+
+    /**
+     * Test creation of a field for which the amount of data falls below the
+     * configured threshold.
+     */
+    @Test
+    public void testBelowThreshold() {
+<span class="fc" id="L104">        FileItemFactory factory = createFactory(null);</span>
+<span class="fc" id="L105">        String textFieldName = &quot;textField&quot;;</span>
+<span class="fc" id="L106">        String textFieldValue = &quot;0123456789&quot;;</span>
+<span class="fc" id="L107">        byte[] testFieldValueBytes = textFieldValue.getBytes();</span>
+
+<span class="fc" id="L109">        FileItem item = factory.createItem(</span>
+<span class="fc" id="L110">                textFieldName,</span>
+<span class="fc" id="L111">                textContentType,</span>
+<span class="fc" id="L112">                true,</span>
+<span class="fc" id="L113">                null</span>
+        );
+<span class="fc" id="L115">        assertNotNull(item);</span>
+
+        try {
+<span class="fc" id="L118">            OutputStream os = item.getOutputStream();</span>
+<span class="fc" id="L119">            os.write(testFieldValueBytes);</span>
+<span class="fc" id="L120">            os.close();</span>
+<span class="pc" id="L121">        } catch(IOException e) {</span>
+<span class="nc" id="L122">            fail(&quot;Unexpected IOException&quot;);</span>
+        }
+<span class="fc" id="L124">        assertTrue(item.isInMemory());</span>
+<span class="fc" id="L125">        assertEquals(item.getSize(), testFieldValueBytes.length);</span>
+<span class="fc" id="L126">        assertTrue(Arrays.equals(item.get(), testFieldValueBytes));</span>
+<span class="fc" id="L127">        assertEquals(item.getString(), textFieldValue);</span>
+<span class="fc" id="L128">    }</span>
+
+    /**
+     * Test creation of a field for which the amount of data falls above the
+     * configured threshold, where no specific repository is configured.
+     */
+    @Test
+    public void testAboveThresholdDefaultRepository() {
+<span class="fc" id="L136">        doTestAboveThreshold(null);</span>
+<span class="fc" id="L137">    }</span>
+
+    /**
+     * Test creation of a field for which the amount of data falls above the
+     * configured threshold, where a specific repository is configured.
+     */
+    @Test
+    public void testAboveThresholdSpecifiedRepository() throws IOException {
+<span class="fc" id="L145">        String tempPath = System.getProperty(&quot;java.io.tmpdir&quot;);</span>
+<span class="fc" id="L146">        String tempDirName = &quot;testAboveThresholdSpecifiedRepository&quot;;</span>
+<span class="fc" id="L147">        File tempDir = new File(tempPath, tempDirName);</span>
+<span class="fc" id="L148">        FileUtils.forceMkdir(tempDir);</span>
+<span class="fc" id="L149">        doTestAboveThreshold(tempDir);</span>
+<span class="fc" id="L150">        tempDir.delete();</span>
+<span class="fc" id="L151">        assertTrue(true);</span>
+<span class="fc" id="L152">    }</span>
+
+    /**
+     * Common code for cases where the amount of data is above the configured
+     * threshold, but the ultimate destination of the data has not yet been
+     * determined.
+     *
+     * @param repository The directory within which temporary files will be
+     *                   created.
+     */
+    public void doTestAboveThreshold(File repository) {
+<span class="fc" id="L163">        FileItemFactory factory = createFactory(repository);</span>
+<span class="fc" id="L164">        String textFieldName = &quot;textField&quot;;</span>
+<span class="fc" id="L165">        String textFieldValue = &quot;01234567890123456789&quot;;</span>
+<span class="fc" id="L166">        byte[] testFieldValueBytes = textFieldValue.getBytes();</span>
+
+<span class="fc" id="L168">        FileItem item = factory.createItem(</span>
+<span class="fc" id="L169">                textFieldName,</span>
+<span class="fc" id="L170">                textContentType,</span>
+<span class="fc" id="L171">                true,</span>
+<span class="fc" id="L172">                null</span>
+        );
+<span class="fc" id="L174">        assertNotNull(item);</span>
+
+        try {
+<span class="fc" id="L177">            OutputStream os = item.getOutputStream();</span>
+<span class="fc" id="L178">            os.write(testFieldValueBytes);</span>
+<span class="fc" id="L179">            os.close();</span>
+<span class="pc" id="L180">        } catch(IOException e) {</span>
+<span class="nc" id="L181">            fail(&quot;Unexpected IOException&quot;);</span>
+        }
+<span class="fc" id="L183">        assertFalse(item.isInMemory());</span>
+<span class="fc" id="L184">        assertEquals(item.getSize(), testFieldValueBytes.length);</span>
+<span class="fc" id="L185">        assertTrue(Arrays.equals(item.get(), testFieldValueBytes));</span>
+<span class="fc" id="L186">        assertEquals(item.getString(), textFieldValue);</span>
+
+<span class="fc" id="L188">        assertTrue(item instanceof DefaultFileItem);</span>
+<span class="fc" id="L189">        DefaultFileItem dfi = (DefaultFileItem) item;</span>
+<span class="fc" id="L190">        File storeLocation = dfi.getStoreLocation();</span>
+<span class="fc" id="L191">        assertNotNull(storeLocation);</span>
+<span class="fc" id="L192">        assertTrue(storeLocation.exists());</span>
+<span class="fc" id="L193">        assertEquals(storeLocation.length(), testFieldValueBytes.length);</span>
+
+<span class="fc bfc" id="L195" title="All 2 branches covered.">        if (repository != null) {</span>
+<span class="fc" id="L196">            assertEquals(storeLocation.getParentFile(), repository);</span>
+        }
+
+<span class="fc" id="L199">        item.delete();</span>
+<span class="fc" id="L200">    }</span>
+
+
+    /**
+     * Creates a new &lt;code&gt;FileItemFactory&lt;/code&gt; and returns it, obscuring
+     * from the caller the underlying implementation of this interface.
+     *
+     * @param repository The directory within which temporary files will be
+     *                   created.
+     * @return the new &lt;code&gt;FileItemFactory&lt;/code&gt; instance.
+     */
+    protected FileItemFactory createFactory(File repository) {
+<span class="fc" id="L212">        return new DefaultFileItemFactory(threshold, repository);</span>
+    }
+
+    static final String CHARSET_ISO88591 = &quot;ISO-8859-1&quot;;
+
+    static final String CHARSET_ASCII = &quot;US-ASCII&quot;;
+
+    static final String CHARSET_UTF8 = &quot;UTF-8&quot;;
+
+    static final String CHARSET_KOI8_R = &quot;KOI8_R&quot;;
+
+    static final String CHARSET_WIN1251 = &quot;Cp1251&quot;;
+
+<span class="fc" id="L225">    static final int SWISS_GERMAN_STUFF_UNICODE [] = {</span>
+<span class="fc" id="L226">        0x47, 0x72, 0xFC, 0x65, 0x7A, 0x69, 0x5F, 0x7A, 0xE4, 0x6D, 0xE4</span>
+    };
+
+<span class="fc" id="L229">    static final int SWISS_GERMAN_STUFF_ISO8859_1 [] = {</span>
+<span class="fc" id="L230">        0x47, 0x72, 0xFC, 0x65, 0x7A, 0x69, 0x5F, 0x7A, 0xE4, 0x6D, 0xE4</span>
+    };
+
+<span class="fc" id="L233">    static final int SWISS_GERMAN_STUFF_UTF8 [] = {</span>
+<span class="fc" id="L234">        0x47, 0x72, 0xC3, 0xBC, 0x65, 0x7A, 0x69, 0x5F, 0x7A, 0xC3, 0xA4,</span>
+<span class="fc" id="L235">        0x6D, 0xC3, 0xA4</span>
+    };
+
+<span class="fc" id="L238">    static final int RUSSIAN_STUFF_UNICODE [] = {</span>
+<span class="fc" id="L239">        0x412, 0x441, 0x435, 0x43C, 0x5F, 0x43F, 0x440, 0x438,</span>
+<span class="fc" id="L240">        0x432, 0x435, 0x442</span>
+    };
+
+<span class="fc" id="L243">    static final int RUSSIAN_STUFF_UTF8 [] = {</span>
+<span class="fc" id="L244">        0xD0, 0x92, 0xD1, 0x81, 0xD0, 0xB5, 0xD0, 0xBC, 0x5F,</span>
+<span class="fc" id="L245">        0xD0, 0xBF, 0xD1, 0x80, 0xD0, 0xB8, 0xD0, 0xB2, 0xD0,</span>
+<span class="fc" id="L246">        0xB5, 0xD1, 0x82</span>
+    };
+
+<span class="fc" id="L249">    static final int RUSSIAN_STUFF_KOI8R [] = {</span>
+<span class="fc" id="L250">        0xF7, 0xD3, 0xC5, 0xCD, 0x5F, 0xD0, 0xD2, 0xC9, 0xD7,</span>
+<span class="fc" id="L251">        0xC5, 0xD4</span>
+    };
+
+<span class="fc" id="L254">    static final int RUSSIAN_STUFF_WIN1251 [] = {</span>
+<span class="fc" id="L255">        0xC2, 0xF1, 0xE5, 0xEC, 0x5F, 0xEF, 0xF0, 0xE8, 0xE2,</span>
+<span class="fc" id="L256">        0xE5, 0xF2</span>
+<span class="fc" id="L257">    };</span>
+
+    private static String constructString(int[] unicodeChars) {
+<span class="nc" id="L260">        StringBuilder buffer = new StringBuilder();</span>
+<span class="nc bnc" id="L261" title="All 2 branches missed.">        if (unicodeChars != null) {</span>
+<span class="nc bnc" id="L262" title="All 2 branches missed.">            for (int unicodeChar : unicodeChars) {</span>
+<span class="nc" id="L263">                buffer.append((char) unicodeChar);</span>
+            }
+        }
+<span class="nc" id="L266">        return buffer.toString();</span>
+    }
+
+    /**
+     * Test construction of content charset.
+     */
+    public void testContentCharSet() throws Exception {
+<span class="nc" id="L273">        FileItemFactory factory = createFactory(null);</span>
+
+<span class="nc" id="L275">        String teststr = constructString(SWISS_GERMAN_STUFF_UNICODE);</span>
+
+<span class="nc" id="L277">        FileItem item =</span>
+<span class="nc" id="L278">            factory.createItem(</span>
+<span class="nc" id="L279">                &quot;doesnotmatter&quot;,</span>
+<span class="nc" id="L280">                &quot;text/plain; charset=&quot; + CHARSET_ISO88591,</span>
+<span class="nc" id="L281">                true,</span>
+<span class="nc" id="L282">                null);</span>
+<span class="nc" id="L283">        OutputStream outstream = item.getOutputStream();</span>
+<span class="nc bnc" id="L284" title="All 2 branches missed.">        for (int element : SWISS_GERMAN_STUFF_ISO8859_1) {</span>
+<span class="nc" id="L285">            outstream.write(element);</span>
+        }
+<span class="nc" id="L287">        outstream.close();</span>
+<span class="nc" id="L288">        assertEquals(teststr, teststr, item.getString());</span>
+
+<span class="nc" id="L290">        item =</span>
+<span class="nc" id="L291">            factory.createItem(</span>
+<span class="nc" id="L292">                &quot;doesnotmatter&quot;,</span>
+<span class="nc" id="L293">                &quot;text/plain; charset=&quot; + CHARSET_UTF8,</span>
+<span class="nc" id="L294">                true,</span>
+<span class="nc" id="L295">                null);</span>
+<span class="nc" id="L296">        outstream = item.getOutputStream();</span>
+<span class="nc bnc" id="L297" title="All 2 branches missed.">        for (int element : SWISS_GERMAN_STUFF_UTF8) {</span>
+<span class="nc" id="L298">            outstream.write(element);</span>
+        }
+<span class="nc" id="L300">        outstream.close();</span>
+<span class="nc" id="L301">        assertEquals(teststr, teststr, item.getString());</span>
+
+<span class="nc" id="L303">        teststr = constructString(RUSSIAN_STUFF_UNICODE);</span>
+
+<span class="nc" id="L305">        item =</span>
+<span class="nc" id="L306">            factory.createItem(</span>
+<span class="nc" id="L307">                &quot;doesnotmatter&quot;,</span>
+<span class="nc" id="L308">                &quot;text/plain; charset=&quot; + CHARSET_KOI8_R,</span>
+<span class="nc" id="L309">                true,</span>
+<span class="nc" id="L310">                null);</span>
+<span class="nc" id="L311">        outstream = item.getOutputStream();</span>
+<span class="nc bnc" id="L312" title="All 2 branches missed.">        for (int element : RUSSIAN_STUFF_KOI8R) {</span>
+<span class="nc" id="L313">            outstream.write(element);</span>
+        }
+<span class="nc" id="L315">        outstream.close();</span>
+<span class="nc" id="L316">        assertEquals(teststr, teststr, item.getString());</span>
+
+<span class="nc" id="L318">        item =</span>
+<span class="nc" id="L319">            factory.createItem(</span>
+<span class="nc" id="L320">                &quot;doesnotmatter&quot;,</span>
+<span class="nc" id="L321">                &quot;text/plain; charset=&quot; + CHARSET_WIN1251,</span>
+<span class="nc" id="L322">                true,</span>
+<span class="nc" id="L323">                null);</span>
+<span class="nc" id="L324">        outstream = item.getOutputStream();</span>
+<span class="nc bnc" id="L325" title="All 2 branches missed.">        for (int element : RUSSIAN_STUFF_WIN1251) {</span>
+<span class="nc" id="L326">            outstream.write(element);</span>
+        }
+<span class="nc" id="L328">        outstream.close();</span>
+<span class="nc" id="L329">        assertEquals(teststr, teststr, item.getString());</span>
+
+<span class="nc" id="L331">        item =</span>
+<span class="nc" id="L332">            factory.createItem(</span>
+<span class="nc" id="L333">                &quot;doesnotmatter&quot;,</span>
+<span class="nc" id="L334">                &quot;text/plain; charset=&quot; + CHARSET_UTF8,</span>
+<span class="nc" id="L335">                true,</span>
+<span class="nc" id="L336">                null);</span>
+<span class="nc" id="L337">        outstream = item.getOutputStream();</span>
+<span class="nc bnc" id="L338" title="All 2 branches missed.">        for (int element : RUSSIAN_STUFF_UTF8) {</span>
+<span class="nc" id="L339">            outstream.write(element);</span>
+        }
+<span class="nc" id="L341">        outstream.close();</span>
+<span class="nc" id="L342">        assertEquals(teststr, teststr, item.getString());</span>
+<span class="nc" id="L343">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.3.201901230119</span>commons-fileupload-commons-fileupload-1.4 (18-Apr-2019 3:46:35 AM)</div></body></html>
