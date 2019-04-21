@@ -43,6 +43,9 @@
 + For code coverage and McCabe Complexity run Jacoco Reports - 
     - Go to the project folder and run – “mvn verify”
     - From within the project go to target\site\jacoco
++ We used PiTest to retrieve the mutation score for all versions of the project.
+    - From the project directory, run the following command using command prompt/terminal <br />
+       &nbsp; mvn org.pitest:pitest-maven:mutationCoverage
 
 ## 3. Team Members
 
