@@ -41,12 +41,16 @@
 
 ## 2. All these commands are executed using command prompt/terminal: 
 + For code coverage and McCabe Complexity run Jacoco Reports - 
-    - Go to the project folder and run – “mvn verify”
+    - Go to the project folder and run – `mvn verify`
     - From within the project go to target\site\jacoco
 + We used PiTest to retrieve the mutation score for all versions of the project.
     - From the project directory, run the following command using command prompt/terminal <br />
-       &nbsp; mvn org.pitest:pitest-maven:mutationCoverage
-
+       &nbsp; `mvn org.pitest:pitest-maven:mutationCoverage`
++ We used CLOC tool to retrieve data for code churns and post release defect density and store them in csv files, so we used the following commands 
+    - `cloc ‘path\Project_Name’ > filename.csv`  for deriving code churns data
+    - `cloc --diff ‘path\Project_Name_Version_A’ ‘path \Project_Name_Version_B’ > filename.csv`  <br />
+     &nbsp; which compared the elements of version A and version B and then exported the data to filename.csv. All this data is stored    in each version of the projects folder. <br />
+`Sources : https://sourceforge.net/projects/cloc/files/cloc/v1.64/`
 ## 3. Team Members
 
 - Jasraj Singh Bedi | 40046931 | jasraj3453@gmail.com
