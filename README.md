@@ -39,18 +39,24 @@
 - **Code Change** inside the project name folder contains configuration code.
 
 
-## 2. All these commands are executed using command prompt/terminal: 
+## 2. Commands used to run the tools for collecting the data
+Before executing following commands ensure Jacoco and PiTest plugins mentioned in all projects are updated in `POM.XML` <br />
+Note : All these commands are executed using command prompt/terminal: 
 + For code coverage and McCabe Complexity run Jacoco Reports - 
     - Go to the project folder and run – `mvn verify`
     - From within the project go to target\site\jacoco
 + We used PiTest to retrieve the mutation score for all versions of the project.
-    - From the project directory, run the following command using command prompt/terminal <br />
+    - From the project directory, run the following command <br />
        &nbsp; `mvn org.pitest:pitest-maven:mutationCoverage`
 + We used CLOC tool to retrieve data for code churns and post release defect density and store them in csv files, so we used the following commands 
     - `cloc ‘path\Project_Name’ > filename.csv`  for deriving code churns data
     - `cloc --diff ‘path\Project_Name_Version_A’ ‘path \Project_Name_Version_B’ > filename.csv`  <br />
      &nbsp; which compared the elements of version A and version B and then exported the data to filename.csv. All this data is stored    in each version of the projects folder. <br />
-`Sources : https://sourceforge.net/projects/cloc/files/cloc/v1.64/`
+`Source : https://sourceforge.net/projects/cloc/files/cloc/v1.64/`
++ Steps to Run Projects/Scripts/main.py - for computing correlations between various metrices 
+    - Install python 3 or above, pip and pip install pandas, scipy, numpy and matlpotlib libraries.
+    - Run python file and run `python main.py` on the terminal/command prompt
+
 ## 3. Team Members
 
 - Jasraj Singh Bedi | 40046931 | jasraj3453@gmail.com
