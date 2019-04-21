@@ -39,9 +39,10 @@
 - **Code Change** inside the project name folder contains configuration code.
 
 
-## 2. Steps to Run Projects/Scripts/main.py  
-- Install python 3 or above, **pip and pip install pandas, scipy, numpy and matlpotlib** libraries.
-- Run python file by opening the terminal and running **python main.py**.
+## 2. All these commands are executed using command prompt/terminal: 
++ For code coverage and McCabe Complexity run Jacoco Reports - 
+    - Go to the project folder and run – “mvn verify”
+    - From within the project go to target\site\jacoco
 
 ## 3. Team Members
 
